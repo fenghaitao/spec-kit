@@ -29,6 +29,7 @@ import zipfile
 import tempfile
 import shutil
 import json
+import re
 from pathlib import Path
 from typing import Optional, Tuple
 
@@ -420,11 +421,195 @@ def init_git_repo(project_path: Path, quiet: bool = False) -> bool:
 
 
 def setup_adk_project_from_local(project_dir: Path, script_type: str = "sh") -> dict:
-    """Set up ADK project using local repository files instead of downloading."""
+    """Set up ADK project using local repository files and the release packaging script."""
     # Find the repository root (where this script is located)
     script_path = Path(__file__).resolve()
     repo_root = script_path.parent.parent.parent  # Go up from src/specify_cli/__init__.py
     
+    # Create the required directory structure
+    adk_commands_dir = project_dir / ".adk" / "commands"
+    specify_dir = project_dir / ".specify"
+    
+    adk_commands_dir.mkdir(parents=True, exist_ok=True)
+    specify_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Process command templates using the same logic as the release packaging script
+    try:
+        # Copy base structure first (like the fallback method)
+        _copy_base_structure(project_dir, script_type, repo_root)
+        
+        # Now process command templates with placeholder replacement
+        _process_adk_command_templates(project_dir, script_type, repo_root)
+        
+    except Exception as e:
+        # Fallback to direct copy if anything fails
+        console.print(f"[yellow]Warning:[/yellow] Template processing failed, falling back to direct copy")
+        console.print(f"[dim]Error: {e}[/dim]")
+        return _setup_adk_project_fallback(project_dir, script_type, repo_root)
+    
+    # Count the commands that were actually created
+    commands_created = len(list(adk_commands_dir.glob("*.md"))) if adk_commands_dir.exists() else 0
+    
+    return {
+        "source": "local_script",
+        "commands_created": commands_created,
+        "script_type": script_type
+    }
+
+
+def _copy_base_structure(project_dir: Path, script_type: str, repo_root: Path) -> None:
+    """Copy the base .specify structure (memory, scripts, templates except commands)."""
+    specify_dir = project_dir / ".specify"
+    
+    # Copy templates to .specify (excluding commands which go to .adk/commands)
+    templates_src = repo_root / "templates"
+    if templates_src.exists():
+        templates_dest = specify_dir / "templates"
+        templates_dest.mkdir(exist_ok=True)
+        
+        # Copy all template files and directories except 'commands'
+        for item in templates_src.iterdir():
+            if item.name != "commands":
+                dest_path = templates_dest / item.name
+                if item.is_dir():
+                    shutil.copytree(item, dest_path, dirs_exist_ok=True)
+                else:
+                    shutil.copy2(item, dest_path)
+    
+    # Copy memory to .specify
+    memory_src = repo_root / "memory"
+    if memory_src.exists():
+        shutil.copytree(memory_src, specify_dir / "memory", dirs_exist_ok=True)
+        
+    # Copy scripts to .specify
+    scripts_src = repo_root / "scripts"
+    if scripts_src.exists():
+        scripts_dest = specify_dir / "scripts"
+        scripts_dest.mkdir(exist_ok=True)
+        
+        # Copy the appropriate script variant
+        if script_type == "sh" and (scripts_src / "bash").exists():
+            shutil.copytree(scripts_src / "bash", scripts_dest / "bash", dirs_exist_ok=True)
+        elif script_type == "ps" and (scripts_src / "powershell").exists():
+            shutil.copytree(scripts_src / "powershell", scripts_dest / "powershell", dirs_exist_ok=True)
+            
+        # Copy any script files that aren't in variant-specific directories
+        for item in scripts_src.iterdir():
+            if item.is_file():
+                shutil.copy2(item, scripts_dest / item.name)
+
+
+def _process_adk_command_templates(project_dir: Path, script_type: str, repo_root: Path) -> None:
+    """Process command templates with placeholder replacement like the release script does."""
+    import re
+    
+    adk_commands_dir = project_dir / ".adk" / "commands"
+    commands_src = repo_root / "templates" / "commands"
+    
+    if not commands_src.exists():
+        return
+    
+    # Arguments format for ADK
+    arg_format = '$ARGUMENTS'
+    
+    for cmd_file in commands_src.glob("*.md"):
+        try:
+            # Read the template file
+            content = cmd_file.read_text(encoding='utf-8')
+            
+            # Extract script command from YAML frontmatter
+            script_command = _extract_script_command(content, script_type)
+            
+            if script_command:
+                # Replace {SCRIPT} placeholder with the script command (without prefix first)
+                content = content.replace("{SCRIPT}", script_command)
+                
+                # Remove the scripts: section from frontmatter while preserving YAML structure
+                content = _remove_scripts_section(content)
+                
+                # Apply other substitutions
+                content = content.replace("{ARGS}", arg_format)
+                content = content.replace("__AGENT__", "adk")
+                
+                # Rewrite paths to use .specify/ prefix (this will add the prefix to script paths)
+                content = _rewrite_paths(content)
+                
+                # Write the processed file
+                output_file = adk_commands_dir / cmd_file.name
+                output_file.write_text(content, encoding='utf-8')
+            else:
+                # If no script command found, copy as-is (fallback)
+                output_file = adk_commands_dir / cmd_file.name
+                shutil.copy2(cmd_file, output_file)
+                
+        except Exception as e:
+            # If processing fails for any file, copy as-is
+            output_file = adk_commands_dir / cmd_file.name
+            shutil.copy2(cmd_file, output_file)
+
+
+def _extract_script_command(content: str, script_variant: str) -> str:
+    """Extract script command from YAML frontmatter."""
+    import re
+    
+    # Look for the script variant in YAML frontmatter
+    pattern = rf'^\s*{re.escape(script_variant)}:\s*(.+)$'
+    
+    for line in content.split('\n'):
+        match = re.match(pattern, line)
+        if match:
+            return match.group(1).strip()
+    
+    return ""
+
+
+def _remove_scripts_section(content: str) -> str:
+    """Remove the scripts: section from YAML frontmatter while preserving structure."""
+    lines = content.split('\n')
+    result_lines = []
+    in_frontmatter = False
+    skip_scripts = False
+    dash_count = 0
+    
+    for line in lines:
+        if line.strip() == '---':
+            dash_count += 1
+            if dash_count == 1:
+                in_frontmatter = True
+            elif dash_count == 2:
+                in_frontmatter = False
+            result_lines.append(line)
+            continue
+            
+        if in_frontmatter and line.strip() == 'scripts:':
+            skip_scripts = True
+            continue
+            
+        if in_frontmatter and skip_scripts and re.match(r'^[a-zA-Z].*:', line):
+            skip_scripts = False
+            
+        if in_frontmatter and skip_scripts and re.match(r'^\s+', line):
+            continue
+            
+        result_lines.append(line)
+    
+    return '\n'.join(result_lines)
+
+
+def _rewrite_paths(content: str) -> str:
+    """Rewrite paths to use .specify/ prefix, but avoid double prefixes."""
+    import re
+    
+    # Only add .specify/ prefix if it's not already there
+    content = re.sub(r'(?<!\.specify/)(/?)memory/', r'.specify/memory/', content)
+    content = re.sub(r'(?<!\.specify/)(/?)scripts/', r'.specify/scripts/', content) 
+    content = re.sub(r'(?<!\.specify/)(/?)templates/', r'.specify/templates/', content)
+    
+    return content
+
+
+def _setup_adk_project_fallback(project_dir: Path, script_type: str, repo_root: Path) -> dict:
+    """Fallback method to set up ADK project by direct copying (original behavior)."""
     # Create the required directory structure
     adk_commands_dir = project_dir / ".adk" / "commands"
     specify_dir = project_dir / ".specify"
@@ -481,7 +666,7 @@ def setup_adk_project_from_local(project_dir: Path, script_type: str = "sh") -> 
     commands_created = len(list(adk_commands_dir.glob("*.md"))) if adk_commands_dir.exists() else 0
     
     return {
-        "source": "local",
+        "source": "local_fallback",
         "commands_created": commands_created,
         "script_type": script_type
     }
