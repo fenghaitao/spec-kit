@@ -1,4 +1,4 @@
-# setup-simics-platform.ps1 - Initialize Simics virtual platform project
+# setup-simics-platform.ps1 - Initialize Simics virtual platform project with workflow enforcement
 # Usage: setup-simics-platform.ps1 -Json "{platform_description}"
 
 param(
@@ -12,7 +12,165 @@ param(
     [switch]$Debug = $false
 )
 
-# Function to log debug messages
+# Load common functions
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
+. "$scriptDir\common.ps1"
+
+# Function to initialize workflow enforcement
+function Initialize-WorkflowEnforcement {
+    Write-DebugLog "Initializing workflow enforcement for product phase"
+    
+    # Create .spec-kit directory structure
+    $specKitDir = Join-Path (Get-Location) ".spec-kit"
+    $phaseMarkersDir = Join-Path $specKitDir "phase-markers"
+    
+    New-Item -ItemType Directory -Force -Path $specKitDir | Out-Null
+    New-Item -ItemType Directory -Force -Path $phaseMarkersDir | Out-Null
+    
+    # Initialize workflow state if not exists
+    $stateFile = Join-Path $specKitDir "workflow-state.json"
+    if (-not (Test-Path $stateFile)) {
+        $featureName = Get-FeatureNameFromBranch
+        $currentTime = (Get-Date -Format "yyyy-MM-ddTHH:mm:ss.fffZ")
+        
+        $initialState = @{
+            currentPhase = "product"
+            completedPhases = @()
+            featureName = $featureName
+            lastUpdated = $currentTime
+            contextHash = $null
+            phaseData = @{}
+        } | ConvertTo-Json -Depth 3
+        
+        Set-Content -Path $stateFile -Value $initialState -Encoding UTF8
+        Write-DebugLog "Created workflow state file: $stateFile"
+    }
+    
+    # Clear any existing phase markers to start fresh
+    Get-ChildItem -Path $phaseMarkersDir -Filter "*.complete" -ErrorAction SilentlyContinue | Remove-Item -Force
+    
+    Write-DebugLog "Workflow enforcement initialized"
+}
+
+# Function to extract feature name from git branch
+function Get-FeatureNameFromBranch {
+    if (Test-Path ".git") {
+        try {
+            $branchName = git branch --show-current 2>$null
+            if ($branchName -and $branchName -match '^\d+-(.+)$') {
+                return $matches[1]
+            } elseif ($branchName) {
+                return $branchName
+            }
+        } catch {
+            # Ignore git errors
+        }
+    }
+    return "unknown-feature"
+}
+
+# Function to capture product context for workflow
+function Capture-ProductContext {
+    param(
+        [string]$PlatformName,
+        [string]$PlatformType,
+        [string]$PlatformDescription,
+        [string]$ComponentList,
+        [string]$TargetSystem
+    )
+    
+    Write-DebugLog "Capturing product context for workflow transfer"
+    
+    # Create product context data structure
+    $contextData = @{
+        vision = "Virtual platform simulation for $PlatformName targeting $TargetSystem architecture"
+        success_criteria = @(
+            "Platform boots successfully in Simics",
+            "All identified components are functional",
+            "System meets target performance requirements",
+            "Platform supports intended use cases"
+        )
+        constraints = @(
+            "Must be compatible with Simics simulation environment",
+            "Platform type: $PlatformType",
+            "Target system: $TargetSystem",
+            "Required components: $ComponentList"
+        )
+        stakeholders = @(
+            @{name = "Platform Developer"; role = "Implementation and testing"},
+            @{name = "System Architect"; role = "Architecture validation"},
+            @{name = "Validation Engineer"; role = "Testing and verification"}
+        )
+        requirements = @(
+            @{id = "REQ-001"; description = "Platform must support $TargetSystem instruction set"},
+            @{id = "REQ-002"; description = "Must include essential components: $ComponentList"},
+            @{id = "REQ-003"; description = "Platform configuration must be maintainable and extensible"}
+        )
+        metadata = @{
+            platform_name = $PlatformName
+            platform_type = $PlatformType
+            target_system = $TargetSystem
+            component_list = $ComponentList
+            original_description = $PlatformDescription
+            captured_at = (Get-Date -Format "yyyy-MM-ddTHH:mm:ss.fffZ")
+        }
+    }
+    
+    # Store context in workflow state
+    $specKitDir = Join-Path (Get-Location) ".spec-kit"
+    $stateFile = Join-Path $specKitDir "workflow-state.json"
+    
+    # Update workflow state with product context
+    try {
+        $state = Get-Content -Path $stateFile -Raw | ConvertFrom-Json
+        if (-not $state.phaseData) {
+            $state.phaseData = @{}
+        }
+        $state.phaseData | Add-Member -NotePropertyName "product" -NotePropertyValue $contextData -Force
+        $state.lastUpdated = (Get-Date -Format "yyyy-MM-ddTHH:mm:ss.fffZ")
+        
+        $updatedState = $state | ConvertTo-Json -Depth 5
+        Set-Content -Path $stateFile -Value $updatedState -Encoding UTF8
+    } catch {
+        # Fallback if JSON processing fails
+        Write-DebugLog "JSON processing failed, storing context as separate file"
+        $contextJson = $contextData | ConvertTo-Json -Depth 3
+        Set-Content -Path (Join-Path $specKitDir "product-context.json") -Value $contextJson -Encoding UTF8
+    }
+    
+    Write-DebugLog "Product context captured and stored"
+}
+
+# Function to complete product phase
+function Complete-ProductPhase {
+    Write-DebugLog "Completing product phase"
+    
+    $specKitDir = Join-Path (Get-Location) ".spec-kit"
+    $phaseMarkersDir = Join-Path $specKitDir "phase-markers"
+    $stateFile = Join-Path $specKitDir "workflow-state.json"
+    
+    # Create product phase completion marker
+    New-Item -ItemType File -Force -Path (Join-Path $phaseMarkersDir "product.complete") | Out-Null
+    
+    # Update workflow state
+    try {
+        $state = Get-Content -Path $stateFile -Raw | ConvertFrom-Json
+        
+        # Mark product phase as completed
+        if ($state.completedPhases -notcontains "product") {
+            $state.completedPhases += "product"
+        }
+        $state.currentPhase = $null
+        $state.lastUpdated = (Get-Date -Format "yyyy-MM-ddTHH:mm:ss.fffZ")
+        
+        $updatedState = $state | ConvertTo-Json -Depth 5
+        Set-Content -Path $stateFile -Value $updatedState -Encoding UTF8
+    } catch {
+        Write-DebugLog "Failed to update workflow state"
+    }
+    
+    Write-DebugLog "Product phase marked as complete"
+}
 function Write-DebugLog {
     param([string]$Message)
     if ($Debug) {
@@ -107,7 +265,7 @@ function Determine-TargetSystem {
 
 # Main execution
 function Main {
-    Write-DebugLog "Starting Simics platform project setup"
+    Write-DebugLog "Starting Simics platform project setup with workflow enforcement"
     
     # Determine platform description from parameters
     $platformDescription = ""
@@ -134,6 +292,9 @@ function Main {
     }
     
     Write-DebugLog "Platform description: $platformDescription"
+    
+    # Initialize workflow enforcement (Product Phase Entry Point)
+    Initialize-WorkflowEnforcement
     
     # Extract platform information
     $platformName = Extract-PlatformName $platformDescription
@@ -206,7 +367,13 @@ function Main {
     
     Write-DebugLog "Created project structure successfully"
     
-    # Output results
+    # Capture product context for workflow transfer
+    Capture-ProductContext $platformName $platformType $platformDescription $componentList $targetSystem
+    
+    # Complete product phase
+    Complete-ProductPhase
+    
+    # Output results with workflow enforcement information
     if ($Json -ne $null) {
         $result = @{
             success = $true
@@ -220,6 +387,13 @@ function Main {
             contracts_dir = $contractsDir
             simics_dir = $simicsDir
             implementation_details_dir = $implDetailsDir
+            workflow = @{
+                phase_completed = "product"
+                next_phase = "specify"
+                next_command = "/specify"
+                enforcement_active = $true
+                context_captured = $true
+            }
         } | ConvertTo-Json -Compress
         Write-Output $result
     } else {
@@ -229,6 +403,13 @@ function Main {
         Write-Host "Target System: $targetSystem"
         Write-Host "Components: $componentList"
         Write-Host "Spec file: $specFile"
+        Write-Host ""
+        Write-Host "=== WORKFLOW ENFORCEMENT ACTIVE ===" -ForegroundColor Yellow
+        Write-Host "`u2713 Product phase completed successfully" -ForegroundColor Green
+        Write-Host "`u2713 Product context captured for specification phase" -ForegroundColor Green
+        Write-Host "`u2192 Next step: Use /specify command to proceed to specification phase" -ForegroundColor Cyan
+        Write-Host "`u26a0 Attempting to skip to /plan or /tasks will be blocked until specification is completed" -ForegroundColor Yellow
+        Write-Host ""
         Write-Host "Ready for specification generation."
     }
 }

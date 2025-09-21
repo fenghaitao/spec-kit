@@ -1,8 +1,12 @@
 #!/bin/bash
-# setup-simics-platform.sh - Initialize Simics virtual platform project
+# setup-simics-platform.sh - Initialize Simics virtual platform project with workflow enforcement
 # Usage: setup-simics-platform.sh --json "{platform_description}"
 
 set -euo pipefail
+
+# Load common functions
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/common.sh"
 
 # Default values
 PLATFORM_DESCRIPTION=""
@@ -35,7 +39,169 @@ debug_log() {
     fi
 }
 
-# Function to generate unique branch name
+# Function to initialize workflow enforcement
+init_workflow_enforcement() {
+    debug_log "Initializing workflow enforcement for product phase"
+    
+    # Create .spec-kit directory structure
+    local spec_kit_dir="$(pwd)/.spec-kit"
+    local phase_markers_dir="$spec_kit_dir/phase-markers"
+    
+    mkdir -p "$spec_kit_dir"
+    mkdir -p "$phase_markers_dir"
+    
+    # Initialize workflow state if not exists
+    local state_file="$spec_kit_dir/workflow-state.json"
+    if [[ ! -f "$state_file" ]]; then
+        local feature_name=$(get_feature_name_from_branch)
+        cat > "$state_file" << EOF
+{
+    "currentPhase": "product",
+    "completedPhases": [],
+    "featureName": "$feature_name",
+    "lastUpdated": "$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)",
+    "contextHash": null,
+    "phaseData": {}
+}
+EOF
+        debug_log "Created workflow state file: $state_file"
+    fi
+    
+    # Clear any existing phase markers to start fresh
+    rm -f "$phase_markers_dir"/*.complete
+    
+    debug_log "Workflow enforcement initialized"
+}
+
+# Function to extract feature name from git branch
+get_feature_name_from_branch() {
+    if [[ -d ".git" ]]; then
+        local branch_name=$(git branch --show-current 2>/dev/null || echo "")
+        if [[ -n "$branch_name" && "$branch_name" =~ ^[0-9]+-(.+)$ ]]; then
+            echo "${BASH_REMATCH[1]}"
+        elif [[ -n "$branch_name" ]]; then
+            echo "$branch_name"
+        else
+            echo "unknown-feature"
+        fi
+    else
+        echo "unknown-feature"
+    fi
+}
+
+# Function to capture product context for workflow
+capture_product_context() {
+    local platform_name="$1"
+    local platform_type="$2"
+    local platform_description="$3"
+    local component_list="$4"
+    local target_system="$5"
+    
+    debug_log "Capturing product context for workflow transfer"
+    
+    # Create product context data structure
+    local context_data=$(cat << EOF
+{
+    "vision": "Virtual platform simulation for $platform_name targeting $target_system architecture",
+    "success_criteria": [
+        "Platform boots successfully in Simics",
+        "All identified components are functional",
+        "System meets target performance requirements",
+        "Platform supports intended use cases"
+    ],
+    "constraints": [
+        "Must be compatible with Simics simulation environment",
+        "Platform type: $platform_type",
+        "Target system: $target_system",
+        "Required components: $component_list"
+    ],
+    "stakeholders": [
+        {"name": "Platform Developer", "role": "Implementation and testing"},
+        {"name": "System Architect", "role": "Architecture validation"},
+        {"name": "Validation Engineer", "role": "Testing and verification"}
+    ],
+    "requirements": [
+        {"id": "REQ-001", "description": "Platform must support $target_system instruction set"},
+        {"id": "REQ-002", "description": "Must include essential components: $component_list"},
+        {"id": "REQ-003", "description": "Platform configuration must be maintainable and extensible"}
+    ],
+    "metadata": {
+        "platform_name": "$platform_name",
+        "platform_type": "$platform_type",
+        "target_system": "$target_system",
+        "component_list": "$component_list",
+        "original_description": "$platform_description",
+        "captured_at": "$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)"
+    }
+}
+EOF
+    )
+    
+    # Store context in workflow state
+    local spec_kit_dir="$(pwd)/.spec-kit"
+    local state_file="$spec_kit_dir/workflow-state.json"
+    
+    # Update workflow state with product context
+    python3 -c "
+import json
+import sys
+
+# Read current state
+with open('$state_file', 'r') as f:
+    state = json.load(f)
+
+# Parse and store product context
+context = $context_data
+state['phaseData']['product'] = context
+state['lastUpdated'] = '$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)'
+
+# Write updated state
+with open('$state_file', 'w') as f:
+    json.dump(state, f, indent=2)
+" 2>/dev/null || {
+        # Fallback if Python is not available
+        debug_log "Python not available for JSON processing, storing context as text"
+        echo "$context_data" > "$spec_kit_dir/product-context.json"
+    }
+    
+    debug_log "Product context captured and stored"
+}
+
+# Function to complete product phase
+complete_product_phase() {
+    debug_log "Completing product phase"
+    
+    local spec_kit_dir="$(pwd)/.spec-kit"
+    local phase_markers_dir="$spec_kit_dir/phase-markers"
+    local state_file="$spec_kit_dir/workflow-state.json"
+    
+    # Create product phase completion marker
+    touch "$phase_markers_dir/product.complete"
+    
+    # Update workflow state
+    python3 -c "
+import json
+
+# Read current state
+with open('$state_file', 'r') as f:
+    state = json.load(f)
+
+# Mark product phase as completed
+if 'product' not in state.get('completedPhases', []):
+    state.setdefault('completedPhases', []).append('product')
+state['currentPhase'] = None
+state['lastUpdated'] = '$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)'
+
+# Write updated state
+with open('$state_file', 'w') as f:
+    json.dump(state, f, indent=2)
+" 2>/dev/null || {
+        # Fallback if Python is not available
+        debug_log "Python not available for state update"
+    }
+    
+    debug_log "Product phase marked as complete"
+}
 generate_branch_name() {
     local platform_name="$1"
     local timestamp=$(date +%s)
@@ -153,7 +319,7 @@ determine_target_system() {
 
 # Main execution
 main() {
-    debug_log "Starting Simics platform project setup"
+    debug_log "Starting Simics platform project setup with workflow enforcement"
     debug_log "Platform description: $PLATFORM_DESCRIPTION"
     
     if [[ -z "$PLATFORM_DESCRIPTION" ]]; then
@@ -165,6 +331,9 @@ main() {
             exit 1
         fi
     fi
+    
+    # Initialize workflow enforcement (Product Phase Entry Point)
+    init_workflow_enforcement
     
     # Extract platform information
     local platform_name=$(extract_platform_name "$PLATFORM_DESCRIPTION")
@@ -231,7 +400,13 @@ EOF
     
     debug_log "Created project structure successfully"
     
-    # Output results
+    # Capture product context for workflow transfer
+    capture_product_context "$platform_name" "$platform_type" "$PLATFORM_DESCRIPTION" "$component_list" "$target_system"
+    
+    # Complete product phase
+    complete_product_phase
+    
+    # Output results with workflow enforcement information
     if [[ "$JSON_OUTPUT" == "true" ]]; then
         cat << EOF
 {
@@ -245,7 +420,14 @@ EOF
     "specs_dir": "$specs_dir",
     "contracts_dir": "$contracts_dir",
     "simics_dir": "$simics_dir",
-    "implementation_details_dir": "$impl_details_dir"
+    "implementation_details_dir": "$impl_details_dir",
+    "workflow": {
+        "phase_completed": "product",
+        "next_phase": "specify",
+        "next_command": "/specify",
+        "enforcement_active": true,
+        "context_captured": true
+    }
 }
 EOF
     else
@@ -255,6 +437,13 @@ EOF
         echo "Target System: $target_system"
         echo "Components: $component_list"
         echo "Spec file: $spec_file"
+        echo ""
+        echo "=== WORKFLOW ENFORCEMENT ACTIVE ==="
+        echo "✓ Product phase completed successfully"
+        echo "✓ Product context captured for specification phase"
+        echo "→ Next step: Use /specify command to proceed to specification phase"
+        echo "⚠ Attempting to skip to /plan or /tasks will be blocked until specification is completed"
+        echo ""
         echo "Ready for specification generation."
     fi
 }
