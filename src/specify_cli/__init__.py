@@ -50,6 +50,9 @@ import readchar
 import ssl
 import truststore
 
+# Import Simics validation framework
+from .simics_validation import validate_simics_integration, validate_simics_project, test_simics_scripts
+
 ssl_context = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
 client = httpx.Client(verify=ssl_context)
 
@@ -475,6 +478,12 @@ def _copy_base_structure(project_dir: Path, script_type: str, repo_root: Path) -
                     shutil.copytree(item, dest_path, dirs_exist_ok=True)
                 else:
                     shutil.copy2(item, dest_path)
+        
+        # Ensure Simics templates are copied to .specify for reference
+        simics_src = templates_src / "simics"
+        if simics_src.exists():
+            simics_dest = templates_dest / "simics"
+            shutil.copytree(simics_src, simics_dest, dirs_exist_ok=True)
     
     # Copy memory to .specify
     memory_src = repo_root / "memory"
@@ -512,6 +521,7 @@ def _process_adk_command_templates(project_dir: Path, script_type: str, repo_roo
     # Arguments format for ADK
     arg_format = '$ARGUMENTS'
     
+    # Process all command templates including Simics commands
     for cmd_file in commands_src.glob("*.md"):
         try:
             # Read the template file
@@ -546,6 +556,12 @@ def _process_adk_command_templates(project_dir: Path, script_type: str, repo_roo
             # If processing fails for any file, copy as-is
             output_file = adk_commands_dir / cmd_file.name
             shutil.copy2(cmd_file, output_file)
+    
+    # Log successful processing of Simics commands
+    simics_commands = ['simics-device.md', 'simics-platform.md', 'simics-validate.md']
+    processed_simics = [cmd for cmd in simics_commands if (adk_commands_dir / cmd).exists()]
+    if processed_simics:
+        console.print(f"[green]✓[/green] Processed Simics commands: {', '.join(processed_simics)}")
 
 
 def _extract_script_command(content: str, script_variant: str) -> str:
@@ -957,6 +973,10 @@ def ensure_executable_scripts(project_path: Path, tracker: StepTracker | None = 
         return
     failures: list[str] = []
     updated = 0
+    
+    # Track Simics scripts separately
+    simics_scripts_found = []
+    
     for script in scripts_root.rglob("*.sh"):
         try:
             if script.is_symlink() or not script.is_file():
@@ -978,12 +998,23 @@ def ensure_executable_scripts(project_path: Path, tracker: StepTracker | None = 
                 new_mode |= 0o100
             os.chmod(script, new_mode)
             updated += 1
+            
+            # Track Simics scripts
+            if "simics" in script.name:
+                simics_scripts_found.append(script.name)
+                
         except Exception as e:
             failures.append(f"{script.relative_to(scripts_root)}: {e}")
+    
     if tracker:
         detail = f"{updated} updated" + (f", {len(failures)} failed" if failures else "")
         tracker.add("chmod", "Set script permissions recursively")
         (tracker.error if failures else tracker.complete)("chmod", detail)
+        
+        # Report Simics integration status
+        if simics_scripts_found:
+            tracker.add("simics-scripts", "Simics integration scripts")
+            tracker.complete("simics-scripts", f"Found {len(simics_scripts_found)} Simics scripts")
     else:
         if updated:
             console.print(f"[cyan]Updated execute permissions on {updated} script(s) recursively[/cyan]")
@@ -1301,6 +1332,19 @@ def check():
     opencode_ok = check_tool_for_tracker("opencode", "https://opencode.ai/", tracker)
     adk_ok = check_tool_for_tracker("adk", "https://github.com/google/adk-python", tracker)
     
+    # Check Simics integration if available
+    try:
+        current_path = Path.cwd()
+        simics_validation = validate_simics_integration(current_path)
+        tracker.add("simics-integration", "Simics integration")
+        if simics_validation['success']:
+            tracker.complete("simics-integration", "available and valid")
+        else:
+            tracker.error("simics-integration", f"{len(simics_validation['errors'])} issues found")
+    except Exception:
+        # Simics integration not available or project not setup
+        pass
+    
     # Render the final tree
     console.print(tracker.render())
     
@@ -1312,6 +1356,129 @@ def check():
         console.print("[dim]Tip: Install git for repository management[/dim]")
     if not (claude_ok or gemini_ok or cursor_ok or qwen_ok or opencode_ok or adk_ok):
         console.print("[dim]Tip: Install an AI assistant for the best experience[/dim]")
+
+
+@app.command(name="validate-simics")
+def validate_simics(
+    project_path: str = typer.Option(".", "--path", "-p", help="Path to validate (default: current directory)"),
+    test_scripts: bool = typer.Option(False, "--test-scripts", help="Also test script execution"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show detailed validation output")
+):
+    """Validate Simics integration setup and project configuration."""
+    
+    target_path = Path(project_path).resolve()
+    
+    if not target_path.exists():
+        console.print(f"[red]Error:[/red] Path does not exist: {target_path}")
+        raise typer.Exit(1)
+    
+    console.print(f"[bold]Validating Simics integration at:[/bold] {target_path}")
+    console.print()
+    
+    # Create validation tracker
+    tracker = StepTracker("Simics Integration Validation")
+    
+    # Validate template integration
+    tracker.add("templates", "Template structure validation")
+    try:
+        integration_result = validate_simics_integration(target_path)
+        if integration_result['success']:
+            tracker.complete("templates", "all templates valid")
+        else:
+            tracker.error("templates", f"{len(integration_result['errors'])} errors found")
+            
+        if verbose and integration_result['errors']:
+            console.print("\n[red]Template Validation Errors:[/red]")
+            for error in integration_result['errors']:
+                console.print(f"  • {error}")
+                
+        if verbose and integration_result['warnings']:
+            console.print("\n[yellow]Template Validation Warnings:[/yellow]")
+            for warning in integration_result['warnings']:
+                console.print(f"  • {warning}")
+                
+    except Exception as e:
+        tracker.error("templates", f"validation failed: {e}")
+        integration_result = {'success': False, 'errors': [str(e)], 'warnings': []}
+    
+    # Validate project setup if it looks like a spec-kit project
+    if (target_path / ".specify").exists():
+        tracker.add("project", "Project setup validation")
+        try:
+            project_result = validate_simics_project(target_path)
+            if project_result['success']:
+                tracker.complete("project", "project setup valid")
+            else:
+                tracker.error("project", f"{len(project_result['errors'])} errors found")
+                
+            if verbose and project_result['errors']:
+                console.print("\n[red]Project Validation Errors:[/red]")
+                for error in project_result['errors']:
+                    console.print(f"  • {error}")
+                    
+            if verbose and project_result['warnings']:
+                console.print("\n[yellow]Project Validation Warnings:[/yellow]")
+                for warning in project_result['warnings']:
+                    console.print(f"  • {warning}")
+                    
+        except Exception as e:
+            tracker.error("project", f"validation failed: {e}")
+            project_result = {'success': False, 'errors': [str(e)], 'warnings': []}
+    else:
+        tracker.skip("project", "not a spec-kit project")
+        project_result = {'success': True, 'errors': [], 'warnings': []}
+    
+    # Test scripts if requested
+    if test_scripts:
+        tracker.add("scripts", "Script execution testing")
+        try:
+            test_result = test_simics_scripts(target_path)
+            if test_result['success']:
+                tracker.complete("scripts", "all script tests passed")
+            else:
+                failed_count = len([r for r in test_result['results'] if not r['passed']])
+                tracker.error("scripts", f"{failed_count} script tests failed")
+                
+            if verbose:
+                console.print("\n[bold]Script Test Results:[/bold]")
+                for result in test_result['results']:
+                    status = "[green]PASS[/green]" if result['passed'] else "[red]FAIL[/red]"
+                    console.print(f"  {status} {result['script']} ({result['type']})")
+                    if not result['passed'] and result['error']:
+                        console.print(f"    Error: {result['error']}")
+                        
+        except Exception as e:
+            tracker.error("scripts", f"testing failed: {e}")
+            test_result = {'success': False, 'results': []}
+    else:
+        tracker.skip("scripts", "--test-scripts not specified")
+        test_result = {'success': True, 'results': []}
+    
+    # Render results
+    console.print(tracker.render())
+    
+    # Summary
+    all_success = (
+        integration_result['success'] and 
+        project_result['success'] and 
+        test_result['success']
+    )
+    
+    if all_success:
+        console.print("\n[bold green]✓ Simics integration validation passed![/bold green]")
+    else:
+        console.print("\n[bold red]✗ Simics integration validation failed[/bold red]")
+        
+        total_errors = len(integration_result['errors']) + len(project_result['errors'])
+        total_warnings = len(integration_result['warnings']) + len(project_result['warnings'])
+        
+        console.print(f"[red]Errors:[/red] {total_errors}")
+        console.print(f"[yellow]Warnings:[/yellow] {total_warnings}")
+        
+        if not verbose:
+            console.print("[dim]Use --verbose for detailed error information[/dim]")
+        
+        raise typer.Exit(1)
 
 
 def main():
