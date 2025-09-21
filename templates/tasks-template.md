@@ -12,6 +12,7 @@
    → data-model.md: Extract entities → model tasks
    → contracts/: Each file → contract test task
    → research.md: Extract decisions → setup tasks
+   → **Simics projects**: Extract register definitions → DML file tasks
 3. Generate tasks by category:
    → Setup: project init, dependencies, linting
    → Tests: contract tests, integration tests
@@ -40,6 +41,7 @@
 - **Single project**: `src/`, `tests/` at repository root
 - **Web app**: `backend/src/`, `frontend/src/`
 - **Mobile**: `api/src/`, `ios/src/` or `android/src/`
+- **Simics**: `device-name/`, `device-name/tests/` at repository root
 - Paths shown below assume single project - adjust based on plan.md structure
 
 ## Phase 3.1: Setup
@@ -47,12 +49,23 @@
 - [ ] T002 Initialize [language] project with [framework] dependencies
 - [ ] T003 [P] Configure linting and formatting tools
 
+**Simics Setup Example:**
+- [ ] T001 Create device directory structure (device-name/, tests/)
+- [ ] T002 Initialize DML project with Simics module dependencies
+- [ ] T003 [P] Configure DML syntax checking and validation tools
+
 ## Phase 3.2: Tests First (TDD) ⚠️ MUST COMPLETE BEFORE 3.3
 **CRITICAL: These tests MUST be written and MUST FAIL before ANY implementation**
 - [ ] T004 [P] Contract test POST /api/users in tests/contract/test_users_post.py
 - [ ] T005 [P] Contract test GET /api/users/{id} in tests/contract/test_users_get.py
 - [ ] T006 [P] Integration test user registration in tests/integration/test_registration.py
 - [ ] T007 [P] Integration test auth flow in tests/integration/test_auth.py
+
+**Simics TDD Example:**
+- [ ] T004 [P] Register access test in device-name/tests/unit/test_registers.py
+- [ ] T005 [P] Interface behavior test in device-name/tests/unit/test_interfaces.py
+- [ ] T006 [P] Device workflow test in device-name/tests/integration/test_device_ops.py
+- [ ] T007 [P] Memory operation test in device-name/tests/integration/test_memory.py
 
 ## Phase 3.3: Core Implementation (ONLY after tests are failing)
 - [ ] T008 [P] User model in src/models/user.py
@@ -63,11 +76,26 @@
 - [ ] T013 Input validation
 - [ ] T014 Error handling and logging
 
+**Simics Implementation Example:**
+- [ ] T008 [P] Register definitions in device-name/registers.dml
+- [ ] T009 [P] Interface declarations in device-name/interfaces.dml
+- [ ] T010 [P] Utility methods in device-name/utility.dml
+- [ ] T011 Main device structure in device-name/device-name.dml
+- [ ] T012 Register read/write logic implementation
+- [ ] T013 Device state management and attributes
+- [ ] T014 Error handling and logging for device operations
+
 ## Phase 3.4: Integration
 - [ ] T015 Connect UserService to DB
 - [ ] T016 Auth middleware
 - [ ] T017 Request/response logging
 - [ ] T018 CORS and security headers
+
+**Simics Integration Example:**
+- [ ] T015 Connect device to memory interface using transact() methods
+- [ ] T016 Implement interrupt line connections and events
+- [ ] T017 Add external port communications and protocols
+- [ ] T018 Integrate with Simics checkpointing and state management
 
 ## Phase 3.5: Polish
 - [ ] T019 [P] Unit tests for validation in tests/unit/test_validation.py
@@ -103,17 +131,21 @@ Task: "Integration test auth in tests/integration/test_auth.py"
 1. **From Contracts**:
    - Each contract file → contract test task [P]
    - Each endpoint → implementation task
+   - **Simics**: Each register interface → register test task [P]
    
 2. **From Data Model**:
    - Each entity → model creation task [P]
    - Relationships → service layer tasks
+   - **Simics**: Each register group → DML file task [P]
    
 3. **From User Stories**:
    - Each story → integration test [P]
    - Quickstart scenarios → validation tasks
+   - **Simics**: Each device workflow → operational test [P]
 
 4. **Ordering**:
    - Setup → Tests → Models → Services → Endpoints → Polish
+   - **Simics**: Setup → Tests → Registers → Interfaces → Device → Integration → Polish
    - Dependencies block parallel execution
 
 ## Validation Checklist

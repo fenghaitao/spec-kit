@@ -15,3 +15,7 @@
   items:
     - name: Local Development
       href: local-development.md
+    - name: Simics Integration
+      href: simics-integration-summary.md
+    - name: Simics Model Development Guide
+      href: simics-model-development-guide.md
