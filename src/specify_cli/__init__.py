@@ -32,6 +32,7 @@ import tempfile
 import shutil
 import shlex
 import json
+import re
 from pathlib import Path
 from typing import Optional, Tuple
 
@@ -77,6 +78,7 @@ AI_CHOICES = {
     "kilocode": "Kilo Code",
     "auggie": "Auggie CLI",
     "roo": "Roo Code",
+    "adk": "ADK (Agent Development Kit)"
 }
 # Add script type choices
 SCRIPT_TYPE_CHOICES = {"sh": "POSIX Shell (bash/zsh)", "ps": "PowerShell"}
@@ -433,6 +435,257 @@ def init_git_repo(project_path: Path, quiet: bool = False) -> bool:
         os.chdir(original_cwd)
 
 
+def setup_adk_project_from_local(project_dir: Path, script_type: str = "sh") -> dict:
+    """Set up ADK project using local repository files and the release packaging script."""
+    # Find the repository root (where this script is located)
+    script_path = Path(__file__).resolve()
+    repo_root = script_path.parent.parent.parent  # Go up from src/specify_cli/__init__.py
+    
+    # Create the required directory structure
+    adk_commands_dir = project_dir / ".adk" / "commands"
+    specify_dir = project_dir / ".specify"
+    
+    adk_commands_dir.mkdir(parents=True, exist_ok=True)
+    specify_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Process command templates using the same logic as the release packaging script
+    try:
+        # Copy base structure first (like the fallback method)
+        _copy_base_structure(project_dir, script_type, repo_root)
+        
+        # Now process command templates with placeholder replacement
+        _process_adk_command_templates(project_dir, script_type, repo_root)
+        
+    except Exception as e:
+        # Fallback to direct copy if anything fails
+        console.print(f"[yellow]Warning:[/yellow] Template processing failed, falling back to direct copy")
+        console.print(f"[dim]Error: {e}[/dim]")
+        return _setup_adk_project_fallback(project_dir, script_type, repo_root)
+    
+    # Count the commands that were actually created
+    commands_created = len(list(adk_commands_dir.glob("*.md"))) if adk_commands_dir.exists() else 0
+    
+    return {
+        "source": "local_script",
+        "commands_created": commands_created,
+        "script_type": script_type
+    }
+
+
+def _copy_base_structure(project_dir: Path, script_type: str, repo_root: Path) -> None:
+    """Copy the base .specify structure (memory, scripts, templates except commands)."""
+    specify_dir = project_dir / ".specify"
+    
+    # Copy templates to .specify (excluding commands which go to .adk/commands)
+    templates_src = repo_root / "templates"
+    if templates_src.exists():
+        templates_dest = specify_dir / "templates"
+        templates_dest.mkdir(exist_ok=True)
+        
+        # Copy all template files and directories except 'commands'
+        for item in templates_src.iterdir():
+            if item.name != "commands":
+                dest_path = templates_dest / item.name
+                if item.is_dir():
+                    shutil.copytree(item, dest_path, dirs_exist_ok=True)
+                else:
+                    shutil.copy2(item, dest_path)
+    
+    # Copy memory to .specify
+    memory_src = repo_root / "memory"
+    if memory_src.exists():
+        shutil.copytree(memory_src, specify_dir / "memory", dirs_exist_ok=True)
+        
+    # Copy scripts to .specify
+    scripts_src = repo_root / "scripts"
+    if scripts_src.exists():
+        scripts_dest = specify_dir / "scripts"
+        scripts_dest.mkdir(exist_ok=True)
+        
+        # Copy the appropriate script variant
+        if script_type == "sh" and (scripts_src / "bash").exists():
+            shutil.copytree(scripts_src / "bash", scripts_dest / "bash", dirs_exist_ok=True)
+        elif script_type == "ps" and (scripts_src / "powershell").exists():
+            shutil.copytree(scripts_src / "powershell", scripts_dest / "powershell", dirs_exist_ok=True)
+            
+        # Copy any script files that aren't in variant-specific directories
+        for item in scripts_src.iterdir():
+            if item.is_file():
+                shutil.copy2(item, scripts_dest / item.name)
+
+
+def _process_adk_command_templates(project_dir: Path, script_type: str, repo_root: Path) -> None:
+    """Process command templates with placeholder replacement like the release script does."""
+    import re
+    
+    adk_commands_dir = project_dir / ".adk" / "commands"
+    commands_src = repo_root / "templates" / "commands"
+    
+    if not commands_src.exists():
+        return
+    
+    # Arguments format for ADK
+    arg_format = '$ARGUMENTS'
+    
+    for cmd_file in commands_src.glob("*.md"):
+        try:
+            # Read the template file
+            content = cmd_file.read_text(encoding='utf-8')
+            
+            # Extract script command from YAML frontmatter
+            script_command = _extract_script_command(content, script_type)
+            
+            if script_command:
+                # Replace {SCRIPT} placeholder with the script command (without prefix first)
+                content = content.replace("{SCRIPT}", script_command)
+                
+                # Remove the scripts: section from frontmatter while preserving YAML structure
+                content = _remove_scripts_section(content)
+                
+                # Apply other substitutions
+                content = content.replace("{ARGS}", arg_format)
+                content = content.replace("__AGENT__", "adk")
+                
+                # Rewrite paths to use .specify/ prefix (this will add the prefix to script paths)
+                content = _rewrite_paths(content)
+                
+                # Write the processed file
+                output_file = adk_commands_dir / cmd_file.name
+                output_file.write_text(content, encoding='utf-8')
+            else:
+                # If no script command found, copy as-is (fallback)
+                output_file = adk_commands_dir / cmd_file.name
+                shutil.copy2(cmd_file, output_file)
+                
+        except Exception as e:
+            # If processing fails for any file, copy as-is
+            output_file = adk_commands_dir / cmd_file.name
+            shutil.copy2(cmd_file, output_file)
+
+
+def _extract_script_command(content: str, script_variant: str) -> str:
+    """Extract script command from YAML frontmatter."""
+    import re
+    
+    # Look for the script variant in YAML frontmatter
+    pattern = rf'^\s*{re.escape(script_variant)}:\s*(.+)$'
+    
+    for line in content.split('\n'):
+        match = re.match(pattern, line)
+        if match:
+            return match.group(1).strip()
+    
+    return ""
+
+
+def _remove_scripts_section(content: str) -> str:
+    """Remove the scripts: section from YAML frontmatter while preserving structure."""
+    lines = content.split('\n')
+    result_lines = []
+    in_frontmatter = False
+    skip_scripts = False
+    dash_count = 0
+    
+    for line in lines:
+        if line.strip() == '---':
+            dash_count += 1
+            if dash_count == 1:
+                in_frontmatter = True
+            elif dash_count == 2:
+                in_frontmatter = False
+            result_lines.append(line)
+            continue
+            
+        if in_frontmatter and line.strip() == 'scripts:':
+            skip_scripts = True
+            continue
+            
+        if in_frontmatter and skip_scripts and re.match(r'^[a-zA-Z].*:', line):
+            skip_scripts = False
+            
+        if in_frontmatter and skip_scripts and re.match(r'^\s+', line):
+            continue
+            
+        result_lines.append(line)
+    
+    return '\n'.join(result_lines)
+
+
+def _rewrite_paths(content: str) -> str:
+    """Rewrite paths to use .specify/ prefix, but avoid double prefixes."""
+    import re
+    
+    # Only add .specify/ prefix if it's not already there
+    content = re.sub(r'(?<!\.specify/)(/?)memory/', r'.specify/memory/', content)
+    content = re.sub(r'(?<!\.specify/)(/?)scripts/', r'.specify/scripts/', content) 
+    content = re.sub(r'(?<!\.specify/)(/?)templates/', r'.specify/templates/', content)
+    
+    return content
+
+
+def _setup_adk_project_fallback(project_dir: Path, script_type: str, repo_root: Path) -> dict:
+    """Fallback method to set up ADK project by direct copying (original behavior)."""
+    # Create the required directory structure
+    adk_commands_dir = project_dir / ".adk" / "commands"
+    specify_dir = project_dir / ".specify"
+    
+    adk_commands_dir.mkdir(parents=True, exist_ok=True)
+    specify_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Copy templates to .specify (excluding commands which go to .adk/commands)
+    templates_src = repo_root / "templates"
+    if templates_src.exists():
+        templates_dest = specify_dir / "templates"
+        templates_dest.mkdir(exist_ok=True)
+        
+        # Copy all template files and directories except 'commands'
+        for item in templates_src.iterdir():
+            if item.name != "commands":
+                dest_path = templates_dest / item.name
+                if item.is_dir():
+                    shutil.copytree(item, dest_path, dirs_exist_ok=True)
+                else:
+                    shutil.copy2(item, dest_path)
+    
+    # Copy memory to .specify
+    memory_src = repo_root / "memory"
+    if memory_src.exists():
+        shutil.copytree(memory_src, specify_dir / "memory", dirs_exist_ok=True)
+        
+    # Copy scripts to .specify
+    scripts_src = repo_root / "scripts"
+    if scripts_src.exists():
+        scripts_dest = specify_dir / "scripts"
+        scripts_dest.mkdir(exist_ok=True)
+        
+        # Copy the appropriate script variant
+        if script_type == "sh" and (scripts_src / "bash").exists():
+            shutil.copytree(scripts_src / "bash", scripts_dest / "bash", dirs_exist_ok=True)
+        elif script_type == "ps" and (scripts_src / "powershell").exists():
+            shutil.copytree(scripts_src / "powershell", scripts_dest / "powershell", dirs_exist_ok=True)
+            
+        # Copy any script files that aren't in variant-specific directories
+        for item in scripts_src.iterdir():
+            if item.is_file():
+                shutil.copy2(item, scripts_dest / item.name)
+    
+    # Copy command templates directly (like other platforms do)
+    commands_src = repo_root / "templates" / "commands"
+    if commands_src.exists():
+        # Simply copy all command template files
+        for cmd_file in commands_src.glob("*.md"):
+            output_file = adk_commands_dir / cmd_file.name
+            shutil.copy2(cmd_file, output_file)
+    
+    # Count the commands that were actually created
+    commands_created = len(list(adk_commands_dir.glob("*.md"))) if adk_commands_dir.exists() else 0
+    
+    return {
+        "source": "local_fallback",
+        "commands_created": commands_created,
+        "script_type": script_type
+    }
+
 def download_template_from_github(ai_assistant: str, download_dir: Path, *, script_type: str = "sh", verbose: bool = True, show_progress: bool = True, client: httpx.Client = None, debug: bool = False, github_token: str = None) -> Tuple[Path, dict]:
     repo_owner = "github"
     repo_name = "spec-kit"
@@ -548,10 +801,29 @@ def download_template_from_github(ai_assistant: str, download_dir: Path, *, scri
 def download_and_extract_template(project_path: Path, ai_assistant: str, script_type: str, is_current_dir: bool = False, *, verbose: bool = True, tracker: StepTracker | None = None, client: httpx.Client = None, debug: bool = False, github_token: str = None) -> Path:
     """Download the latest release and extract it to create a new project.
     Returns project_path. Uses tracker if provided (with keys: fetch, download, extract, cleanup)
+    For ADK, use local repository files instead of downloading.
     """
     current_dir = Path.cwd()
     
-    # Step: fetch + download combined
+    if ai_assistant == "adk":
+        # For ADK, use local files instead of downloading
+        if tracker:
+            tracker.start("fetch", "using local repository files")
+        try:
+            meta = setup_adk_project_from_local(project_path, script_type=script_type)
+            if tracker:
+                tracker.complete("fetch", f"local setup ({meta['commands_created']} commands)")
+                tracker.complete("download", "local files")
+                tracker.complete("extract", "files copied")
+                tracker.complete("zip-list", "local directory structure")
+                tracker.complete("extracted-summary", f"ADK project structure created")
+            return project_path  # Return early for ADK
+        except Exception as e:
+            if tracker:
+                tracker.error("fetch", str(e))
+            raise
+    
+    # For other platforms, download from GitHub as before
     if tracker:
         tracker.start("fetch", "contacting GitHub API")
     try:
@@ -750,7 +1022,7 @@ def ensure_executable_scripts(project_path: Path, tracker: StepTracker | None = 
 @app.command()
 def init(
     project_name: str = typer.Argument(None, help="Name for your new project directory (optional if using --here, or use '.' for current directory)"),
-    ai_assistant: str = typer.Option(None, "--ai", help="AI assistant to use: claude, gemini, copilot, cursor, qwen, opencode, codex, windsurf, kilocode, or auggie"),
+    ai_assistant: str = typer.Option(None, "--ai", help="AI assistant to use: claude, gemini, copilot, cursor, qwen, opencode, codex, windsurf, kilocode, auggie, roo, or adk"),
     script_type: str = typer.Option(None, "--script", help="Script type to use: sh or ps"),
     ignore_agent_tools: bool = typer.Option(False, "--ignore-agent-tools", help="Skip checks for AI agent tools like Claude Code"),
     no_git: bool = typer.Option(False, "--no-git", help="Skip git repository initialization"),
@@ -765,8 +1037,8 @@ def init(
     
     This command will:
     1. Check that required tools are installed (git is optional)
-    2. Let you choose your AI assistant (Claude Code, Gemini CLI, GitHub Copilot, Cursor, Qwen Code, opencode, Codex CLI, Windsurf, Kilo Code, or Auggie CLI)
-    3. Download the appropriate template from GitHub
+    2. Let you choose your AI assistant (Claude Code, Gemini CLI, GitHub Copilot, Cursor, Qwen Code, opencode, Codex CLI, Windsurf, Kilo Code, Auggie CLI, Roo Code, or ADK)
+    3. Download the appropriate template from GitHub (or use local files for ADK)
     4. Extract the template to a new project directory or current directory
     5. Initialize a fresh git repository (if not --no-git and no existing repo)
     6. Optionally set up AI assistant commands
@@ -778,10 +1050,13 @@ def init(
         specify init my-project --ai copilot --no-git
         specify init my-project --ai cursor
         specify init my-project --ai qwen
+        specify init my-project --ai adk
         specify init my-project --ai opencode
         specify init my-project --ai codex
         specify init my-project --ai windsurf
+        specify init my-project --ai kilocode
         specify init my-project --ai auggie
+        specify init my-project --ai roo
         specify init --ignore-agent-tools my-project
         specify init . --ai claude         # Initialize in current directory
         specify init .                     # Initialize in current directory (interactive AI selection)
@@ -906,6 +1181,14 @@ def init(
             if not check_tool("auggie", "https://docs.augmentcode.com/cli/setup-auggie/install-auggie-cli"):
                 install_url = "https://docs.augmentcode.com/cli/setup-auggie/install-auggie-cli"
                 agent_tool_missing = True
+        elif selected_ai == "roo":
+            if not check_tool("roo", "https://roo.ai"):
+                install_url = "https://roo.ai"
+                agent_tool_missing = True
+        elif selected_ai == "adk":
+            if not check_tool("adk", "Install from: https://github.com/google/adk-python"):
+                console.print("[red]Error:[/red] ADK CLI is required for ADK projects")
+                agent_tool_missing = True
         # GitHub Copilot and Cursor checks are not needed as they're typically available in supported IDEs
 
         if agent_tool_missing:
@@ -1029,8 +1312,9 @@ def init(
         "windsurf": ".windsurf/",
         "kilocode": ".kilocode/",
         "auggie": ".augment/",
-        "copilot": ".github/",
-        "roo": ".roo/"
+        "roo": ".roo/",
+        "adk": ".adk/",
+        "copilot": ".github/"
     }
     
     if selected_ai in agent_folder_map:
@@ -1064,6 +1348,12 @@ def init(
             cmd = f"export CODEX_HOME={quoted_path}"
         
         steps_lines.append(f"{step_num}. Set [cyan]CODEX_HOME[/cyan] environment variable before running Codex: [cyan]{cmd}[/cyan]")
+        step_num += 1
+    elif selected_ai == "adk":
+        steps_lines.append(f"{step_num}. Use ADK CLI commands")
+        steps_lines.append("   - Run adk specify to create specifications")
+        steps_lines.append("   - Run adk plan to create implementation plans")
+        steps_lines.append("   - Run adk tasks to generate tasks")
         step_num += 1
 
     steps_lines.append(f"{step_num}. Start using slash commands with your AI agent:")
@@ -1114,11 +1404,10 @@ def check():
     tracker.add("code", "Visual Studio Code")
     tracker.add("code-insiders", "Visual Studio Code Insiders")
     tracker.add("cursor-agent", "Cursor IDE agent")
-    tracker.add("windsurf", "Windsurf IDE")
-    tracker.add("kilocode", "Kilo Code IDE")
-    tracker.add("opencode", "opencode")
     tracker.add("codex", "Codex CLI")
     tracker.add("auggie", "Auggie CLI")
+    tracker.add("roo", "Roo Code")
+    tracker.add("adk", "ADK CLI")
     
     git_ok = check_tool_for_tracker("git", tracker)
     claude_ok = check_tool_for_tracker("claude", tracker)  
@@ -1132,14 +1421,15 @@ def check():
     opencode_ok = check_tool_for_tracker("opencode", tracker)
     codex_ok = check_tool_for_tracker("codex", tracker)
     auggie_ok = check_tool_for_tracker("auggie", tracker)
-
+    roo_ok = check_tool_for_tracker("roo", tracker)
+    adk_ok = check_tool_for_tracker("adk", tracker)
     console.print(tracker.render())
 
     console.print("\n[bold green]Specify CLI is ready to use![/bold green]")
 
     if not git_ok:
         console.print("[dim]Tip: Install git for repository management[/dim]")
-    if not (claude_ok or gemini_ok or cursor_ok or qwen_ok or windsurf_ok or kilocode_ok or opencode_ok or codex_ok or auggie_ok):
+    if not (claude_ok or gemini_ok or cursor_ok or qwen_ok or windsurf_ok or kilocode_ok or opencode_ok or codex_ok or auggie_ok or roo_ok or adk_ok):
         console.print("[dim]Tip: Install an AI assistant for the best experience[/dim]")
 
 

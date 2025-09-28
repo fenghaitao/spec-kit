@@ -15,7 +15,7 @@ scripts:
 1. Load feature spec from Input path
    → If not found: ERROR "No feature spec at {path}"
 2. Fill Technical Context (scan for NEEDS CLARIFICATION)
-   → Detect Project Type from file system structure or context (web=frontend+backend, mobile=app+api)
+   → Detect Project Type from context (web=frontend+backend, mobile=app+api, simics=hardware device)
    → Set Structure Decision based on project type
 3. Fill the Constitution Check section based on the content of the constitution document.
 4. Evaluate Constitution Check section below
@@ -40,15 +40,15 @@ scripts:
 [Extract from feature spec: primary requirement + technical approach from research]
 
 ## Technical Context
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
+**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75, DML 1.4 or NEEDS CLARIFICATION]  
+**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM, Simics API or NEEDS CLARIFICATION]  
 **Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-**Project Type**: [single/web/mobile - determines source structure]  
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Testing**: [e.g., pytest, XCTest, cargo test, Simics test scripts or NEEDS CLARIFICATION]  
+**Target Platform**: [e.g., Linux server, iOS 15+, WASM, Simics 6.x or NEEDS CLARIFICATION]
+**Project Type**: [single/web/mobile/simics - determines source structure]  
+**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps, functional accuracy or NEEDS CLARIFICATION]  
+**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable, software-visible behavior or NEEDS CLARIFICATION]  
+**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens, register count/complexity or NEEDS CLARIFICATION]
 
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
@@ -109,6 +109,16 @@ api/
 
 ios/ or android/
 └── [platform-specific structure: feature modules, UI flows, platform tests]
+
+# [REMOVE IF UNUSED] Option 4: Simics device project
+device-name/
+├── device-name.dml          # Main device implementation
+├── registers.dml            # Register definitions
+├── interfaces.dml           # External interfaces
+├── utility.dml             # Common utilities
+└── tests/
+    ├── unit/               # DML unit tests
+    └── integration/        # System-level tests
 ```
 
 **Structure Decision**: [Document the selected structure and reference the real
@@ -128,10 +138,20 @@ directories captured above]
      Task: "Find best practices for {tech} in {domain}"
    ```
 
+   **Simics-specific research tasks**:
+   ```
+   If Project Type = simics:
+     Task: "Research DML syntax and device modeling patterns"
+     Task: "Research Simics API for memory operations and interfaces"
+     Task: "Analyze hardware specification for register mapping"
+     Task: "Research similar device implementations for reference"
+   ```
+
 3. **Consolidate findings** in `research.md` using format:
    - Decision: [what was chosen]
    - Rationale: [why chosen]
    - Alternatives considered: [what else evaluated]
+   - **Simics projects**: Include device architecture decisions and abstraction strategy
 
 **Output**: research.md with all NEEDS CLARIFICATION resolved
 
@@ -142,20 +162,24 @@ directories captured above]
    - Entity name, fields, relationships
    - Validation rules from requirements
    - State transitions if applicable
+   - **Simics projects**: Register definitions, interfaces, and device state
 
 2. **Generate API contracts** from functional requirements:
    - For each user action → endpoint
    - Use standard REST/GraphQL patterns
    - Output OpenAPI/GraphQL schema to `/contracts/`
+   - **Simics projects**: Register access contracts and interface specifications
 
 3. **Generate contract tests** from contracts:
    - One test file per endpoint
    - Assert request/response schemas
    - Tests must fail (no implementation yet)
+   - **Simics projects**: Register read/write behavior tests
 
 4. **Extract test scenarios** from user stories:
    - Each story → integration test scenario
    - Quickstart test = story validation steps
+   - **Simics projects**: Device operational workflow tests
 
 5. **Update agent file incrementally** (O(1) operation):
    - Run `{SCRIPT}`

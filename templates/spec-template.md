@@ -35,6 +35,7 @@
 ### Section Requirements
 - **Mandatory sections**: Must be completed for every feature
 - **Optional sections**: Include only when relevant to the feature
+- **Simics sections**: Include only for hardware device modeling projects
 - When a section doesn't apply, remove it entirely (don't leave as "N/A")
 
 ### For AI Generation
@@ -81,6 +82,12 @@ When creating this spec from a user prompt:
 ### Key Entities *(include if feature involves data)*
 - **[Entity 1]**: [What it represents, key attributes without implementation]
 - **[Entity 2]**: [What it represents, relationships to other entities]
+
+### Hardware Specification *(Simics projects only)*
+- **Device Type**: [e.g., Network controller, Storage device, Memory controller]
+- **Register Map**: [High-level register categories and their purposes]
+- **External Interfaces**: [Ports, connections, and protocols the device supports]
+- **Software Visibility**: [What aspects of the device software can observe/control]
 
 ---
 

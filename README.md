@@ -564,6 +564,21 @@ echo "Cleaning up..."
 rm gcm-linux_amd64.2.6.1.deb
 ```
 
+### Setting up upstream remote
+
+If you've forked this repository and want to sync with the original spec-kit repository, add the upstream remote:
+
+```bash
+git remote add upstream https://github.com/github/spec-kit.git
+```
+
+You can then fetch updates from the original repository:
+
+```bash
+git fetch upstream
+git merge upstream/main
+```
+
 ## 👥 Maintainers
 
 - Den Delimarsky ([@localden](https://github.com/localden))
