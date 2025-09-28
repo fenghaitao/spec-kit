@@ -1057,6 +1057,7 @@ def init(
         specify init my-project --ai kilocode
         specify init my-project --ai auggie
         specify init my-project --ai roo
+        specify init my-project --ai adk    # ADK automatically uses --ignore-agent-tools
         specify init --ignore-agent-tools my-project
         specify init . --ai claude         # Initialize in current directory
         specify init .                     # Initialize in current directory (interactive AI selection)
@@ -1153,8 +1154,8 @@ def init(
             "copilot"
         )
     
-    # Check agent tools unless ignored
-    if not ignore_agent_tools:
+    # Check agent tools unless ignored (ADK automatically ignores agent tools)
+    if not ignore_agent_tools and selected_ai != "adk":
         agent_tool_missing = False
         install_url = ""
         if selected_ai == "claude":
@@ -1222,6 +1223,10 @@ def init(
     
     console.print(f"[cyan]Selected AI assistant:[/cyan] {selected_ai}")
     console.print(f"[cyan]Selected script type:[/cyan] {selected_script}")
+    
+    # Inform user when ADK automatically ignores agent tools
+    if selected_ai == "adk" and not ignore_agent_tools:
+        console.print("[dim]ADK automatically skips agent tool checks[/dim]")
     
     # Download and set up project
     # New tree-based progress (no emojis); include earlier substeps
