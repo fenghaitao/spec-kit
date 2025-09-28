@@ -9,7 +9,7 @@ Mirrors the behavior of scripts/bash/update-agent-context.sh:
  2. Plan Data Extraction
  3. Agent File Management (create from template or update existing)
  4. Content Generation (technology stack, recent changes, timestamp)
- 5. Multi-Agent Support (claude, gemini, copilot, cursor, qwen, opencode, codex, windsurf)
+ 5. Multi-Agent Support (claude, gemini, copilot, cursor, qwen, opencode, codex, windsurf, adk)
 
 .PARAMETER AgentType
 Optional agent key to update a single agent. If omitted, updates all existing agent files (creating a default Claude file if none exist).
@@ -25,7 +25,7 @@ Relies on common helper functions in common.ps1
 #>
 param(
     [Parameter(Position=0)]
-    [ValidateSet('claude','gemini','copilot','cursor','qwen','opencode','codex','windsurf','kilocode','auggie','roo')]
+    [ValidateSet('claude','gemini','copilot','cursor','qwen','opencode','codex','windsurf','kilocode','auggie','roo','adk')]
     [string]$AgentType
 )
 

@@ -55,7 +55,8 @@ AI_CHOICES = {
     "cursor": "Cursor",
     "qwen": "Qwen Code",
     "opencode": "opencode",
-    "windsurf": "Windsurf"  # Add new agent here
+    "windsurf": "Windsurf",
+    "adk": "ADK"  # Add new agent here
 }
 ```
 
@@ -69,9 +70,11 @@ agent_folder_map = {
     "qwen": ".qwen/",
     "opencode": ".opencode/",
     "codex": ".codex/",
-    "windsurf": ".windsurf/",  # Add new agent folder here
+    "windsurf": ".windsurf/",
     "kilocode": ".kilocode/",
     "auggie": ".auggie/",
+    "roo": ".roo/",
+    "adk": ".adk/",  # Add new agent folder here
     "copilot": ".github/"
 }
 ```
@@ -99,7 +102,7 @@ Modify `.github/workflows/scripts/create-release-packages.sh`:
 
 ##### Add to ALL_AGENTS array:
 ```bash
-ALL_AGENTS=(claude gemini copilot cursor qwen opencode windsurf)
+ALL_AGENTS=(claude gemini copilot cursor qwen opencode windsurf adk)
 ```
 
 ##### Add case statement for directory structure:
