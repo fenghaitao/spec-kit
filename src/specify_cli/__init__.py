@@ -489,7 +489,11 @@ def _copy_base_structure(project_dir: Path, script_type: str, repo_root: Path) -
                 if item.is_dir():
                     shutil.copytree(item, dest_path, dirs_exist_ok=True)
                 else:
-                    shutil.copy2(item, dest_path)
+                    # Special processing for plan-template.md to replace __AGENT__ placeholder
+                    if item.name == "plan-template.md":
+                        _process_plan_template(item, dest_path, script_type)
+                    else:
+                        shutil.copy2(item, dest_path)
     
     # Copy memory to .specify
     memory_src = repo_root / "memory"
@@ -512,6 +516,39 @@ def _copy_base_structure(project_dir: Path, script_type: str, repo_root: Path) -
         for item in scripts_src.iterdir():
             if item.is_file():
                 shutil.copy2(item, scripts_dest / item.name)
+
+
+def _process_plan_template(src_file: Path, dest_file: Path, script_type: str) -> None:
+    """Process plan-template.md to replace __AGENT__ placeholder with 'adk'."""
+    try:
+        # Read the template file
+        content = src_file.read_text(encoding='utf-8')
+        
+        # Extract script command from YAML frontmatter
+        script_command = _extract_script_command(content, script_type)
+        
+        if script_command:
+            # Always prefix with .specify/ for plan usage
+            script_command = f".specify/{script_command}"
+            # Replace {SCRIPT} placeholder with the script command and __AGENT__ with 'adk'
+            content = content.replace("{SCRIPT}", script_command)
+            content = content.replace("__AGENT__", "adk")
+            
+            # Remove the scripts: section from frontmatter while preserving YAML structure
+            content = _remove_scripts_section(content)
+            
+            # Write the processed file
+            dest_file.write_text(content, encoding='utf-8')
+        else:
+            # If no script command found, copy as-is but still replace __AGENT__
+            content = content.replace("__AGENT__", "adk")
+            dest_file.write_text(content, encoding='utf-8')
+            
+    except Exception as e:
+        # If processing fails, copy as-is but still replace __AGENT__
+        content = src_file.read_text(encoding='utf-8')
+        content = content.replace("__AGENT__", "adk")
+        dest_file.write_text(content, encoding='utf-8')
 
 
 def _process_adk_command_templates(project_dir: Path, script_type: str, repo_root: Path) -> None:
