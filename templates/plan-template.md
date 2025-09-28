@@ -110,15 +110,17 @@ api/
 ios/ or android/
 └── [platform-specific structure: feature modules, UI flows, platform tests]
 
-# [REMOVE IF UNUSED] Option 4: Simics device project
-device-name/
+# [REMOVE IF UNUSED] Option 4: Simics device project (when "simics" detected)
+modules/device-name/
 ├── device-name.dml          # Main device implementation
-├── registers.dml            # Register definitions
-├── interfaces.dml           # External interfaces
-├── utility.dml             # Common utilities
-└── tests/
-    ├── unit/               # DML unit tests
-    └── integration/        # System-level tests
+├── CMakeLists.txt           # Module build configuration
+├── DEVICEINFO               # Device metadata and description
+├── Makefile                 # Alternative build system
+├── module_load.py           # Python module interface
+└── test/
+    ├── CMakeLists.txt       # Test build configuration
+    ├── s-device-name.py     # Python test file
+    └── SUITEINFO            # Test suite metadata
 ```
 
 **Structure Decision**: [Document the selected structure and reference the real
