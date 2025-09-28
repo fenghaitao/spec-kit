@@ -16,6 +16,9 @@ scripts:
    → If not found: ERROR "No feature spec at {path}"
 2. Fill Technical Context (scan for NEEDS CLARIFICATION)
    → Detect Project Type from context (web=frontend+backend, mobile=app+api, simics=hardware device)
+   → **Simics Hardware Simulation Detection**: Analyze the feature spec for hardware simulation requirements. If the feature involves hardware simulation (keywords: simics, modeling, processor, CPU, GPU, FPGA, microcontroller, embedded, simulation, modeling, hardware validation, x86, ARM, RISC-V, MIPS, SPARC, PCI, USB, memory controller, peripheral, firmware, BIOS, bootloader, RTL), then:
+      → Use the `get_simics_version` or `list_installed_packages` MCP tools to check Simics envrionment.
+      → Use the `create_simics_project` MCP tool to create a new Simics project with project_name=DEVICE_NAME and project_path="simics"
    → Set Structure Decision based on project type
 3. Fill the Constitution Check section based on the content of the constitution document.
 4. Evaluate Constitution Check section below
@@ -40,14 +43,14 @@ scripts:
 [Extract from feature spec: primary requirement + technical approach from research]
 
 ## Technical Context
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75, DML 1.4 or NEEDS CLARIFICATION]  
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM, Simics API or NEEDS CLARIFICATION]  
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
-**Testing**: [e.g., pytest, XCTest, cargo test, Simics test scripts or NEEDS CLARIFICATION]  
+**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75, DML 1.4 or NEEDS CLARIFICATION]
+**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM, Simics API or NEEDS CLARIFICATION]
+**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
+**Testing**: [e.g., pytest, XCTest, cargo test, Simics test scripts or NEEDS CLARIFICATION]
 **Target Platform**: [e.g., Linux server, iOS 15+, WASM, Simics 6.x or NEEDS CLARIFICATION]
-**Project Type**: [single/web/mobile/simics - determines source structure]  
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps, functional accuracy or NEEDS CLARIFICATION]  
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable, software-visible behavior or NEEDS CLARIFICATION]  
+**Project Type**: [single/web/mobile/simics - determines source structure]
+**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps, functional accuracy or NEEDS CLARIFICATION]
+**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable, software-visible behavior or NEEDS CLARIFICATION]
 **Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens, register count/complexity or NEEDS CLARIFICATION]
 
 ## Constitution Check
@@ -111,14 +114,15 @@ ios/ or android/
 └── [platform-specific structure: feature modules, UI flows, platform tests]
 
 # [REMOVE IF UNUSED] Option 4: Simics device project
-device-name/
-├── device-name.dml          # Main device implementation
-├── registers.dml            # Register definitions
-├── interfaces.dml           # External interfaces
-├── utility.dml             # Common utilities
-└── tests/
-    ├── unit/               # DML unit tests
-    └── integration/        # System-level tests
+simics_project
+└──modules
+   └──device-name/
+      ├── device-name.dml          # Main device implementation
+      ├── module_load.py           # Simics module load action definitions
+      ├── CMakeLists.txt           # CMake file
+      └── tests/
+          ├── unit/               # DML unit tests
+          └── integration/        # System-level tests
 ```
 
 **Structure Decision**: [Document the selected structure and reference the real
@@ -199,12 +203,12 @@ directories captured above]
 - Load `.specify/templates/tasks-template.md` as base
 - Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
 - Each contract → contract test task [P]
-- Each entity → model creation task [P] 
+- Each entity → model creation task [P]
 - Each user story → integration test task
 - Implementation tasks to make tests pass
 
 **Ordering Strategy**:
-- TDD order: Tests before implementation 
+- TDD order: Tests before implementation
 - Dependency order: Models before services before UI
 - Mark [P] for parallel execution (independent files)
 
@@ -215,8 +219,8 @@ directories captured above]
 ## Phase 3+: Future Implementation
 *These phases are beyond the scope of the /plan command*
 
-**Phase 3**: Task execution (/tasks command creates tasks.md)  
-**Phase 4**: Implementation (execute tasks.md following constitutional principles)  
+**Phase 3**: Task execution (/tasks command creates tasks.md)
+**Phase 4**: Implementation (execute tasks.md following constitutional principles)
 **Phase 5**: Validation (run tests, execute quickstart.md, performance validation)
 
 ## Complexity Tracking
