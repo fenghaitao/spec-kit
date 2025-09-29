@@ -6,12 +6,14 @@ This document describes the Phase 1 integration between spec-kit and simics-mcp-
 
 ## What Changed
 
+**Important**: Path corrections were made based on actual Simics project structure analysis. The real structure uses `modules/device-name/` at the project root, not nested under a device directory.
+
 ### `templates/plan-template.md` Updates
 
 #### 1. Enhanced Technical Context (Lines 53-58)
 Added Simics-specific context fields:
 - **Simics Version**: References `get_simics_version()` MCP tool
-- **Required Packages**: References `search_packages()` and `install_simics_package()` MCP tools
+- **Required Packages**: References `search_packages()` MCP tool for package discovery
 - **MCP Server**: Notes integration availability
 - **Device Type**: Hardware device classification
 - **Hardware Interfaces**: Register-level interface definitions
@@ -35,39 +37,44 @@ Added MCP-specific research tasks:
 
 ### `templates/tasks-template.md` Updates
 
-#### 1. MCP-Powered Setup Phase (Lines 53-57)
+#### 1. MCP-Powered Setup Phase (Lines 53-56)
 Replaced manual setup with automated MCP tool calls:
 - **T001**: Verify connection with `get_simics_version()`
 - **T002**: Create project structure with `create_simics_project(project_name="DEVICE_NAME", project_path=".")`
-- **T003**: Install packages with `install_simics_package(package_name, version)`
-- **T004**: Add device skeleton with `add_dml_device_skeleton(project_path=".", device_name="DEVICE_NAME")`
-- **T005**: Verify build system with `build_simics_project(project_path=".")`
+- **T003**: Add device skeleton with `add_dml_device_skeleton(project_path=".", device_name="DEVICE_NAME")`
+- **T004**: Verify build system with `build_simics_project(project_path=".")`
 
-#### 2. Enhanced TDD Phase (Lines 67-70)
-Updated test setup with MCP validation:
-- **T009**: Set up and validate test environment using `run_simics_test(project_path=".", suite=None)`
+#### 2. Enhanced TDD Phase (Lines 66-69)
+Updated test setup with correct Simics project paths:
+- **T005**: Register access test in `modules/device-name/test/test_registers.py`
+- **T006**: Interface behavior test in `modules/device-name/test/test_interfaces.py`
+- **T007**: Device workflow test in `modules/device-name/test/s-device-name.py` (main test file)
+- **T008**: Set up and validate test environment using `run_simics_test(project_path=".", suite=None)`
 
-#### 3. Build-Integrated Implementation (Lines 82-90)
-Added continuous build validation:
-- **T013**: Build device module using `build_simics_project(project_path=".", module="DEVICE_NAME")`
-- **T018**: Incremental build validation using `build_simics_project(project_path=".")`
+#### 3. Build-Integrated Implementation (Lines 81-89)
+Added continuous build validation with correct Simics paths:
+- **T009**: Register definitions in `modules/device-name/registers.dml`
+- **T010**: Interface declarations in `modules/device-name/interfaces.dml`
+- **T011**: Utility methods in `modules/device-name/utility.dml`
+- **T012**: Build device module using `build_simics_project(project_path=".", module="DEVICE_NAME")`
+- **T013**: Main device structure in `modules/device-name/device-name.dml`
+- **T017**: Incremental build validation using `build_simics_project(project_path=".")`
 
-#### 4. Comprehensive Integration Testing (Lines 99-104)
+#### 4. Comprehensive Integration Testing (Lines 98-103)
 Enhanced integration phase with validation:
-- **T023**: Validate integration with `build_simics_project(project_path=".")`
-- **T024**: Run comprehensive tests using `run_simics_test(project_path=".", suite="all")`
+- **T022**: Validate integration with `build_simics_project(project_path=".")`
+- **T023**: Run comprehensive tests using `run_simics_test(project_path=".", suite="all")`
 
 #### 5. Enhanced Task Generation Rules (Lines 154-156)
 Updated ordering strategy:
 - **Simics**: MCP Setup → Tests → Registers → Interfaces → Device → Integration → Validation → Polish
 - **Simics MCP Tools**: Use at each validation step for continuous integration
 
-#### 6. Simics-Specific Validation (Lines 168-173)
+#### 6. Simics-Specific Validation (Lines 168-171)
 Added validation checklist for MCP integration:
 - All MCP tool calls specify correct project_path
 - Build validation tasks after implementation changes
 - Test execution tasks use appropriate suite parameter
-- Package installation tasks specify version when known
 - Device name consistently used across MCP tool calls
 
 ## MCP Tools Referenced
@@ -82,7 +89,6 @@ The templates now reference these simics-mcp-server MCP tools:
 ### Package Management  
 - `search_packages(query)` - Search available packages
 - `list_installed_packages()` - List installed packages
-- `install_simics_package(package_name, version)` - Install packages
 
 ### Build & Testing
 - `build_simics_project(project_path, module=None)` - Build project or specific module
@@ -129,13 +135,14 @@ When executing generated tasks:
 # Instead of manual project creation, tasks will specify:
 # - T001: Verify simics-mcp-server connection and Simics installation using `get_simics_version()`
 # - T002: Create Simics project structure using `create_simics_project(project_name="DEVICE_NAME", project_path=".")`
+# - T003: Add device skeleton using `add_dml_device_skeleton(project_path=".", device_name="DEVICE_NAME")`
 ```
 
 #### Implementation Phase
 ```bash
 # Build validation integrated into development cycle:
-# - T013: Build device module using `build_simics_project(project_path=".", module="DEVICE_NAME")`
-# - T018: Incremental build validation using `build_simics_project(project_path=".")`
+# - T012: Build device module using `build_simics_project(project_path=".", module="DEVICE_NAME")`
+# - T017: Incremental build validation using `build_simics_project(project_path=".")`
 ```
 
 ## Benefits
@@ -155,12 +162,7 @@ When executing generated tasks:
 - Test environment validation
 - Comprehensive integration testing
 
-### 4. **Package Management**
-- Automated dependency installation
-- Version compatibility checking
-- Package discovery and research
-
-### 5. **Structured Development**
+### 4. **Structured Development**
 - Clear separation of manual vs automated tasks
 - Validated progression through development phases
 - Consistent tooling across projects
