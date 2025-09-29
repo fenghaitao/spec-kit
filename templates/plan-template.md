@@ -119,21 +119,23 @@ ios/ or android/
 
 # [REMOVE IF UNUSED] Option 4: Simics device project (when "simics" detected)
 # Use MCP tools for automated project creation:
-# 1. `create_simics_project(project_name=DEVICE_NAME, project_path=".")` → generates base structure
+# 1. `create_simics_project(project_path="simics_project")` → generates base structure
 # 2. `add_dml_device_skeleton(project_path=".", device_name=DEVICE_NAME)` → adds device modeling files
 # The structure shown below will be created automatically during Phase 3.1 Setup.
 
-DEVICE_NAME/
-├── modules/device-name/
-│   ├── device-name.dml          # Main device implementation
-│   ├── CMakeLists.txt           # Module build configuration
-│   ├── DEVICEINFO               # Device metadata and description
-│   ├── Makefile                 # Alternative build system
-│   ├── module_load.py           # Python module interface
-│   └── test/
-│       ├── CMakeLists.txt       # Test build configuration
-│       ├── s-device-name.py     # Python test file
-│       └── SUITEINFO            # Test suite metadata
+modules/device-name/
+├── device-name.dml          # Main device implementation
+├── registers.dml            # Register definitions and mappings (optional)
+├── interfaces.dml           # Device interface implementations (optional)
+├── sub-feature.dml          # Device sub-feature modules (optional)
+├── module_load.py           # Simics module load action definitions
+├── CMakeLists.txt           # CMake file
+└── test/
+    ├── CMakeLists.txt       # CMake file
+    ├── SUITEINFO            # Test timeout and tags
+    ├── s-device-name.py     # tests implementation
+    ├── test_name_common.py  # test configuration and device instance creation
+    └── README
 ```
 
 **Structure Decision**: [Document the selected structure and reference the real
@@ -160,7 +162,7 @@ directories captured above]
    **Simics-specific research tasks**:
    ```
    If Project Type = simics:
-     Task: "Research DML syntax and device modeling patterns"
+     Task: "Research DML syntax and device modeling patterns with `get_dml_template` or `get_simics_device_example` MCP tool"
      Task: "Research Simics API for memory operations and interfaces"
      Task: "Analyze hardware specification for register mapping"
      Task: "Research similar device implementations for reference"
