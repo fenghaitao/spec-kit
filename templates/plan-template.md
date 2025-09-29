@@ -119,23 +119,24 @@ ios/ or android/
 
 # [REMOVE IF UNUSED] Option 4: Simics device project (when "simics" detected)
 # Use MCP tools for automated project creation:
-# 1. `create_simics_project(project_path="simics_project")` → generates base structure
-# 2. `add_dml_device_skeleton(project_path=".", device_name=DEVICE_NAME)` → adds device modeling files
+# 1. `create_simics_project(project_path="simics-project")` → generates base structure
+# 2. `add_dml_device_skeleton(project_path="simics-project", device_name=DEVICE_NAME)` → adds device modeling files
 # The structure shown below will be created automatically during Phase 3.1 Setup.
 
-modules/device-name/
-├── device-name.dml          # Main device implementation
-├── registers.dml            # Register definitions and mappings (optional)
-├── interfaces.dml           # Device interface implementations (optional)
-├── sub-feature.dml          # Device sub-feature modules (optional)
-├── module_load.py           # Simics module load action definitions
-├── CMakeLists.txt           # CMake file
-└── test/
-    ├── CMakeLists.txt       # CMake file
-    ├── SUITEINFO            # Test timeout and tags
-    ├── s-device-name.py     # tests implementation
-    ├── test_name_common.py  # test configuration and device instance creation
-    └── README
+simics-project/
+└── modules/device-name/
+    ├── device-name.dml       # Main device implementation
+    ├── registers.dml            # Register definitions and mappings (optional)
+    ├── interfaces.dml           # Device interface implementations (optional)
+    ├── sub-feature.dml          # Device sub-feature modules (optional)
+    ├── module_load.py           # Simics module load action definitions
+    ├── CMakeLists.txt           # CMake file
+    └── test/
+        ├── CMakeLists.txt       # CMake file
+        ├── SUITEINFO            # Test timeout and tags
+        ├── s-device-name.py  # tests implementation
+        ├── test_name_common.py  # test configuration and device instance creation
+        └── README
 ```
 
 **Structure Decision**: [Document the selected structure and reference the real

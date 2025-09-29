@@ -234,7 +234,7 @@ get_project_structure() {
     if [[ "$project_type" == *"web"* ]]; then
         echo "backend/\\nfrontend/\\ntests/"
     elif [[ "$project_type" == *"simics"* ]]; then
-        echo "DEVICE_NAME/\\n├── modules/device-name/\\n│   ├── device-name.dml\\n│   ├── CMakeLists.txt\\n│   ├── DEVICEINFO\\n│   ├── Makefile\\n│   ├── module_load.py\\n│   └── test/\\n│       ├── CMakeLists.txt\\n│       ├── s-device-name.py\\n│       └── SUITEINFO"
+        echo "simics-project/\\n└── modules/device-name/\\n    ├── device-name.dml\\n    ├── registers.dml\\n    ├── interfaces.dml\\n    ├── sub-feature.dml\\n    ├── module_load.py\\n    ├── CMakeLists.txt\\n    └── test/\\n        ├── CMakeLists.txt\\n        ├── SUITEINFO\\n        ├── s-device-name.py\\n        ├── test_name_common.py\\n        └── README"
     else
         echo "src/\\ntests/"
     fi
