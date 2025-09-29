@@ -16,9 +16,6 @@ scripts:
    → If not found: ERROR "No feature spec at {path}"
 2. Fill Technical Context (scan for NEEDS CLARIFICATION)
    → Detect Project Type from context (web=frontend+backend, mobile=app+api, simics=hardware device)
-   → **Simics Hardware Simulation Detection**: Analyze the feature spec for hardware simulation requirements. If the feature involves hardware simulation (keywords: simics, modeling, processor, CPU, GPU, FPGA, microcontroller, embedded, simulation, modeling, hardware validation, x86, ARM, RISC-V, MIPS, SPARC, PCI, USB, memory controller, peripheral, firmware, BIOS, bootloader, RTL), then:
-      → Use the `get_simics_version` or `list_installed_packages` MCP tools to check Simics envrionment.
-      → Use the `create_simics_project` MCP tool to create a new Simics project with project_name=DEVICE_NAME and project_path="simics"
    → Set Structure Decision based on project type
 3. Fill the Constitution Check section based on the content of the constitution document.
 4. Evaluate Constitution Check section below
@@ -114,15 +111,18 @@ ios/ or android/
 └── [platform-specific structure: feature modules, UI flows, platform tests]
 
 # [REMOVE IF UNUSED] Option 4: Simics device project
-simics_project
-└──modules
-   └──device-name/
-      ├── device-name.dml          # Main device implementation
-      ├── module_load.py           # Simics module load action definitions
-      ├── CMakeLists.txt           # CMake file
-      └── tests/
-          ├── unit/               # DML unit tests
-          └── integration/        # System-level tests
+# Structure created by create_simics_project and add_dml_device_skeleton MCP tools
+# Additional .dml files can be created for register, interfaces, and sub-features
+simics_project/modules/device-name
+├── device-name.dml          # Main device implementation
+├── registers.dml            # Register definitions and mappings (optional)
+├── interfaces.dml           # Device interface implementations (optional)
+├── sub-feature.dml          # Device sub-feature modules (optional)
+├── module_load.py           # Simics module load action definitions
+├── CMakeLists.txt           # CMake file
+└── tests/
+    ├── unit/               # DML unit tests
+    └── integration/        # System-level tests
 ```
 
 **Structure Decision**: [Document the selected structure and reference the real
@@ -149,7 +149,10 @@ directories captured above]
      Task: "Research Simics API for memory operations and interfaces"
      Task: "Analyze hardware specification for register mapping"
      Task: "Research similar device implementations for reference"
+
    ```
+
+   Note: Use `get_simics_device_example` MCP tool to obtain device implementation examples to support Simics research tasks
 
 3. **Consolidate findings** in `research.md` using format:
    - Decision: [what was chosen]
@@ -218,6 +221,11 @@ directories captured above]
 
 ## Phase 3+: Future Implementation
 *These phases are beyond the scope of the /plan command*
+
+**Simics Device Structure Creation**: If the feature was detected as Simics-related during planning:
+→ Use the `get_simics_version` or `list_isntalled_packages` MCP tools to check Simics environment
+→ Use the `create_simics_project` MCP tool to build the Simics project structure with project_path=current working directory
+→ Use the `add_dml_device_skeleton` MCP tool to create the device structure with project_path=the path returned by `create_simics_project`, device_name=the simics model name
 
 **Phase 3**: Task execution (/tasks command creates tasks.md)
 **Phase 4**: Implementation (execute tasks.md following constitutional principles)

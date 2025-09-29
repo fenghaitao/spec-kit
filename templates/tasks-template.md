@@ -41,17 +41,20 @@
 - **Single project**: `src/`, `tests/` at repository root
 - **Web app**: `backend/src/`, `frontend/src/`
 - **Mobile**: `api/src/`, `ios/src/` or `android/src/`
-- **Simics**: `device-name/`, `device-name/tests/` at repository root
+- **Simics**: `modules/device-name/`, `modules/device-name/tests/` at repository root
 - Paths shown below assume single project - adjust based on plan.md structure
 
 ## Phase 3.1: Setup
+**NOTE: For Simics projects, use MCP tools to create device structure first before any other tasks**
+
 - [ ] T001 Create project structure per implementation plan
 - [ ] T002 Initialize [language] project with [framework] dependencies
 - [ ] T003 [P] Configure linting and formatting tools
 
 **Simics Setup Example:**
-- [ ] T001 Create device directory structure (device-name/, tests/)
-- [ ] T002 Initialize DML project with Simics module dependencies
+**CRITICAL: For Simics projects, device structure setup MUST be implemented first**
+- [ ] T001 **[PRIORITY] Use create_simics_project MCP tool to build Simics project structure**
+- [ ] T002 **[PRIORITY] Use add_dml_device_skeleton MCP tool to create device structure**
 - [ ] T003 [P] Configure DML syntax checking and validation tools
 
 ## Phase 3.2: Tests First (TDD) ⚠️ MUST COMPLETE BEFORE 3.3
@@ -62,10 +65,10 @@
 - [ ] T007 [P] Integration test auth flow in tests/integration/test_auth.py
 
 **Simics TDD Example:**
-- [ ] T004 [P] Register access test in device-name/tests/unit/test_registers.py
-- [ ] T005 [P] Interface behavior test in device-name/tests/unit/test_interfaces.py
-- [ ] T006 [P] Device workflow test in device-name/tests/integration/test_device_ops.py
-- [ ] T007 [P] Memory operation test in device-name/tests/integration/test_memory.py
+- [ ] T004 [P] Register access test in modules/device-name/tests/unit/test_registers.py
+- [ ] T005 [P] Interface behavior test in modules/device-name/tests/unit/test_interfaces.py
+- [ ] T006 [P] Device workflow test in modules/device-name/tests/integration/test_device_ops.py
+- [ ] T007 [P] Memory operation test in modules/device-name/tests/integration/test_memory.py
 
 ## Phase 3.3: Core Implementation (ONLY after tests are failing)
 - [ ] T008 [P] User model in src/models/user.py
@@ -132,12 +135,12 @@ Task: "Integration test auth in tests/integration/test_auth.py"
    - Each contract file → contract test task [P]
    - Each endpoint → implementation task
    - **Simics**: Each register interface → register test task [P]
-   
+
 2. **From Data Model**:
    - Each entity → model creation task [P]
    - Relationships → service layer tasks
    - **Simics**: Each register group → DML file task [P]
-   
+
 3. **From User Stories**:
    - Each story → integration test [P]
    - Quickstart scenarios → validation tasks
@@ -147,6 +150,12 @@ Task: "Integration test auth in tests/integration/test_auth.py"
    - Setup → Tests → Models → Services → Endpoints → Polish
    - **Simics**: Setup → Tests → Registers → Interfaces → Device → Integration → Polish
    - Dependencies block parallel execution
+
+5. **Simics Build Rule**:
+   - **CRITICAL**: For Simics device model compilation, ALWAYS use `build_simics_project` MCP tool
+   - Never guess or hardcode cmake/make commands - use the MCP tool with project_path parameter
+   - Include build tasks after DML implementation but before integration testing
+   - Example: "Use build_simics_project MCP tool to compile device model in simics_project/"
 
 ## Validation Checklist
 *GATE: Checked by main() before returning*
