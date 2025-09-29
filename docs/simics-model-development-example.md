@@ -594,5 +594,7 @@ class TestUARTRegisters:
 - **Improved Templates**: Simics-specific sections in spec, plan, and tasks templates
 - **ADK Support**: Agent Development Kit for custom AI agent integration
 - **Constitution Framework**: Simics Model Development Constitution for best practices
+- **MCP Server Integration**: Integration with simics-mcp-server for automated project management
+- **Simics MCP Tools**: Project creation, building, testing, and package management via MCP protocol
 
 This example demonstrates how the spec-kit framework supports systematic Simics device development, from initial specification through complete implementation, ensuring both correctness and maintainability.

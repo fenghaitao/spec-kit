@@ -168,6 +168,8 @@ $req
 - **Enhanced Templates**: Simics-specific sections in all core templates
 - **Constitution Framework**: Built-in Simics Model Development Constitution
 - **DML Project Structure**: Optimized directory structure for DML device projects
+- **MCP Server Integration**: Integration with simics-mcp-server for automated project management
+- **Simics MCP Tools**: Project creation, building, testing, and package management via MCP protocol
 
 ### Workflow Improvements
 - **Unified Prerequisites**: Consolidated prerequisite checking across all platforms

@@ -111,20 +111,25 @@ ios/ or android/
 └── [platform-specific structure: feature modules, UI flows, platform tests]
 
 # [REMOVE IF UNUSED] Option 4: Simics device project (when "simics" detected)
-modules/device-name/
-├── device-name.dml          # Main device implementation
-├── CMakeLists.txt           # Module build configuration
-├── DEVICEINFO               # Device metadata and description
-├── Makefile                 # Alternative build system
-├── module_load.py           # Python module interface
-└── test/
-    ├── CMakeLists.txt       # Test build configuration
-    ├── s-device-name.py     # Python test file
-    └── SUITEINFO            # Test suite metadata
+# Use the `create_simics_project` MCP tool to create a new Simics project with project_name=DEVICE_NAME and project_path="." and then use `add_dml_device_skeleton` MCP tool to add the device skeleton with project_path="." and device_name=DEVICE_NAME. The structure shown in lines 116-126 will be generated automatically and needs to be worked on. 
+
+DEVICE_NAME/
+├── modules/device-name/
+│   ├── device-name.dml          # Main device implementation
+│   ├── CMakeLists.txt           # Module build configuration
+│   ├── DEVICEINFO               # Device metadata and description
+│   ├── Makefile                 # Alternative build system
+│   ├── module_load.py           # Python module interface
+│   └── test/
+│       ├── CMakeLists.txt       # Test build configuration
+│       ├── s-device-name.py     # Python test file
+│       └── SUITEINFO            # Test suite metadata
 ```
 
 **Structure Decision**: [Document the selected structure and reference the real
 directories captured above]
+
+**For Simics projects**: The structure above shows the template that will be generated. The actual project structure will be created by the MCP server's `create_simics_project()` and `add_dml_device_skeleton()` tools during task execution (Phase 3.1 Setup).
 
 ## Phase 0: Outline & Research
 1. **Extract unknowns from Technical Context** above:
@@ -147,6 +152,7 @@ directories captured above]
      Task: "Research Simics API for memory operations and interfaces"
      Task: "Analyze hardware specification for register mapping"
      Task: "Research similar device implementations for reference"
+     Task: "Research simics-mcp-server capabilities for project automation an code generation"
    ```
 
 3. **Consolidate findings** in `research.md` using format:
@@ -201,7 +207,7 @@ directories captured above]
 - Load `.specify/templates/tasks-template.md` as base
 - Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
 - Each contract → contract test task [P]
-- Each entity → model creation task [P]
+- Each entity → model creation task [P] 
 - Each user story → integration test task
 - Implementation tasks to make tests pass
 

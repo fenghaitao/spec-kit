@@ -171,7 +171,13 @@ function Get-ProjectStructure {
         [Parameter(Mandatory=$false)]
         [string]$ProjectType
     )
-    if ($ProjectType -match 'web') { return "backend/`nfrontend/`ntests/" } else { return "src/`ntests/" } 
+    if ($ProjectType -match 'web') { 
+        return "backend/`nfrontend/`ntests/" 
+    } elseif ($ProjectType -match 'simics') {
+        return "DEVICE_NAME/`n├── modules/device-name/`n│   ├── device-name.dml`n│   ├── CMakeLists.txt`n│   ├── DEVICEINFO`n│   ├── Makefile`n│   ├── module_load.py`n│   └── test/`n│       ├── CMakeLists.txt`n│       ├── s-device-name.py`n│       └── SUITEINFO"
+    } else { 
+        return "src/`ntests/" 
+    }
 }
 
 function Get-CommandsForLanguage { 
