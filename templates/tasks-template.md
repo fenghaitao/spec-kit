@@ -50,10 +50,11 @@
 - [ ] T003 [P] Configure linting and formatting tools
 
 **Simics Setup Example:**
-- [ ] T001 Set up simics-mcp-server environment and verify Simics installation
-- [ ] T002 Create Simics project structure using `create_simics_project(project_name, project_path)` (generates modules/device-name/ with CMakeLists.txt, DEVICEINFO, etc.)
+- [ ] T001 Verify simics-mcp-server connection and Simics installation using `get_simics_version()`
+- [ ] T002 Create Simics project structure using `create_simics_project(project_name="DEVICE_NAME", project_path=".")`
 - [ ] T003 [P] Install required Simics packages using `install_simics_package(package_name, version)`
-- [ ] T004 [P] Configure DML syntax checking and validation tools
+- [ ] T004 Add device skeleton using `add_dml_device_skeleton(project_path=".", device_name="DEVICE_NAME")`
+- [ ] T005 [P] Verify project structure and build system using `build_simics_project(project_path=".")`
 
 ## Phase 3.2: Tests First (TDD) ⚠️ MUST COMPLETE BEFORE 3.3
 **CRITICAL: These tests MUST be written and MUST FAIL before ANY implementation**
@@ -63,10 +64,10 @@
 - [ ] T007 [P] Integration test auth flow in tests/integration/test_auth.py
 
 **Simics TDD Example:**
-- [ ] T005 [P] Register access test in device-name/tests/unit/test_registers.py
-- [ ] T006 [P] Interface behavior test in device-name/tests/unit/test_interfaces.py
-- [ ] T007 [P] Device workflow test in device-name/tests/integration/test_device_ops.py
-- [ ] T008 [P] Set up test environment using `run_simics_test(project_path, suite)`
+- [ ] T006 [P] Register access test in device-name/tests/unit/test_registers.py
+- [ ] T007 [P] Interface behavior test in device-name/tests/unit/test_interfaces.py
+- [ ] T008 [P] Device workflow test in device-name/tests/integration/test_device_ops.py
+- [ ] T009 [P] Set up and validate test environment using `run_simics_test(project_path=".", suite=None)`
 
 ## Phase 3.3: Core Implementation (ONLY after tests are failing)
 - [ ] T008 [P] User model in src/models/user.py
@@ -78,14 +79,15 @@
 - [ ] T014 Error handling and logging
 
 **Simics Implementation Example:**
-- [ ] T009 [P] Register definitions in device-name/registers.dml
-- [ ] T010 [P] Interface declarations in device-name/interfaces.dml
-- [ ] T011 [P] Utility methods in device-name/utility.dml
-- [ ] T012 [P] Build project using `build_simics_project(project_path, module)`
-- [ ] T013 Main device structure in device-name/device-name.dml
-- [ ] T014 Register read/write logic implementation
-- [ ] T015 Device state management and attributes
-- [ ] T016 Error handling and logging for device operations
+- [ ] T010 [P] Register definitions in device-name/registers.dml
+- [ ] T011 [P] Interface declarations in device-name/interfaces.dml
+- [ ] T012 [P] Utility methods in device-name/utility.dml
+- [ ] T013 [P] Build device module using `build_simics_project(project_path=".", module="DEVICE_NAME")`
+- [ ] T014 Main device structure in device-name/device-name.dml
+- [ ] T015 Register read/write logic implementation
+- [ ] T016 Device state management and attributes
+- [ ] T017 Error handling and logging for device operations
+- [ ] T018 [P] Incremental build validation using `build_simics_project(project_path=".")`
 
 ## Phase 3.4: Integration
 - [ ] T015 Connect UserService to DB
@@ -94,11 +96,12 @@
 - [ ] T018 CORS and security headers
 
 **Simics Integration Example:**
-- [ ] T017 Connect device to memory interface using transact() methods
-- [ ] T018 Implement interrupt line connections and events
-- [ ] T019 Add external port communications and protocols
-- [ ] T020 Integrate with Simics checkpointing and state management
-- [ ] T021 [P] Run comprehensive tests using `run_simics_test(project_path, suite)`
+- [ ] T019 Connect device to memory interface using transact() methods
+- [ ] T020 Implement interrupt line connections and events
+- [ ] T021 Add external port communications and protocols
+- [ ] T022 Integrate with Simics checkpointing and state management
+- [ ] T023 [P] Validate integration with `build_simics_project(project_path=".")`
+- [ ] T024 [P] Run comprehensive tests using `run_simics_test(project_path=".", suite="all")`
 
 ## Phase 3.5: Polish
 - [ ] T019 [P] Unit tests for validation in tests/unit/test_validation.py
@@ -148,8 +151,9 @@ Task: "Integration test auth in tests/integration/test_auth.py"
 
 4. **Ordering**:
    - Setup → Tests → Models → Services → Endpoints → Polish
-   - **Simics**: Setup → Tests → Registers → Interfaces → Device → Integration → Polish
+   - **Simics**: MCP Setup → Tests → Registers → Interfaces → Device → Integration → Validation → Polish
    - Dependencies block parallel execution
+   - **Simics MCP Tools**: Use at each validation step for continuous integration
 
 ## Validation Checklist
 *GATE: Checked by main() before returning*
@@ -160,3 +164,10 @@ Task: "Integration test auth in tests/integration/test_auth.py"
 - [ ] Parallel tasks truly independent
 - [ ] Each task specifies exact file path
 - [ ] No task modifies same file as another [P] task
+
+**Simics-Specific Validation:**
+- [ ] All MCP tool calls specify correct project_path
+- [ ] Build validation tasks after implementation changes
+- [ ] Test execution tasks use appropriate suite parameter
+- [ ] Package installation tasks specify version when known
+- [ ] Device name consistently used across MCP tool calls

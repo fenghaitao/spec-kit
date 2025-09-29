@@ -50,6 +50,13 @@ scripts:
 **Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable, software-visible behavior or NEEDS CLARIFICATION]
 **Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens, register count/complexity or NEEDS CLARIFICATION]
 
+**Simics-Specific Context** (if Project Type = simics):
+**Simics Version**: [e.g., Simics Base 7.57.0 or use MCP `get_simics_version()` or NEEDS CLARIFICATION]
+**Required Packages**: [e.g., simics-base, simics-qsp-x86 or NEEDS CLARIFICATION]
+**MCP Server**: [simics-mcp-server integration available for project automation and build management]
+**Device Type**: [e.g., PCI device, memory controller, peripheral or NEEDS CLARIFICATION]
+**Hardware Interfaces**: [e.g., memory-mapped registers, DMA, interrupts or NEEDS CLARIFICATION]
+
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
@@ -111,7 +118,10 @@ ios/ or android/
 └── [platform-specific structure: feature modules, UI flows, platform tests]
 
 # [REMOVE IF UNUSED] Option 4: Simics device project (when "simics" detected)
-# Use the `create_simics_project` MCP tool to create a new Simics project with project_name=DEVICE_NAME and project_path="." and then use `add_dml_device_skeleton` MCP tool to add the device skeleton with project_path="." and device_name=DEVICE_NAME. The structure shown in lines 116-126 will be generated automatically and needs to be worked on. 
+# Use MCP tools for automated project creation:
+# 1. `create_simics_project(project_name=DEVICE_NAME, project_path=".")` → generates base structure
+# 2. `add_dml_device_skeleton(project_path=".", device_name=DEVICE_NAME)` → adds device modeling files
+# The structure shown below will be created automatically during Phase 3.1 Setup.
 
 DEVICE_NAME/
 ├── modules/device-name/
@@ -129,7 +139,9 @@ DEVICE_NAME/
 **Structure Decision**: [Document the selected structure and reference the real
 directories captured above]
 
-**For Simics projects**: The structure above shows the template that will be generated. The actual project structure will be created by the MCP server's `create_simics_project()` and `add_dml_device_skeleton()` tools during task execution (Phase 3.1 Setup).
+**For Simics projects**: The structure above shows the template that will be generated. The actual project structure will be created by the simics-mcp-server's MCP tools during task execution (Phase 3.1 Setup):
+- `create_simics_project()` creates the base project structure
+- `add_dml_device_skeleton()` adds device-specific modeling files
 
 ## Phase 0: Outline & Research
 1. **Extract unknowns from Technical Context** above:
@@ -152,7 +164,9 @@ directories captured above]
      Task: "Research Simics API for memory operations and interfaces"
      Task: "Analyze hardware specification for register mapping"
      Task: "Research similar device implementations for reference"
-     Task: "Research simics-mcp-server capabilities for project automation an code generation"
+     Task: "Verify simics-mcp-server connection using `get_simics_version()` MCP tool"
+     Task: "Validate required packages using `list_installed_packages()` MCP tool"
+     Task: "Research simics-mcp-server MCP tools for project automation and build management"
    ```
 
 3. **Consolidate findings** in `research.md` using format:
