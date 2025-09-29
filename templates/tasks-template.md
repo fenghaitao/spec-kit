@@ -54,6 +54,7 @@
 - [ ] T002 Create Simics project structure using `create_simics_project(project_path="simics_project")`
 - [ ] T003 Add device skeleton using `add_dml_device_skeleton(project_path="simics_project", device_name="DEVICE_NAME")`
 - [ ] T004 [P] Verify project structure and build system using `build_simics_project(project_path="simics_project", module="DEVICE_NAME")`
+- [ ] T005 Call `get_simics_device_example` and `get_dml_templete` MCP tools to study DML grammar and Python test style before implementing tests or core features
 
 ## Phase 3.2: Tests First (TDD) ⚠️ MUST COMPLETE BEFORE 3.3
 **CRITICAL: These tests MUST be written and MUST FAIL before ANY implementation**
@@ -63,10 +64,10 @@
 - [ ] T007 [P] Integration test auth flow in tests/integration/test_auth.py
 
 **Simics TDD Example:**
-- [ ] T005 [P] Register access test in modules/device-name/test/s-registers.py
-- [ ] T006 [P] Interface behavior test in modules/device-name/test/s-interfaces.py
-- [ ] T007 [P] Device workflow test in modules/device-name/test/s-device-name.py (main test file)
-- [ ] T008 [P] Set up and validate test environment using `run_simics_test(project_path=".", suite="modules/DEVICE_NAME/test")
+- [ ] T006 [P] Register access test in modules/device-name/test/s-registers.py
+- [ ] T007 [P] Interface behavior test in modules/device-name/test/s-interfaces.py
+- [ ] T008 [P] Device workflow test in modules/device-name/test/s-device-name.py (main test file)
+- [ ] T009 [P] Set up and validate test environment using `run_simics_test(project_path="simics_project", suite="modules/DEVICE_NAME/test")
 
 ## Phase 3.3: Core Implementation (ONLY after tests are failing)
 - [ ] T008 [P] User model in src/models/user.py
@@ -78,8 +79,8 @@
 - [ ] T014 Error handling and logging
 
 **Simics Implementation Example:**
-- [ ] T009 [P] Register definitions in modules/device-name/registers.dml
-- [ ] T010 [P] Interface declarations in modules/device-name/interfaces.dml
+- [ ] T010 [P] Register definitions in modules/device-name/registers.dml
+- [ ] T011 [P] Interface declarations in modules/device-name/interfaces.dml
 - [ ] T011 [P] Utility methods in modules/device-name/utility.dml
 - [ ] T012 [P] Build device module using `build_simics_project(project_path=".", module="DEVICE_NAME")`
 - [ ] T013 Main device structure in modules/device-name/device-name.dml
