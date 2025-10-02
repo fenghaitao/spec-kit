@@ -41,7 +41,7 @@
 - **Single project**: `src/`, `tests/` at repository root
 - **Web app**: `backend/src/`, `frontend/src/`
 - **Mobile**: `api/src/`, `ios/src/` or `android/src/`
-- **Simics**: `modules/device-name/`, `modules/device-name/test/` at repository root
+- **Simics**: `./simics-project/modules/device-name/`, `./simics-project/modules/device-name/test/` at repository root
 - Paths shown below assume single project - adjust based on plan.md structure
 
 ## Phase 3.1: Setup
@@ -51,9 +51,9 @@
 
 **Simics Setup Example:**
 - [ ] T001 Verify simics-mcp-server connection and Simics installation using `get_simics_version()`
-- [ ] T002 Create Simics project structure using `create_simics_project(project_path="simics-project")`
-- [ ] T003 Add device skeleton using `add_dml_device_skeleton(project_path="simics-project", device_name="DEVICE_NAME")`
-- [ ] T004 [P] Verify project structure and build system using `build_simics_project(project_path="simics-project", module="DEVICE_NAME")`
+- [ ] T002 Create Simics project structure using `create_simics_project(project_path="./simics-project")`
+- [ ] T003 Add device skeleton using `add_dml_device_skeleton(project_path="./simics-project", device_name="DEVICE_NAME")`
+- [ ] T004 [P] Verify project structure and build system using `build_simics_project(project_path="./simics-project", module="DEVICE_NAME")`
 - [ ] T005 **MANDATORY**: Execute `get_simics_device_example()` to retrieve DML example code and patterns
 - [ ] T006 **MANDATORY**: Execute `get_dml_template()` to retrieve DML template structures and syntax
 - [ ] T007 **CRITICAL**: Study and document the retrieved examples before proceeding to test or implementation phases
@@ -70,7 +70,7 @@
 - [ ] T009 [P] Register access test in modules/device-name/test/s-registers.py
 - [ ] T010 [P] Interface behavior test in modules/device-name/test/s-interfaces.py
 - [ ] T011 [P] Device workflow test in modules/device-name/test/s-device-name.py (main test file)
-- [ ] T012 [P] Set up and validate test environment using `run_simics_test(project_path="simics-project", suite="modules/DEVICE_NAME/test")`
+- [ ] T012 [P] Set up and validate test environment using `run_simics_test(project_path="./simics-project", suite="modules/DEVICE_NAME/test")`
 
 ## Phase 3.3: Core Implementation (ONLY after tests are failing)
 - [ ] T008 [P] User model in src/models/user.py
@@ -85,12 +85,12 @@
 - [ ] T013 [P] Register definitions in modules/device-name/registers.dml
 - [ ] T014 [P] Interface declarations in modules/device-name/interfaces.dml
 - [ ] T015 [P] Utility methods in modules/device-name/utility.dml
-- [ ] T016 [P] Build device module using `build_simics_project(project_path="simics-project", module="DEVICE_NAME")`
+- [ ] T016 [P] Build device module using `build_simics_project(project_path="./simics-project", module="DEVICE_NAME")`
 - [ ] T017 Main device structure in modules/device-name/device-name.dml
 - [ ] T018 Register read/write logic implementation
 - [ ] T019 Device state management and attributes
 - [ ] T020 Error handling and logging for device operations
-- [ ] T021 [P] Incremental build validation using `build_simics_project(project_path="simics-project", module="DEVICE_NAME")`
+- [ ] T021 [P] Incremental build validation using `build_simics_project(project_path="./simics-project", module="DEVICE_NAME")`
 
 ## Phase 3.4: Integration
 - [ ] T015 Connect UserService to DB
@@ -103,8 +103,8 @@
 - [ ] T023 Implement interrupt line connections and events
 - [ ] T024 Add external port communications and protocols
 - [ ] T025 Integrate with Simics checkpointing and state management
-- [ ] T026 [P] Validate integration with `build_simics_project(project_path="simics-project")`
-- [ ] T027 [P] Run comprehensive tests using `run_simics_test(project_path="simics-project", suite="modules/DEVICE_NAME/test")`
+- [ ] T026 [P] Validate integration with `build_simics_project(project_path="./simics-project")`
+- [ ] T027 [P] Run comprehensive tests using `run_simics_test(project_path="./simics-project", suite="modules/DEVICE_NAME/test")`
 
 ## Phase 3.5: Polish
 - [ ] T019 [P] Unit tests for validation in tests/unit/test_validation.py

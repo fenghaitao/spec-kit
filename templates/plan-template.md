@@ -118,33 +118,46 @@ ios/ or android/
 └── [platform-specific structure: feature modules, UI flows, platform tests]
 
 # [REMOVE IF UNUSED] Option 4: Simics device project (when "simics" detected)
-# Use MCP tools for automated project creation:
-# 1. `create_simics_project(project_path="simics-project")` → generates base structure
-# 2. `add_dml_device_skeleton(project_path="simics-project", device_name=DEVICE_NAME)` → adds device modeling files
-# The structure shown below will be created automatically during Phase 3.1 Setup.
+# Use MCP tools for automated project creation AT REPO ROOT:
+# 1. `create_simics_project(project_path="./simics-project")` → generates base structure at repo root
+# 2. `add_dml_device_skeleton(project_path="./simics-project", device_name=DEVICE_NAME)` → adds device modeling files
+# The structure shown below will be created automatically during Phase 3.1 Setup AT REPOSITORY ROOT.
 
-simics-project/
-└── modules/device-name/
-    ├── device-name.dml       # Main device implementation
-    ├── registers.dml            # Register definitions and mappings (optional)
-    ├── interfaces.dml           # Device interface implementations (optional)
-    ├── sub-feature.dml          # Device sub-feature modules (optional)
-    ├── module_load.py           # Simics module load action definitions
-    ├── CMakeLists.txt           # CMake file
-    └── test/
-        ├── CMakeLists.txt       # CMake file
-        ├── SUITEINFO            # Test timeout and tags
-        ├── s-device-name.py  # tests implementation
-        ├── test_name_common.py  # test configuration and device instance creation
-        └── README
+## Repository Structure
+repo-root/
+├── simics-project/              # ← Source code (implementation)
+│   └── modules/device-name/
+│       ├── device-name.dml      # Main device implementation
+│       ├── registers.dml        # Register definitions and mappings (optional)
+│       ├── interfaces.dml       # Device interface implementations (optional)
+│       ├── sub-feature.dml      # Device sub-feature modules (optional)
+│       ├── module_load.py       # Simics module load action definitions
+│       ├── CMakeLists.txt       # CMake file
+│       └── test/
+│           ├── CMakeLists.txt   # CMake file
+│           ├── SUITEINFO        # Test timeout and tags
+│           ├── s-device-name.py # tests implementation
+│           ├── test_name_common.py # test configuration and device instance creation
+│           └── README
+│
+└── specs/                       # ← Documentation artifacts only
+    └── [###-feature-name]/
+        ├── plan.md              # This file (/plan command output)
+        ├── research.md          # Phase 0 output (/plan command)
+        ├── data-model.md        # Phase 1 output (/plan command)
+        ├── quickstart.md        # Phase 1 output (/plan command)
+        ├── contracts/           # Phase 1 output (/plan command)
+        └── tasks.md             # Phase 2 output (/tasks command - NOT created by /plan)
 ```
 
 **Structure Decision**: [Document the selected structure and reference the real
 directories captured above]
 
-**For Simics projects**: The structure above shows the template that will be generated. The actual project structure will be created by the simics-mcp-server's MCP tools during task execution (Phase 3.1 Setup):
-- `create_simics_project()` creates the base project structure
-- `add_dml_device_skeleton()` adds device-specific modeling files
+**For Simics projects**: The structure above shows the template that will be generated AT REPOSITORY ROOT (not in specs/ folder). The actual project structure will be created by the simics-mcp-server's MCP tools during task execution (Phase 3.1 Setup):
+- `create_simics_project(project_path="./simics-project")` creates the base project structure at repo root
+- `add_dml_device_skeleton(project_path="./simics-project", device_name=DEVICE_NAME)` adds device-specific modeling files
+
+**IMPORTANT**: Simics projects must be created at repository root to separate source code from documentation. The specs/ folder contains only documentation artifacts (plan.md, tasks.md, etc.), while the simics-project/ folder at repo root contains the actual implementation.
 
 ## Phase 0: Outline & Research
 1. **Extract unknowns from Technical Context** above:
