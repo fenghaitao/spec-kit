@@ -177,22 +177,31 @@ directories captured above]
    **Simics-specific research tasks**:
    ```
    If Project Type = simics:
-     Task: "Research DML syntax and device modeling patterns using `get_simics_dml_1_4_reference_manual` and `get_simics_model_builder_user_guide` MCP tools"
-     Task: "Research Simics API for memory operations and interfaces"
-     Task: "Analyze hardware specification for register mapping"
-     Task: "Research similar device implementations for reference using `get_simics_device_example_i2c` or `get_simics_device_example_ds12887` MCP tools"
-     Task: "Verify simics-mcp-server connection using `get_simics_version()` MCP tool"
-     Task: "Validate required packages using `list_installed_packages()` MCP tool"
-     Task: "Research simics-mcp-server MCP tools for project automation and build management"
+     Task: "MANDATORY: Execute `get_simics_version()` MCP tool to resolve environment NEEDS CLARIFICATION"
+     Task: "MANDATORY: Execute `list_installed_packages()` MCP tool to resolve package dependencies NEEDS CLARIFICATION"
+     Task: "IF DML syntax is NEEDS CLARIFICATION: Execute `get_simics_dml_1_4_reference_manual()` MCP tool for language reference"
+     Task: "IF modeling approach is NEEDS CLARIFICATION: Execute `get_simics_model_builder_user_guide()` MCP tool for patterns"
+     Task: "IF similar implementations needed for decisions: Execute `get_simics_device_example_i2c()` or `get_simics_device_example_ds12887()` MCP tools"
+     Task: "Research Simics API for memory operations and interfaces (from documentation)"
+     Task: "Analyze hardware specification for register mapping requirements"
+     Task: "Document architectural decisions based on MCP tool findings"
+     Task: "Validate constitutional compliance for device-first development approach"
    ```
 
-3. **Consolidate findings** in `research.md` using format:
+3. **Execute discovery MCP tools immediately** (for Simics projects):
+   - **Environment tools**: `get_simics_version()` and `list_installed_packages()` are MANDATORY
+   - **Documentation tools**: Only if needed to resolve NEEDS CLARIFICATION for architectural decisions
+   - **DO NOT execute implementation tools**: `create_simics_project()`, `add_dml_device_skeleton()`, `build_simics_project()`, etc. belong in /implement phase
+   - Include MCP tool outputs directly in research.md to inform design decisions
+   - **Purpose**: Gather information needed for planning, not create implementation artifacts
+
+4. **Consolidate findings** in `research.md` using format:
    - Decision: [what was chosen]
    - Rationale: [why chosen]
    - Alternatives considered: [what else evaluated]
-   - **Simics projects**: Include device architecture decisions and abstraction strategy
+   - **Simics projects**: Include device architecture decisions, MCP tool outputs, and abstraction strategy
 
-**Output**: research.md with all NEEDS CLARIFICATION resolved
+**Output**: research.md with all NEEDS CLARIFICATION resolved and MCP tool outputs documented
 
 ## Phase 1: Design & Contracts
 *Prerequisites: research.md complete*
@@ -241,7 +250,11 @@ directories captured above]
 - Each entity → model creation task [P] 
 - Each user story → integration test task
 - Implementation tasks to make tests pass
-- **Simics projects**: Include MCP tool tasks for project setup (`create_simics_project`), device modeling (`add_dml_device_skeleton`), building (`build_simics_project`) and testing (`run_simics_test`)
+- **Simics projects**: Include implementation MCP tool tasks:
+  - **Setup tasks**: `create_simics_project()`, `add_dml_device_skeleton()`
+  - **Build tasks**: `build_simics_project()`
+  - **Test tasks**: `run_simics_test()`
+  - **Note**: Discovery MCP tools (`get_simics_version`, `list_installed_packages`) already executed in /plan phase
 
 **Ordering Strategy**:
 - TDD order: Tests before implementation
@@ -284,6 +297,16 @@ directories captured above]
 - [ ] Post-Design Constitution Check: PASS
 - [ ] All NEEDS CLARIFICATION resolved
 - [ ] Complexity deviations documented
+
+**Simics Discovery MCP Tool Status** (if Project Type = simics):
+- [ ] `get_simics_version()` executed and documented (MANDATORY)
+- [ ] `list_installed_packages()` executed and documented (MANDATORY)
+- [ ] `get_simics_dml_1_4_reference_manual()` executed (only if DML syntax was NEEDS CLARIFICATION)
+- [ ] `get_simics_model_builder_user_guide()` executed (only if modeling approach was NEEDS CLARIFICATION)
+- [ ] Device example tools executed (only if needed for architectural decisions)
+- [ ] MCP tool outputs incorporated into research.md
+- [ ] Environmental constraints documented for /implement phase
+- [ ] **Implementation MCP tools NOT executed** (reserved for /implement phase)
 
 ---
 *Based on Constitution v2.1.1 - See `/memory/constitution.md`*
