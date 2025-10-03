@@ -229,7 +229,43 @@ directories captured above]
    - Quickstart test = story validation steps
    - **Simics projects**: Device operational workflow tests
 
-5. **Update agent file incrementally** (O(1) operation):
+5. **Generate quickstart.md** from user story validation:
+   - **DO NOT assume implementation details**: No specific register names or commands until implemented
+   - **Focus on user validation**: How will users verify the feature works?
+   - **Reference tasks.md**: Steps should align with implementation tasks
+   - **Use placeholders**: `[DEVICE_NAME]`, `[REGISTER_NAME]` for unknowns
+   - **Include validation criteria**: What constitutes success for each step?
+   - **Simics projects**: Focus on device behavior validation, not implementation commands
+   
+   **Quickstart.md Structure**:
+   ```
+   # Quick Start: [FEATURE_NAME]
+   
+   ## Goal
+   [One sentence: What will users accomplish by following this guide?]
+   
+   ## Prerequisites
+   [Environment requirements from research.md - actual versions/packages found]
+   
+   ## Validation Steps
+   ### Step 1: [First User Story Validation]
+   [What to do]
+   **Expected Result**: [What should happen]
+   **Success Criteria**: [How to verify it worked]
+   
+   ### Step 2: [Second User Story Validation]
+   [What to do - no implementation details, reference tasks that will create them]
+   **Expected Result**: [What should happen]
+   **Success Criteria**: [How to verify it worked]
+   
+   ## Troubleshooting
+   [Common failure modes and how to debug them]
+   
+   ## Next Steps
+   [References to contracts/, data-model.md, and tasks.md]
+   ```
+
+6. **Update agent file incrementally** (O(1) operation):
    - Run `{SCRIPT}`
      **IMPORTANT**: Execute it exactly as specified above. Do not add or remove any arguments.
    - If exists: Add only NEW tech from current plan
