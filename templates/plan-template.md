@@ -179,7 +179,7 @@ directories captured above]
    If Project Type = simics:
      Task: "MANDATORY: Execute `get_simics_version()` MCP tool to resolve environment NEEDS CLARIFICATION"
      Task: "MANDATORY: Execute `list_installed_packages()` MCP tool to resolve package dependencies NEEDS CLARIFICATION"
-     Task: "IF DML syntax is NEEDS CLARIFICATION: Execute `get_simics_dml_1_4_reference_manual()` MCP tool for language reference"
+     Task: "IF DML syntax is NEEDS CLARIFICATION: Execute `get_simics_dml_template()` MCP tool first and then `get_simics_dml_1_4_reference_manual()` MCP tool for language reference"
      Task: "IF modeling approach is NEEDS CLARIFICATION: Execute `get_simics_model_builder_user_guide()` MCP tool for patterns"
      Task: "IF similar implementations needed for decisions: Execute `get_simics_device_example_i2c()` or `get_simics_device_example_ds12887()` MCP tools"
      Task: "Research Simics API for memory operations and interfaces (from documentation)"
@@ -216,13 +216,13 @@ directories captured above]
    - For each user action → endpoint
    - Use standard REST/GraphQL patterns
    - Output OpenAPI/GraphQL schema to `/contracts/`
-   - **Simics projects**: Register access contracts and interface specifications using device examples from `get_simics_device_example_i2c` or `get_simics_device_example_ds12887` MCP tools
+   - **Simics projects**: Register access contracts and interface specifications using device examples from `get_simics_device_example_i2c()`, `get_simics_device_example_ds12887()`, and `get_simics_dml_template()` MCP tools
 
 3. **Generate contract tests** from contracts:
    - One test file per endpoint
    - Assert request/response schemas
    - Tests must fail (no implementation yet)
-   - **Simics projects**: Register read/write behavior tests using `run_simics_test` MCP tool for validation; sample test patterns available from `get_simics_device_example_i2c` or `get_simics_device_example_ds12887` MCP tools via python_test_samples_path
+   - **Simics projects**: Register read/write behavior tests using `run_simics_test` MCP tool for validation; sample test patterns available from `get_simics_dml_template()` MCP tool and `get_simics_device_example_i2c()`, `get_simics_device_example_ds12887()` MCP tools via python_test_samples_path
 
 4. **Extract test scenarios** from user stories:
    - Each story → integration test scenario
