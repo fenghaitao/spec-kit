@@ -52,8 +52,9 @@ scripts:
 
 **Simics-Specific Context** (if Project Type = simics):
 **Simics Version**: [e.g., Simics Base 7.57.0 or use MCP `get_simics_version()` or NEEDS CLARIFICATION]
-**Required Packages**: [e.g., simics-base, simics-qsp-x86 or NEEDS CLARIFICATION]
-**MCP Server**: [simics-mcp-server integration available for project automation and build management]
+**Required Packages**: [e.g., simics-base, simics-qsp-x86 or use MCP `list_installed_packages()` or NEEDS CLARIFICATION]
+**Available Platforms**: [use MCP `list_simics_platforms()` to discover available simulation targets or NEEDS CLARIFICATION]
+**MCP Server**: [simics-mcp-server integration available with 22+ tools for project automation, device modeling and documentation access]
 **Device Type**: [e.g., PCI device, memory controller, peripheral or NEEDS CLARIFICATION]
 **Hardware Interfaces**: [e.g., memory-mapped registers, DMA, interrupts or NEEDS CLARIFICATION]
 
@@ -176,10 +177,10 @@ directories captured above]
    **Simics-specific research tasks**:
    ```
    If Project Type = simics:
-     Task: "Research DML syntax and device modeling patterns with `get_dml_template` or `get_simics_device_example` MCP tool"
+     Task: "Research DML syntax and device modeling patterns using `get_simics_dml_1_4_reference_manual` and `get_simics_model_builder_user_guide` MCP tools"
      Task: "Research Simics API for memory operations and interfaces"
      Task: "Analyze hardware specification for register mapping"
-     Task: "Research similar device implementations for reference"
+     Task: "Research similar device implementations for reference using `get_simics_device_example_i2c` or `get_simics_device_example_ds12887` MCP tools"
      Task: "Verify simics-mcp-server connection using `get_simics_version()` MCP tool"
      Task: "Validate required packages using `list_installed_packages()` MCP tool"
      Task: "Research simics-mcp-server MCP tools for project automation and build management"
@@ -206,13 +207,13 @@ directories captured above]
    - For each user action → endpoint
    - Use standard REST/GraphQL patterns
    - Output OpenAPI/GraphQL schema to `/contracts/`
-   - **Simics projects**: Register access contracts and interface specifications
+   - **Simics projects**: Register access contracts and interface specifications using device examples from `get_simics_device_example_i2c` or `get_simics_device_example_ds12887` MCP tools
 
 3. **Generate contract tests** from contracts:
    - One test file per endpoint
    - Assert request/response schemas
    - Tests must fail (no implementation yet)
-   - **Simics projects**: Register read/write behavior tests
+   - **Simics projects**: Register read/write behavior tests using `run_simics_test` MCP tool for validation; sample test patterns available from `get_simics_device_example_i2c` or `get_simics_device_example_ds12887` MCP tools via python_test_samples_path
 
 4. **Extract test scenarios** from user stories:
    - Each story → integration test scenario
@@ -240,6 +241,7 @@ directories captured above]
 - Each entity → model creation task [P] 
 - Each user story → integration test task
 - Implementation tasks to make tests pass
+- **Simics projects**: Include MCP tool tasks for project setup (`create_simics_project`), device modeling (`add_dml_device_skeleton`), building (`build_simics_project`) and testing (`run_simics_test`)
 
 **Ordering Strategy**:
 - TDD order: Tests before implementation
