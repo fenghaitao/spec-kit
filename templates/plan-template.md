@@ -179,29 +179,78 @@ directories captured above]
    If Project Type = simics:
      Task: "MANDATORY: Execute `get_simics_version()` MCP tool to resolve environment NEEDS CLARIFICATION"
      Task: "MANDATORY: Execute `list_installed_packages()` MCP tool to resolve package dependencies NEEDS CLARIFICATION"
-     Task: "IF DML syntax is NEEDS CLARIFICATION: Execute `get_simics_dml_template()` MCP tool first and then `get_simics_dml_1_4_reference_manual()` MCP tool for language reference"
-     Task: "IF modeling approach is NEEDS CLARIFICATION: Execute `get_simics_model_builder_user_guide()` MCP tool for patterns"
-     Task: "IF similar implementations needed for decisions: Execute `get_simics_device_example_i2c()` or `get_simics_device_example_ds12887()` MCP tools"
-     Task: "Research Simics API for memory operations and interfaces (from documentation)"
-     Task: "Analyze hardware specification for register mapping requirements"
-     Task: "Document architectural decisions based on MCP tool findings"
-     Task: "Validate constitutional compliance for device-first development approach"
+     Task: "MANDATORY: Execute `list_simics_platforms()` MCP tool to identify available simulation targets"
+     Task: "MANDATORY: Execute `get_simics_dml_1_4_reference_manual()` MCP tool to access DML language reference for architectural decisions"
+     Task: "MANDATORY: Execute `get_simics_model_builder_user_guide()` MCP tool to understand device modeling patterns and best practices"
+     Task: "MANDATORY: Execute `get_simics_dml_template()` MCP tool to study base device structure patterns before design"
+     Task: "MANDATORY: Execute `get_simics_device_example_i2c()` MCP tool for reference implementation patterns (includes test samples via python_test_samples_path)"
+     Task: "MANDATORY: Execute `get_simics_device_example_ds12887()` MCP tool for advanced device patterns (includes test samples via python_test_samples_path)"
+     Task: "Analyze MCP tool outputs: Study DML template structure, device examples, and test patterns"
+     Task: "Document architectural decisions: Register organization, interface choices, abstraction strategy based on examples"
+     Task: "Extract test patterns: Review python_test_samples_path from device examples for TDD approach in Phase 1"
+     Task: "Validate hardware specification completeness: Ensure spec.md has sufficient detail for data-model.md generation"
+     Task: "Research Simics API specifics: Memory operations and interface implementations needed for this device type"
+     Task: "Validate constitutional compliance: Device-first development approach alignment"
    ```
 
-3. **Execute discovery MCP tools immediately** (for Simics projects):
-   - **Environment tools**: `get_simics_version()` and `list_installed_packages()` are MANDATORY
-   - **Documentation tools**: Only if needed to resolve NEEDS CLARIFICATION for architectural decisions
-   - **DO NOT execute implementation tools**: `create_simics_project()`, `add_dml_device_skeleton()`, `build_simics_project()`, etc. belong in /implement phase
-   - Include MCP tool outputs directly in research.md to inform design decisions
-   - **Purpose**: Gather information needed for planning, not create implementation artifacts
+3. **Execute ALL discovery and documentation MCP tools immediately** (for Simics projects):
+   - **Environment tools (MANDATORY)**:
+     - `get_simics_version()` - Resolve Simics version NEEDS CLARIFICATION
+     - `list_installed_packages()` - Resolve package dependencies NEEDS CLARIFICATION
+     - `list_simics_platforms()` - Identify available simulation targets
+
+   - **Documentation tools (MANDATORY for Phase 1 design)**:
+     - `get_simics_dml_1_4_reference_manual()` - DML language reference for architectural decisions
+     - `get_simics_model_builder_user_guide()` - Device modeling patterns and best practices
+     - `get_simics_dml_template()` - Base device structure patterns
+     - `get_simics_device_example_i2c()` - Reference implementation with test samples
+     - `get_simics_device_example_ds12887()` - Advanced patterns with test samples
+
+   - **DO NOT execute implementation tools**: `create_simics_project()`, `add_dml_device_skeleton()`, `build_simics_project()`, `run_simics_test()` belong in /implement phase (Phase 3)
+
+   - **Include outputs in research.md**: Document all MCP tool findings to inform Phase 1 design decisions
+
+   - **Extract test patterns**: Access python_test_samples_path from device examples for contract test generation in Phase 1
+
+   - **Purpose**: Gather ALL information needed for data-model.md, contracts/, and test generation before implementation begins
 
 4. **Consolidate findings** in `research.md` using format:
    - Decision: [what was chosen]
    - Rationale: [why chosen]
    - Alternatives considered: [what else evaluated]
-   - **Simics projects**: Include device architecture decisions, MCP tool outputs, and abstraction strategy
+   - **Simics projects**: Include device architecture decisions, all MCP tool outputs, test pattern analysis, and abstraction strategy
 
-**Output**: research.md with all NEEDS CLARIFICATION resolved and MCP tool outputs documented
+   **research.md Structure for Simics Projects**:
+   ```markdown
+   # Research: [DEVICE_NAME]
+
+   ## Environment Discovery
+   - **Simics Version**: [output from get_simics_version()]
+   - **Installed Packages**: [output from list_installed_packages()]
+   - **Available Platforms**: [output from list_simics_platforms()]
+
+   ## Documentation Analysis
+   - **DML 1.4 Reference**: [key findings from get_simics_dml_1_4_reference_manual()]
+   - **Model Builder Guide**: [patterns from get_simics_model_builder_user_guide()]
+   - **DML Template Structure**: [analysis of get_simics_dml_template() output]
+
+   ## Device Example Analysis
+   - **I2C Device Example**: [architectural insights from get_simics_device_example_i2c()]
+   - **DS12887 Device Example**: [advanced patterns from get_simics_device_example_ds12887()]
+   - **Test Patterns Extracted**: [summary of python_test_samples_path contents for TDD]
+
+   ## Architectural Decisions
+   - **Register Organization**: [how registers will be structured in DML based on examples]
+   - **Interface Strategy**: [which Simics interfaces needed and why]
+   - **Device Abstraction**: [abstraction approach based on Model Builder guide]
+   - **Test Strategy**: [TDD approach based on extracted test patterns]
+
+   ## Validation
+   - **Spec Completeness**: [verification that spec.md Hardware Specification is sufficient]
+   - **Constitutional Compliance**: [alignment with device-first development]
+   ```
+
+**Output**: research.md with all NEEDS CLARIFICATION resolved, all MCP tool outputs documented, and architectural foundation for Phase 1 design
 
 ## Phase 1: Design & Contracts
 *Prerequisites: research.md complete*
@@ -210,7 +259,69 @@ directories captured above]
    - Entity name, fields, relationships
    - Validation rules from requirements
    - State transitions if applicable
-   - **Simics projects**: Register definitions, interfaces, and device state
+   - **Simics projects**: Transform Hardware Specification from spec.md into structured register definitions, interfaces, and device state using this format:
+
+   **data-model.md Format for Simics Projects**:
+   ```markdown
+   # Data Model: [DEVICE_NAME]
+
+   ## Device State
+   - **Device Type**: [from spec.md Device Overview]
+   - **Base Address**: [from spec.md, or determined in research.md]
+   - **Address Space**: [size from spec.md]
+
+   ## Register Definitions
+
+   ### [REGISTER_NAME] (Offset: 0xXX)
+   - **Size**: [8/16/32/64-bit]
+   - **Access Mode**: [R/W, R/O, W/O]
+   - **Reset Value**: [hex value from spec.md]
+   - **Purpose**: [copied from spec.md Register Map]
+
+   **Bit Fields**:
+   | Bits | Field Name | Access | Reset | Description |
+   |------|------------|--------|-------|-------------|
+   | [31:8] | RESERVED | - | 0x0 | Reserved, read as 0 |
+   | 7 | FIELD_NAME | R/W | 0 | [Purpose from spec.md bit field details] |
+   | ... | ... | ... | ... | ... |
+
+   **Behavior**:
+   - Read: [What happens on read, from spec.md Operational Behavior]
+   - Write: [What happens on write, side effects]
+   - State Changes: [What device state is modified]
+
+   ### [Continue for each register...]
+
+   ## Interfaces
+
+   ### [INTERFACE_NAME] (e.g., io_memory, signal, etc.)
+   - **Type**: [Simics interface type from research.md]
+   - **Methods**: [interface methods needed]
+   - **Connected To**: [what this interface connects to]
+   - **Purpose**: [from spec.md External Interfaces]
+
+   ## Device Attributes
+   - **[attribute_name]**: [Type] - [Purpose, from spec.md Software Visibility]
+   - [List all device configuration attributes]
+
+   ## State Transitions
+   - **Initialization**: [From spec.md Operational Behavior - Initialization]
+   - **Normal Operation**: [From spec.md Operational Behavior - Normal Operation]
+   - **Error States**: [From spec.md Operational Behavior - Error Handling]
+   - **Reset Behavior**: [How device resets to initial state]
+
+   ## Validation Rules
+   - [Register access ordering constraints from spec.md Software Visibility]
+   - [Reserved bit handling rules from spec.md]
+   - [Interrupt generation conditions from spec.md Operational Behavior]
+   ```
+
+   **Mapping from spec.md to data-model.md**:
+   - spec.md Register Map table → data-model.md Register Definitions (one section per register)
+   - spec.md Bit field details → data-model.md Bit Fields tables
+   - spec.md Operational Behavior → data-model.md Behavior and State Transitions
+   - spec.md External Interfaces → data-model.md Interfaces
+   - spec.md Software Visibility → data-model.md Device Attributes and Validation Rules
 
 2. **Generate API contracts** from functional requirements:
    - For each user action → endpoint
@@ -334,15 +445,26 @@ directories captured above]
 - [ ] All NEEDS CLARIFICATION resolved
 - [ ] Complexity deviations documented
 
-**Simics Discovery MCP Tool Status** (if Project Type = simics):
-- [ ] `get_simics_version()` executed and documented (MANDATORY)
-- [ ] `list_installed_packages()` executed and documented (MANDATORY)
-- [ ] `get_simics_dml_1_4_reference_manual()` executed (only if DML syntax was NEEDS CLARIFICATION)
-- [ ] `get_simics_model_builder_user_guide()` executed (only if modeling approach was NEEDS CLARIFICATION)
-- [ ] Device example tools executed (only if needed for architectural decisions)
-- [ ] MCP tool outputs incorporated into research.md
-- [ ] Environmental constraints documented for /implement phase
-- [ ] **Implementation MCP tools NOT executed** (reserved for /implement phase)
+**Simics MCP Tool Status** (if Project Type = simics):
+
+*Phase 0 - Discovery & Documentation Tools (MANDATORY - must execute during /plan):*
+- [ ] `get_simics_version()` executed and documented
+- [ ] `list_installed_packages()` executed and documented
+- [ ] `list_simics_platforms()` executed and documented
+- [ ] `get_simics_dml_1_4_reference_manual()` executed for DML language reference
+- [ ] `get_simics_model_builder_user_guide()` executed for modeling patterns
+- [ ] `get_simics_dml_template()` executed for base device structure
+- [ ] `get_simics_device_example_i2c()` executed for reference patterns
+- [ ] `get_simics_device_example_ds12887()` executed for advanced patterns
+- [ ] Test patterns extracted from python_test_samples_path
+- [ ] All MCP tool outputs incorporated into research.md
+- [ ] Architectural decisions documented based on MCP findings
+
+*Phase 3 - Implementation Tools (reserved for /implement phase):*
+- [ ] `create_simics_project()` - NOT executed in /plan (belongs in Phase 3.1)
+- [ ] `add_dml_device_skeleton()` - NOT executed in /plan (belongs in Phase 3.1)
+- [ ] `build_simics_project()` - NOT executed in /plan (belongs in Phase 3.3+)
+- [ ] `run_simics_test()` - NOT executed in /plan (belongs in Phase 3.2+)
 
 ---
 *Based on Constitution v2.1.1 - See `/memory/constitution.md`*
