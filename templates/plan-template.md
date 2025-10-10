@@ -179,8 +179,8 @@ directories captured above]
    If Project Type = simics:
      Task: "MANDATORY: Execute `get_simics_version()` MCP tool to resolve environment NEEDS CLARIFICATION"
      Task: "MANDATORY: Execute `list_installed_packages()` MCP tool to resolve package dependencies NEEDS CLARIFICATION"
-     Task: "IF DML syntax is NEEDS CLARIFICATION: Execute `get_simics_dml_1_4_reference_manual()` MCP tool for language reference"
-     Task: "IF modeling approach is NEEDS CLARIFICATION: Execute `get_simics_model_builder_user_guide()` MCP tool for patterns"
+     Task: "IF DML syntax is NEEDS CLARIFICATION: Execute `pageindex_rag_query_drm(string)` MCP tool for language reference"
+     Task: "IF modeling approach is NEEDS CLARIFICATION: Execute `pageindex_rag_query_model_builder(string)` MCP tool for patterns"
      Task: "IF similar implementations needed for decisions: Execute `get_simics_device_example_i2c()` or `get_simics_device_example_ds12887()` MCP tools"
      Task: "Research Simics API for memory operations and interfaces (from documentation)"
      Task: "Analyze hardware specification for register mapping requirements"
@@ -337,8 +337,8 @@ directories captured above]
 **Simics Discovery MCP Tool Status** (if Project Type = simics):
 - [ ] `get_simics_version()` executed and documented (MANDATORY)
 - [ ] `list_installed_packages()` executed and documented (MANDATORY)
-- [ ] `get_simics_dml_1_4_reference_manual()` executed (only if DML syntax was NEEDS CLARIFICATION)
-- [ ] `get_simics_model_builder_user_guide()` executed (only if modeling approach was NEEDS CLARIFICATION)
+- [ ] `pageindex_rag_query_drm(string)` executed (only if DML syntax was NEEDS CLARIFICATION)
+- [ ] `pageindex_rag_query_model_builder(string)` executed (only if modeling approach was NEEDS CLARIFICATION)
 - [ ] Device example tools executed (only if needed for architectural decisions)
 - [ ] MCP tool outputs incorporated into research.md
 - [ ] Environmental constraints documented for /implement phase

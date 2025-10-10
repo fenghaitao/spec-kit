@@ -54,8 +54,8 @@
 - [ ] T002 Create Simics project structure using `create_simics_project(project_path="./simics-project")`
 - [ ] T003 Add device skeleton using `add_dml_device_skeleton(project_path="./simics-project", device_name="DEVICE_NAME")`
 - [ ] T004 [P] Verify project structure and build system using `build_simics_project(project_path="./simics-project", module="DEVICE_NAME")`
-- [ ] T005 **MANDATORY**: Access DML 1.4 reference documentation using `get_simics_dml_1_4_reference_manual()`
-- [ ] T006 **MANDATORY**: Access Model Builder User Guide using `get_simics_model_builder_user_guide()`
+- [ ] T005 **MANDATORY**: Access DML 1.4 reference documentation using `pageindex_rag_query_drm(string)`
+- [ ] T006 **MANDATORY**: Access Model Builder User Guide using `pageindex_rag_query_model_builder(string)`
 - [ ] T007 **MANDATORY**: Retrieve I2C device example using `get_simics_device_example_i2c()` for reference patterns
 - [ ] T008 **MANDATORY**: Retrieve DS12887 device example using `get_simics_device_example_ds12887()` for advanced patterns
 - [ ] T009 **CRITICAL**: Study and document the retrieved documentation and examples before proceeding to test or implementation phases
@@ -191,8 +191,6 @@ Task: "Integration test auth in tests/integration/test_auth.py"
 **⚠️ MANDATORY: These MCP tools MUST be executed before proceeding to Phase 3.2 (Tests)**
 
 ### Pre-Test Phase Gate Checklist:
-- [ ] **GATE T005**: `get_simics_dml_1_4_reference_manual()` has been successfully executed and returned valid documentation paths
-- [ ] **GATE T006**: `get_simics_model_builder_user_guide()` has been successfully executed and returned valid guide paths
 - [ ] **GATE T007**: `get_simics_device_example_i2c()` has been successfully executed and returned valid I2C device example code
 - [ ] **GATE T008**: `get_simics_device_example_ds12887()` has been successfully executed and returned valid DS12887 device example code
 - [ ] **GATE T009**: Retrieved documentation and examples have been studied and documented for reference during implementation
