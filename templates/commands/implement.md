@@ -41,6 +41,48 @@ $ARGUMENTS
    - **Integration work**: Database connections, middleware, logging, external services
    - **Polish and validation**: Unit tests, performance optimization, documentation
 
+   **For Simics Device Implementation Tasks:**
+   - **Critical Principles**:
+     * Focus on software-visible behaviors (Simics is functional simulator)
+     * Omit low-level hardware logic irrelevant to software
+     * ALL registers MUST be 100% correct (visible to software/outside world)
+     * DO NOT use your own knowledge - refer to MCP tool documentation
+     * Memory read/write MUST use `transact()` method
+     * Simplify internal behavior as long as external state is correct
+     * **CRITICAL - Single DML File**: Write ALL DML code into ONE file: `device-name.dml`
+       - Do NOT split into registers.dml, interfaces.dml, utility.dml, etc.
+       - All registers, ports, connects, attributes, methods, events in one file
+     * **Use Example Devices for Reference**:
+       - `get_simics_device_example_i2c()` and `get_simics_device_example_ds12887()` return FILE PATHS
+       - You MUST use read_file to retrieve actual source code from returned paths
+       - Study example DML files (device structure, syntax, patterns)
+       - Study example test files (in modules/*/test/ directories) for test patterns
+   
+   - **Implementation Process**:
+     1. Use MCP tools (pageindex_rag_query_drm, pageindex_rag_query_model_builder) to learn Simics/DML
+     2. Get example device paths: `get_simics_device_example_i2c()`, `get_simics_device_example_ds12887()`
+     3. Use read_file on returned paths to retrieve example DML and test source code
+     4. Study example patterns for device structure, register declarations, interfaces, tests
+     5. Write ALL code into single DML file: `simics-project/modules/device-name/device-name.dml`
+     6. Declare ALL `register`s, `port`s, `connect`s with spec references in comments
+     7. Separate register declarations from logic implementation
+     8. Leave side effects unimplemented initially (use `unimpl`) with comments
+     9. List unclear/questionable spec parts in top file comment
+     10. Implement register-specific logic in `write_register()`/`read_register()` methods
+     11. Use `attribute`s for internal state, runtime config, checkpointing
+     12. Implement `interface`s in `connect` for device communication
+     13. Use `template`s from "utility.dml" to minimize redundancy
+     14. Define `event`s for asynchronous/deferred operations
+     15. Complete clearly stated side effects with spec references
+     16. Leave unclear logic as `TODO` in top comment - DO NOT implement unclear parts
+     17. Build with `build_simics_project()` after each major change
+     18. Fix syntax errors iteratively
+     19. Write Python tests adapting patterns from example test files (read from example paths)
+     20. Test only clear implementations with spec references
+   
+   - **YOU MUST**: Implement ALL registers - this is mandatory
+   - **Remember**: Remind yourself of Simics concepts/DML syntax before each task
+
 6. Progress tracking and error handling:
    - Report progress after each completed task
    - Halt execution if any non-parallel task fails

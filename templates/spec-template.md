@@ -84,10 +84,55 @@ When creating this spec from a user prompt:
 - **[Entity 2]**: [What it represents, relationships to other entities]
 
 ### Hardware Specification *(Simics projects only)*
-- **Device Type**: [e.g., Network controller, Storage device, Memory controller]
-- **Register Map**: [High-level register categories and their purposes]
-- **External Interfaces**: [Ports, connections, and protocols the device supports]
-- **Software Visibility**: [What aspects of the device software can observe/control]
+
+**Device Overview**:
+- **Device Type**: [e.g., PCI Network controller, I2C Storage device, Memory-mapped Memory controller]
+- **Base Address**: [e.g., 0x1000, dynamically assigned, or NEEDS CLARIFICATION]
+- **Address Space Size**: [e.g., 4KB, 64 registers, or NEEDS CLARIFICATION]
+- **External Interfaces**: [Ports, bus connections, interrupt lines, DMA channels the device exposes]
+
+**Register Map** *(use table format for each register)*:
+
+| Offset | Name | Size | Access | Reset | Purpose |
+|--------|------|------|--------|-------|---------|
+| 0x00 | CONTROL | 32-bit | R/W | 0x0000 | Device control and enable flags |
+| 0x04 | STATUS | 32-bit | R/O | 0x0001 | Device status indicators |
+| 0x08 | DATA | 32-bit | R/W | 0x0000 | Data transfer register |
+| ... | ... | ... | ... | ... | ... |
+
+*For each register with bit fields, detail the fields:*
+
+**CONTROL Register (0x00)** bit fields:
+- Bits [31:8]: Reserved (must be 0)
+- Bit 7: INTERRUPT_ENABLE (R/W) - Enable interrupt generation
+- Bit 6: DMA_ENABLE (R/W) - Enable DMA transfers
+- Bits [5:1]: Reserved
+- Bit 0: DEVICE_ENABLE (R/W) - Master enable for device operation
+
+**STATUS Register (0x04)** bit fields:
+- Bits [31:4]: Reserved
+- Bit 3: ERROR (R/O) - Error condition detected
+- Bit 2: BUSY (R/O) - Device busy processing
+- Bit 1: INTERRUPT_PENDING (R/O) - Interrupt waiting to be serviced
+- Bit 0: READY (R/O) - Device ready for operations
+
+*Continue for all registers...*
+
+**Operational Behavior**:
+- **Initialization**: [Sequence of register writes needed to initialize device, e.g., "Write 0x1 to CONTROL.DEVICE_ENABLE"]
+- **Normal Operation**: [Key register interactions during typical use, e.g., "Write data to DATA register, then set CONTROL.START_TRANSFER"]
+- **Error Handling**: [How errors are signaled and cleared, e.g., "STATUS.ERROR set on failure, write 1 to CONTROL.CLEAR_ERROR to reset"]
+- **Interrupts**: [When interrupts fire and how to acknowledge, e.g., "Interrupt fires when STATUS.INTERRUPT_PENDING=1, clear by reading STATUS"]
+
+**Software Visibility**:
+- [What aspects of device behavior are observable from software]
+- [What internal state is NOT visible to software]
+- [Timing constraints or ordering requirements for register access]
+
+**Examples of marking unclear specifications**:
+- **Base Address**: [NEEDS CLARIFICATION: Is this PCI BAR-based or fixed memory-mapped?]
+- **CONTROL.RESERVED bits**: [NEEDS CLARIFICATION: Should writes to reserved bits be ignored or cause errors?]
+- **Interrupt line**: [NEEDS CLARIFICATION: Which interrupt line number or dynamically assigned?]
 
 ---
 
