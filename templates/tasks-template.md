@@ -64,9 +64,18 @@
 - [ ] T007 [P] Integration test auth flow in tests/integration/test_auth.py
 
 **Simics TDD Example:**
-- [ ] T004 [P] Register access test in simics-project/modules/device-name/test/s-registers.py (using test patterns from research.md python_test_samples_path analysis)
+- [ ] T004 [P] Register access test in simics-project/modules/device-name/test/s-registers.py
+      * Get example test paths using `get_simics_device_example_i2c()` and `get_simics_device_example_ds12887()`
+      * Use read_file on returned paths to retrieve example test source code from `modules/*/test/` directories
+      * Study test patterns, Simics API usage, and assertion styles from examples
+      * Adapt patterns to your device's register specifications
+      * Reference research.md python_test_samples_path analysis for additional patterns
 - [ ] T005 [P] Interface behavior test in simics-project/modules/device-name/test/s-interfaces.py
+      * Use example test files for interface testing patterns
+      * Read actual test code from example paths to understand interface validation
 - [ ] T006 [P] Device workflow test in simics-project/modules/device-name/test/s-device-name.py (main test file)
+      * Study comprehensive device tests from example projects
+      * Adapt workflow patterns to your device's operational scenarios
 - [ ] T007 [P] Validate tests fail as expected using `run_simics_test(project_path="./simics-project", suite="modules/DEVICE_NAME/test")`
 
 ## Phase 3.3: Core Implementation (ONLY after tests are failing)
@@ -90,9 +99,20 @@
 - Memory read/write MUST use Simics `transact()` method
 - DO NOT use your own knowledge - refer to MCP tool information
 - Remind yourself of Simics concepts and DML syntax before each task
+- **CRITICAL - Single DML File**: Write ALL DML code into ONE file: `simics-project/modules/device-name/device-name.dml`
+  - Do NOT create separate files like registers.dml, interfaces.dml, utility.dml
+  - All registers, ports, connects, attributes, methods, events go in device-name.dml
+- **Use Example Devices**: 
+  - `get_simics_device_example_i2c()` and `get_simics_device_example_ds12887()` return FILE PATHS
+  - You MUST use read_file to retrieve actual source code from returned paths
+  - Study example DML and test files for patterns and best practices
 
 **Implementation Tasks:**
-- [ ] T008 [P] Define ALL registers in simics-project/modules/device-name/device-name.dml
+- [ ] T008 [P] Define ALL registers in single file: simics-project/modules/device-name/device-name.dml
+      * **CRITICAL**: Write everything in ONE DML file (no separate registers.dml, interfaces.dml, etc.)
+      * Get example paths using `get_simics_device_example_i2c()` and `get_simics_device_example_ds12887()`
+      * Use read_file on returned paths to retrieve example DML source code
+      * Study example patterns for register declarations, syntax, and structure
       * Declare all `register`s, `port`s, `connect`s from data-model.md
       * Reference original spec in comments for each register
       * Leave side effects unimplemented (use `unimpl`) with clear comments
