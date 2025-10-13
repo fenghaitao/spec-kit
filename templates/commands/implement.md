@@ -41,6 +41,35 @@ $ARGUMENTS
    - **Integration work**: Database connections, middleware, logging, external services
    - **Polish and validation**: Unit tests, performance optimization, documentation
 
+   **For Simics Device Implementation Tasks:**
+   - **Critical Principles**:
+     * Focus on software-visible behaviors (Simics is functional simulator)
+     * Omit low-level hardware logic irrelevant to software
+     * ALL registers MUST be 100% correct (visible to software/outside world)
+     * DO NOT use your own knowledge - refer to MCP tool documentation
+     * Memory read/write MUST use `transact()` method
+     * Simplify internal behavior as long as external state is correct
+   
+   - **Implementation Process**:
+     1. Use MCP tools (pageindex_rag_query_drm, pageindex_rag_query_model_builder) to learn Simics/DML
+     2. Declare ALL `register`s, `port`s, `connect`s with spec references in comments
+     3. Separate register declarations from logic implementation
+     4. Leave side effects unimplemented initially (use `unimpl`) with comments
+     5. List unclear/questionable spec parts in top file comment
+     6. Implement register-specific logic in `write_register()`/`read_register()` methods
+     7. Use `attribute`s for internal state, runtime config, checkpointing
+     8. Implement `interface`s in `connect` for device communication
+     9. Use `template`s from "utility.dml" to minimize redundancy
+     10. Define `event`s for asynchronous/deferred operations
+     11. Complete clearly stated side effects with spec references
+     12. Leave unclear logic as `TODO` in top comment - DO NOT implement unclear parts
+     13. Build with `build_simics_project()` after each major change
+     14. Fix syntax errors iteratively
+     15. Write Python tests with spec references (test only clear implementations)
+   
+   - **YOU MUST**: Implement ALL registers - this is mandatory
+   - **Remember**: Remind yourself of Simics concepts/DML syntax before each task
+
 6. Progress tracking and error handling:
    - Report progress after each completed task
    - Halt execution if any non-parallel task fails

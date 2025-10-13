@@ -79,15 +79,63 @@
 - [ ] T014 Error handling and logging
 
 **Simics Implementation Example:**
-- [ ] T008 [P] Register definitions in simics-project/modules/device-name/registers.dml (from data-model.md Register Definitions)
-- [ ] T009 [P] Interface declarations in simics-project/modules/device-name/interfaces.dml (from data-model.md Interfaces)
-- [ ] T010 [P] Utility methods in simics-project/modules/device-name/utility.dml
-- [ ] T011 [P] Build device module using `build_simics_project(project_path="./simics-project", module="DEVICE_NAME")`
-- [ ] T012 Main device structure in simics-project/modules/device-name/device-name.dml (from data-model.md Device State)
-- [ ] T013 Register read/write logic implementation (from data-model.md Behavior sections)
-- [ ] T014 Device state management and attributes (from data-model.md Device Attributes)
-- [ ] T015 Error handling and logging for device operations
-- [ ] T016 [P] Incremental build validation using `build_simics_project(project_path="./simics-project", module="DEVICE_NAME")`
+
+**CRITICAL PRINCIPLES** (Apply to all Simics tasks below):
+- Focus on **software-visible behaviors** - Simics is a functional simulator
+- Omit low-level internal hardware logic irrelevant to software
+- Device need not be 100% identical to physical device
+- Internal parts invisible to software can be simplified
+- **MANDATORY**: All `register`s MUST be 100% correct (visible to software/outside world)
+- Hardware-layer protocols NOT needed - this is software emulation
+- Memory read/write MUST use Simics `transact()` method
+- DO NOT use your own knowledge - refer to MCP tool information
+- Remind yourself of Simics concepts and DML syntax before each task
+
+**Implementation Tasks:**
+- [ ] T008 [P] Define ALL registers in simics-project/modules/device-name/device-name.dml
+      * Declare all `register`s, `port`s, `connect`s from data-model.md
+      * Reference original spec in comments for each register
+      * Leave side effects unimplemented (use `unimpl`) with clear comments
+      * Separate register declarations from logic
+      * List unclear/questionable spec parts in top comment
+      * Use pageindex_rag_query_drm for DML syntax validation
+- [ ] T009 [P] Implement register-specific logic (read/write methods)
+      * Implement `write_register()` and `read_register()` methods (or `read()`/`write()`)
+      * Add spec references in comments for each implementation
+      * Use `attribute`s for internal state, runtime config, checkpointing
+      * DO NOT use magic numbers in return values
+      * Keep side effects in methods, not inline
+- [ ] T010 [P] Add interface declarations in device-name.dml
+      * Implement `interface`s in `connect` for device communication
+      * Memory interfaces using `transact()`
+      * Interrupt lines, links, and external connections
+      * Use `template`s from "utility.dml" to minimize redundancy
+      * Reference data-model.md Interfaces section
+- [ ] T011 [P] Build and validate register structure using `build_simics_project(project_path="./simics-project", module="DEVICE_NAME")`
+      * Fix syntax errors from build output
+      * Iterate until clean build
+- [ ] T012 Implement remaining functionality and side effects
+      * Complete all clearly stated side effects from spec
+      * Trigger external methods for complex actions (not inline)
+      * Leave unclear logic as `TODO` with comments at top of file
+      * Reference original spec text in all implementation comments
+- [ ] T013 Add event handling for asynchronous operations
+      * Define `event`s for deferred operations (polling, etc.)
+      * No events needed for immediate reactions
+      * Ensure state management for checkpointing/restoration
+- [ ] T014 Implement device workflows and state transitions
+      * From data-model.md Device State and State Transitions
+      * Use common `method`s for reusable code
+      * Simplify internal behavior as long as external state is correct
+      * Example: Counter doesn't need actual ticking - just expected state and interrupt
+- [ ] T015 Error handling and unimplemented features
+      * Mark all unimplemented parts with `TODO` in top file comment
+      * DO NOT implement unclear or conflicting spec parts
+      * Add logging for device operations
+- [ ] T016 [P] Final build validation using `build_simics_project(project_path="./simics-project", module="DEVICE_NAME")`
+      * Verify all registers implemented
+      * Confirm no syntax errors
+      * Validate against spec completeness
 
 ## Phase 3.4: Integration
 - [ ] T015 Connect UserService to DB
