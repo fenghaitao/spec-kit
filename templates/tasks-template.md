@@ -50,16 +50,11 @@
 - [ ] T003 [P] Configure linting and formatting tools
 
 **Simics Setup Example:**
-- [ ] T001 Verify simics-mcp-server connection and Simics installation using `get_simics_version()`
-- [ ] T002 Create Simics project structure using `create_simics_project(project_path="./simics-project")`
-- [ ] T003 Add device skeleton using `add_dml_device_skeleton(project_path="./simics-project", device_name="DEVICE_NAME")`
-- [ ] T004 [P] Verify project structure and build system using `build_simics_project(project_path="./simics-project", module="DEVICE_NAME")`
-- [ ] T005 **MANDATORY**: Access DML 1.4 reference documentation using `pageindex_rag_query_drm(string)`
-- [ ] T006 **MANDATORY**: Access Model Builder User Guide using `pageindex_rag_query_model_builder(string)`
-- [ ] T007 **MANDATORY**: Retrieve I2C device example using `get_simics_device_example_i2c()` for reference patterns
-- [ ] T008 **MANDATORY**: Retrieve DS12887 device example using `get_simics_device_example_ds12887()` for advanced patterns
-- [ ] T009 **CRITICAL**: Study and document the retrieved documentation and examples before proceeding to test or implementation phases
-- [ ] T010 **VALIDATION**: Verify that documentation and examples have been successfully retrieved and analyzed
+- [ ] T001 Create Simics project structure using `create_simics_project(project_path="./simics-project")`
+- [ ] T002 Add device skeleton using `add_dml_device_skeleton(project_path="./simics-project", device_name="DEVICE_NAME")`
+- [ ] T003 [P] Verify project structure and build system using `build_simics_project(project_path="./simics-project", module="DEVICE_NAME")`
+
+**NOTE**: Discovery and documentation MCP tools (`get_simics_version()`, `list_installed_packages()`, `list_simics_platforms()`, `pageindex_rag_query_drm(string)`, ``pageindex_rag_query_model_builder(string)`, `get_simics_dml_template()`, `get_simics_device_example_i2c()`, `get_simics_device_example_ds12887()`) were already executed during Phase 0 of /plan command. Their outputs are documented in research.md and informed the design in data-model.md and contracts/.
 
 ## Phase 3.2: Tests First (TDD) ⚠️ MUST COMPLETE BEFORE 3.3
 **CRITICAL: These tests MUST be written and MUST FAIL before ANY implementation**
@@ -69,10 +64,10 @@
 - [ ] T007 [P] Integration test auth flow in tests/integration/test_auth.py
 
 **Simics TDD Example:**
-- [ ] T011 [P] Register access test in simics-project/modules/device-name/test/s-registers.py (use python_test_samples_path from device examples for patterns)
-- [ ] T012 [P] Interface behavior test in simics-project/modules/device-name/test/s-interfaces.py
-- [ ] T013 [P] Device workflow test in simics-project/modules/device-name/test/s-device-name.py (main test file)
-- [ ] T014 [P] Set up and validate test environment using `run_simics_test(project_path="./simics-project", suite="modules/DEVICE_NAME/test")`
+- [ ] T004 [P] Register access test in simics-project/modules/device-name/test/s-registers.py (using test patterns from research.md python_test_samples_path analysis)
+- [ ] T005 [P] Interface behavior test in simics-project/modules/device-name/test/s-interfaces.py
+- [ ] T006 [P] Device workflow test in simics-project/modules/device-name/test/s-device-name.py (main test file)
+- [ ] T007 [P] Validate tests fail as expected using `run_simics_test(project_path="./simics-project", suite="modules/DEVICE_NAME/test")`
 
 ## Phase 3.3: Core Implementation (ONLY after tests are failing)
 - [ ] T008 [P] User model in src/models/user.py
@@ -84,15 +79,15 @@
 - [ ] T014 Error handling and logging
 
 **Simics Implementation Example:**
-- [ ] T015 [P] Register definitions in simics-project/modules/device-name/registers.dml
-- [ ] T016 [P] Interface declarations in simics-project/modules/device-name/interfaces.dml
-- [ ] T017 [P] Utility methods in simics-project/modules/device-name/utility.dml
-- [ ] T018 [P] Build device module using `build_simics_project(project_path="./simics-project", module="DEVICE_NAME")`
-- [ ] T019 Main device structure in simics-project/modules/device-name/device-name.dml
-- [ ] T020 Register read/write logic implementation
-- [ ] T021 Device state management and attributes
-- [ ] T022 Error handling and logging for device operations
-- [ ] T023 [P] Incremental build validation using `build_simics_project(project_path="./simics-project", module="DEVICE_NAME")`
+- [ ] T008 [P] Register definitions in simics-project/modules/device-name/registers.dml (from data-model.md Register Definitions)
+- [ ] T009 [P] Interface declarations in simics-project/modules/device-name/interfaces.dml (from data-model.md Interfaces)
+- [ ] T010 [P] Utility methods in simics-project/modules/device-name/utility.dml
+- [ ] T011 [P] Build device module using `build_simics_project(project_path="./simics-project", module="DEVICE_NAME")`
+- [ ] T012 Main device structure in simics-project/modules/device-name/device-name.dml (from data-model.md Device State)
+- [ ] T013 Register read/write logic implementation (from data-model.md Behavior sections)
+- [ ] T014 Device state management and attributes (from data-model.md Device Attributes)
+- [ ] T015 Error handling and logging for device operations
+- [ ] T016 [P] Incremental build validation using `build_simics_project(project_path="./simics-project", module="DEVICE_NAME")`
 
 ## Phase 3.4: Integration
 - [ ] T015 Connect UserService to DB
@@ -101,12 +96,12 @@
 - [ ] T018 CORS and security headers
 
 **Simics Integration Example:**
-- [ ] T024 Connect device to memory interface using transact() methods
-- [ ] T025 Implement interrupt line connections and events
-- [ ] T026 Add external port communications and protocols
-- [ ] T027 Integrate with Simics checkpointing and state management
-- [ ] T028 [P] Validate integration with `build_simics_project(project_path="./simics-project")`
-- [ ] T029 [P] Run comprehensive tests using `run_simics_test(project_path="./simics-project", suite="modules/DEVICE_NAME/test")`
+- [ ] T017 Connect device to memory interface using transact() methods (from data-model.md Interfaces)
+- [ ] T018 Implement interrupt line connections and events (from data-model.md External Interfaces)
+- [ ] T019 Add external port communications and protocols
+- [ ] T020 Integrate with Simics checkpointing and state management (from data-model.md State Transitions)
+- [ ] T021 [P] Validate integration with `build_simics_project(project_path="./simics-project")`
+- [ ] T022 [P] Run comprehensive tests using `run_simics_test(project_path="./simics-project", suite="modules/DEVICE_NAME/test")`
 
 ## Phase 3.5: Polish
 - [ ] T019 [P] Unit tests for validation in tests/unit/test_validation.py
@@ -121,16 +116,14 @@
 - T016 blocks T018
 - Implementation before polish (T019-T023)
 ### Simics Dependencies
-- MCP server connection (T001) before project creation (T002)
-- Project structure (T002) before device skeleton (T003)
-- Device skeleton (T003) before build validation (T004)
-- Build validation (T004) before documentation access (T005-T008)
-- Documentation access (T005-T008) before study phase (T009)
-- Documentation study (T009) before validation (T010)
-- Validation (T010) before register tests (T011-T014)
-- Register tests (T011-T014) before implementation (T015-T023)
-- Device implementation (T015-T023) before integration (T024-T029)
-- Integration validation (T028-T029) before polish tasks
+- Project creation (T001) before device skeleton (T002)
+- Device skeleton (T002) before build validation (T003)
+- Build validation (T003) before tests (T004-T007)
+- Tests (T004-T007) before implementation (T008-T016)
+- Device implementation (T008-T016) before integration (T017-T022)
+- Integration validation (T021-T022) before polish tasks
+
+**NOTE**: Phase 0 MCP tools (`get_simics_version()`, `list_installed_packages()`, `list_simics_platforms()`, documentation and example tools) already executed during /plan phase - their outputs in research.md inform all subsequent tasks.
 
 ## Parallel Example
 ```
@@ -186,26 +179,29 @@ Task: "Integration test auth in tests/integration/test_auth.py"
 - [ ] Build validation tasks after implementation changes
 - [ ] Test execution tasks use appropriate suite parameter
 - [ ] Device name consistently used across MCP tool calls
+- [ ] Phase 0 MCP tool outputs from research.md correctly referenced in tasks
 
-## Critical MCP Tool Execution Gate
-**⚠️ MANDATORY: These MCP tools MUST be executed before proceeding to Phase 3.2 (Tests)**
+## Phase 0 Prerequisites (Simics Projects)
+**✅ These MCP tools were already executed during /plan Phase 0:**
 
-### Pre-Test Phase Gate Checklist:
-- [ ] **GATE T007**: `get_simics_device_example_i2c()` has been successfully executed and returned valid I2C device example code
-- [ ] **GATE T008**: `get_simics_device_example_ds12887()` has been successfully executed and returned valid DS12887 device example code
-- [ ] **GATE T009**: Retrieved documentation and examples have been studied and documented for reference during implementation
-- [ ] **GATE T010**: Validation confirms that all MCP tools returned non-empty, valid content
+The following discovery and documentation MCP tools completed in Phase 0 and their outputs are in research.md:
+- `get_simics_version()` - Environment discovery
+- `list_installed_packages()` - Package validation
+- `list_simics_platforms()` - Platform discovery
+- `pageindex_rag_query_drm(string)` - DML language reference
+- `pageindex_rag_query_model_builder(string)` - Modeling patterns
+- `get_simics_dml_template()` - Base device structure
+- `get_simics_device_example_i2c()` - Reference implementation patterns
+- `get_simics_device_example_ds12887()` - Advanced patterns
+- Test patterns extracted from python_test_samples_path
 
-### Execution Validation Rules:
-1. **Immediate Execution**: When T005-T008 are encountered, the MCP functions MUST be called immediately
-2. **Success Verification**: Each MCP call must return valid content before marking task complete
-3. **Documentation Required**: Results must be saved and documented for later reference
-4. **python_test_samples_path Access**: Device examples must include access to test sample paths for TDD phase
-5. **Blocking Dependency**: No Phase 3.2+ tasks can proceed until ALL setup MCP tools are successfully executed
+**These outputs informed:**
+- data-model.md register and interface definitions
+- contracts/ test specifications
+- Task generation in this file
 
-### Common Execution Failures:
-- ❌ **Stating intention without execution**: "Let's call get_simics_device_example_i2c" without actually invoking it
-- ❌ **Skipping to file operations**: Moving to task file updates instead of executing MCP calls
-- ❌ **Assuming completion**: Marking tasks complete without verifying MCP tool execution
-- ❌ **Ignoring test samples**: Not accessing python_test_samples_path from device examples
-- ✅ **Correct approach**: Execute MCP function → Verify result → Access test samples → Document output → Mark complete
+**Only implementation MCP tools remain** for Phase 3:
+- `create_simics_project()` (T001)
+- `add_dml_device_skeleton()` (T002)
+- `build_simics_project()` (T003, T011, T016, T021)
+- `run_simics_test()` (T007, T022)
