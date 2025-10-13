@@ -59,8 +59,10 @@
 - [ ] T007 **MANDATORY**: Retrieve DML template using `get_simics_dml_template()` for base device structure patterns
 - [ ] T008 **MANDATORY**: Retrieve I2C device example using `get_simics_device_example_i2c()` for reference patterns
 - [ ] T009 **MANDATORY**: Retrieve DS12887 device example using `get_simics_device_example_ds12887()` for advanced patterns
-- [ ] T010 **CRITICAL**: Study and document the retrieved documentation, examples, and DML template before proceeding to test or implementation phases
-- [ ] T011 **VALIDATION**: Verify that documentation and examples have been successfully retrieved and analyzed
+- [ ] T010 **RAG SEARCH**: Use `perform_rag_query("DML device implementation patterns", source_type="source", match_count=5)` for additional examples
+- [ ] T011 **RAG SEARCH**: Use `perform_rag_query("Simics register modeling", source_type="dml", match_count=5)` for register-specific guidance
+- [ ] T012 **CRITICAL**: Study and document the retrieved documentation, examples, DML template, and RAG search results before proceeding to test or implementation phases
+- [ ] T013 **VALIDATION**: Verify that documentation, examples, and RAG searches have been successfully retrieved and analyzed
 
 ## Phase 3.2: Tests First (TDD) ⚠️ MUST COMPLETE BEFORE 3.3
 **CRITICAL: These tests MUST be written and MUST FAIL before ANY implementation**
@@ -70,10 +72,11 @@
 - [ ] T007 [P] Integration test auth flow in tests/integration/test_auth.py
 
 **Simics TDD Example:**
-- [ ] T012 [P] Register access test in simics-project/modules/device-name/test/s-registers.py (use python_test_samples_path from device examples for patterns)
-- [ ] T013 [P] Interface behavior test in simics-project/modules/device-name/test/s-interfaces.py
-- [ ] T014 [P] Device workflow test in simics-project/modules/device-name/test/s-device-name.py (main test file)
-- [ ] T015 [P] Set up and validate test environment using `run_simics_test(project_path="./simics-project", suite="modules/DEVICE_NAME/test")`
+- [ ] T014 [P] **RAG SEARCH**: Use `perform_rag_query("Simics Python test patterns", source_type="python", match_count=5)` for test examples
+- [ ] T015 [P] Register access test in simics-project/modules/device-name/test/s-registers.py (use python_test_samples_path from device examples and RAG results for patterns)
+- [ ] T016 [P] Interface behavior test in simics-project/modules/device-name/test/s-interfaces.py
+- [ ] T017 [P] Device workflow test in simics-project/modules/device-name/test/s-device-name.py (main test file)
+- [ ] T018 [P] Set up and validate test environment using `run_simics_test(project_path="./simics-project", suite="modules/DEVICE_NAME/test")`
 
 ## Phase 3.3: Core Implementation (ONLY after tests are failing)
 - [ ] T008 [P] User model in src/models/user.py
@@ -85,15 +88,17 @@
 - [ ] T014 Error handling and logging
 
 **Simics Implementation Example:**
-- [ ] T016 [P] Register definitions in simics-project/modules/device-name/registers.dml
-- [ ] T017 [P] Interface declarations in simics-project/modules/device-name/interfaces.dml
-- [ ] T018 [P] Utility methods in simics-project/modules/device-name/utility.dml
-- [ ] T019 [P] Build device module using `build_simics_project(project_path="./simics-project", module="DEVICE_NAME")`
-- [ ] T020 Main device structure in simics-project/modules/device-name/device-name.dml
-- [ ] T021 Register read/write logic implementation
-- [ ] T022 Device state management and attributes
-- [ ] T023 Error handling and logging for device operations
-- [ ] T024 [P] Incremental build validation using `build_simics_project(project_path="./simics-project", module="DEVICE_NAME")`
+- [ ] T019 [P] **RAG SEARCH**: Use `perform_rag_query("DML register implementation", source_type="dml", match_count=5)` for implementation patterns
+- [ ] T020 [P] Register definitions in simics-project/modules/device-name/registers.dml
+- [ ] T021 [P] Interface declarations in simics-project/modules/device-name/interfaces.dml
+- [ ] T022 [P] Utility methods in simics-project/modules/device-name/utility.dml
+- [ ] T023 [P] Build device module using `build_simics_project(project_path="./simics-project", module="DEVICE_NAME")`
+- [ ] T024 Main device structure in simics-project/modules/device-name/device-name.dml
+- [ ] T025 **RAG SEARCH**: Use `perform_rag_query("device state management Simics", source_type="source", match_count=5)` for state handling patterns
+- [ ] T026 Register read/write logic implementation
+- [ ] T027 Device state management and attributes
+- [ ] T028 Error handling and logging for device operations
+- [ ] T029 [P] Incremental build validation using `build_simics_project(project_path="./simics-project", module="DEVICE_NAME")`
 
 ## Phase 3.4: Integration
 - [ ] T015 Connect UserService to DB
@@ -102,12 +107,13 @@
 - [ ] T018 CORS and security headers
 
 **Simics Integration Example:**
-- [ ] T025 Connect device to memory interface using transact() methods
-- [ ] T026 Implement interrupt line connections and events
-- [ ] T027 Add external port communications and protocols
-- [ ] T028 Integrate with Simics checkpointing and state management
-- [ ] T029 [P] Validate integration with `build_simics_project(project_path="./simics-project")`
-- [ ] T030 [P] Run comprehensive tests using `run_simics_test(project_path="./simics-project", suite="modules/DEVICE_NAME/test")`
+- [ ] T030 **RAG SEARCH**: Use `perform_rag_query("Simics device interface integration", source_type="docs", match_count=5)` for integration patterns
+- [ ] T031 Connect device to memory interface using transact() methods
+- [ ] T032 Implement interrupt line connections and events
+- [ ] T033 Add external port communications and protocols
+- [ ] T034 Integrate with Simics checkpointing and state management
+- [ ] T035 [P] Validate integration with `build_simics_project(project_path="./simics-project")`
+- [ ] T036 [P] Run comprehensive tests using `run_simics_test(project_path="./simics-project", suite="modules/DEVICE_NAME/test")`
 
 ## Phase 3.5: Polish
 - [ ] T019 [P] Unit tests for validation in tests/unit/test_validation.py
@@ -126,12 +132,16 @@
 - Project structure (T002) before device skeleton (T003)
 - Device skeleton (T003) before build validation (T004)
 - Build validation (T004) before documentation access (T005-T009)
-- Documentation access (T005-T009) before study phase (T010)
-- Documentation study (T010) before validation (T011)
-- Validation (T011) before register tests (T012-T015)
-- Register tests (T012-T015) before implementation (T016-T024)
-- Device implementation (T016-T024) before integration (T025-T030)
-- Integration validation (T029-T030) before polish tasks
+- Documentation access (T005-T009) before RAG searches (T010-T011)
+- RAG searches (T010-T011) before study phase (T012)
+- Documentation study (T012) before validation (T013)
+- Validation (T013) before test RAG search (T014)
+- Test RAG search (T014) before register tests (T015-T018)
+- Register tests (T015-T018) before implementation RAG searches (T019, T025)
+- Implementation RAG searches before actual implementation (T020-T029)
+- Device implementation (T020-T029) before integration RAG search (T030)
+- Integration RAG search (T030) before integration tasks (T031-T036)
+- Integration validation (T035-T036) before polish tasks
 
 ## Parallel Example
 ```
@@ -187,6 +197,9 @@ Task: "Integration test auth in tests/integration/test_auth.py"
 - [ ] Build validation tasks after implementation changes
 - [ ] Test execution tasks use appropriate suite parameter
 - [ ] Device name consistently used across MCP tool calls
+- [ ] RAG searches use appropriate source_type for each phase
+- [ ] RAG search results documented before proceeding to implementation
+- [ ] match_count parameter set to 5 for all searches
 
 ## Critical MCP Tool Execution Gate
 **⚠️ MANDATORY: These MCP tools MUST be executed before proceeding to Phase 3.2 (Tests)**
@@ -197,19 +210,23 @@ Task: "Integration test auth in tests/integration/test_auth.py"
 - [ ] **GATE T007**: `get_simics_dml_template()` has been successfully executed and returned valid DML template code
 - [ ] **GATE T008**: `get_simics_device_example_i2c()` has been successfully executed and returned valid I2C device example code
 - [ ] **GATE T009**: `get_simics_device_example_ds12887()` has been successfully executed and returned valid DS12887 device example code
-- [ ] **GATE T010**: Retrieved documentation, examples, and DML template have been studied and documented for reference during implementation
-- [ ] **GATE T011**: Validation confirms that all MCP tools returned non-empty, valid content
+- [ ] **GATE T010**: `perform_rag_query()` executed for DML device patterns with valid results
+- [ ] **GATE T011**: `perform_rag_query()` executed for Simics register modeling with valid results
+- [ ] **GATE T012**: Retrieved documentation, examples, DML template, and RAG search results have been studied and documented for reference during implementation
+- [ ] **GATE T013**: Validation confirms that all MCP tools and RAG searches returned non-empty, valid content
 
 ### Execution Validation Rules:
-1. **Immediate Execution**: When T005-T009 are encountered, the MCP functions MUST be called immediately
-2. **Success Verification**: Each MCP call must return valid content before marking task complete
+1. **Immediate Execution**: When T005-T011 are encountered, the MCP functions and RAG searches MUST be called immediately
+2. **Success Verification**: Each MCP call and RAG search must return valid content before marking task complete
 3. **Documentation Required**: Results must be saved and documented for later reference
 4. **python_test_samples_path Access**: Device examples must include access to test sample paths for TDD phase
-5. **Blocking Dependency**: No Phase 3.2+ tasks can proceed until ALL setup MCP tools are successfully executed
+5. **RAG Search Parameters**: Use appropriate source_type and match_count=5 for all searches
+6. **Blocking Dependency**: No Phase 3.2+ tasks can proceed until ALL setup MCP tools and RAG searches are successfully executed
 
 ### Common Execution Failures:
-- ❌ **Stating intention without execution**: "Let's call get_simics_device_example_i2c" without actually invoking it
-- ❌ **Skipping to file operations**: Moving to task file updates instead of executing MCP calls
-- ❌ **Assuming completion**: Marking tasks complete without verifying MCP tool execution
+- ❌ **Stating intention without execution**: "Let's call get_simics_device_example_i2c" or "Let's search with RAG" without actually invoking
+- ❌ **Skipping to file operations**: Moving to task file updates instead of executing MCP calls and RAG searches
+- ❌ **Assuming completion**: Marking tasks complete without verifying MCP tool and RAG execution
 - ❌ **Ignoring test samples**: Not accessing python_test_samples_path from device examples
-- ✅ **Correct approach**: Execute MCP function → Verify result → Access test samples → Document output → Mark complete
+- ❌ **Wrong source_type**: Using source_type="all" when specific type (dml/python/source) would be more appropriate
+- ✅ **Correct approach**: Execute MCP function/RAG search → Verify result → Access test samples → Document output → Mark complete

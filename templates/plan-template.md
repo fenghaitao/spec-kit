@@ -191,17 +191,24 @@ directories captured above]
 3. **Execute discovery MCP tools immediately** (for Simics projects):
    - **Environment tools**: `get_simics_version()` and `list_installed_packages()` are MANDATORY
    - **Documentation tools**: Only if needed to resolve NEEDS CLARIFICATION for architectural decisions
+   - **RAG documentation search**: Use `perform_rag_query(query, source_type, match_count)` to search Simics documentation
+     * `source_type="dml"` - Search Simics DML device modeling examples
+     * `source_type="python"` - Search Simics device Python test cases
+     * `source_type="source"` - Search both DML and Python sources
+     * `source_type="docs"` - Search general Simics documentation
+     * `source_type="all"` - Search all available sources
    - **DO NOT execute implementation tools**: `create_simics_project()`, `add_dml_device_skeleton()`, `build_simics_project()`, etc. belong in /implement phase
-   - Include MCP tool outputs directly in research.md to inform design decisions
+   - Include MCP tool outputs and RAG findings directly in research.md to inform design decisions
    - **Purpose**: Gather information needed for planning, not create implementation artifacts
 
 4. **Consolidate findings** in `research.md` using format:
    - Decision: [what was chosen]
    - Rationale: [why chosen]
    - Alternatives considered: [what else evaluated]
-   - **Simics projects**: Include device architecture decisions, MCP tool outputs, and abstraction strategy
+   - **Simics projects**: Include device architecture decisions, MCP tool outputs, RAG search results, and abstraction strategy
+   - **RAG findings**: Document relevant code examples, API patterns, and best practices discovered
 
-**Output**: research.md with all NEEDS CLARIFICATION resolved and MCP tool outputs documented
+**Output**: research.md with all NEEDS CLARIFICATION resolved, MCP tool outputs, and RAG documentation search results documented
 
 ## Phase 1: Design & Contracts
 *Prerequisites: research.md complete*
@@ -217,6 +224,7 @@ directories captured above]
    - Use standard REST/GraphQL patterns
    - Output OpenAPI/GraphQL schema to `/contracts/`
    - **Simics projects**: Register access contracts and interface specifications using device examples from `get_simics_device_example_i2c()`, `get_simics_device_example_ds12887()`, and `get_simics_dml_template()` MCP tools
+   - **RAG support**: Use `perform_rag_query("register interface patterns", source_type="source")` for additional implementation examples
 
 3. **Generate contract tests** from contracts:
    - One test file per endpoint
@@ -343,6 +351,15 @@ directories captured above]
 - [ ] MCP tool outputs incorporated into research.md
 - [ ] Environmental constraints documented for /implement phase
 - [ ] **Implementation MCP tools NOT executed** (reserved for /implement phase)
+
+**RAG Documentation Search Status** (if Project Type = simics):
+- [ ] `perform_rag_query()` used for DML-specific research (source_type="dml")
+- [ ] `perform_rag_query()` used for Python API research (source_type="python")
+- [ ] `perform_rag_query()` used for implementation patterns (source_type="source")
+- [ ] `perform_rag_query()` used for architectural guidance (source_type="docs")
+- [ ] RAG search results documented in research.md
+- [ ] Code examples and patterns extracted from RAG results
+- [ ] Best practices identified and incorporated into design decisions
 
 ---
 *Based on Constitution v2.1.1 - See `/memory/constitution.md`*
