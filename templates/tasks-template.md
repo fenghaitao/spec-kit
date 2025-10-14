@@ -91,14 +91,13 @@
 - [ ] T019 [P] **RAG SEARCH**: Use `perform_rag_query("DML register implementation", source_type="dml", match_count=5)` for implementation patterns
 - [ ] T020 [P] Register definitions in simics-project/modules/device-name/registers.dml
 - [ ] T021 [P] Interface declarations in simics-project/modules/device-name/interfaces.dml
-- [ ] T022 [P] Utility methods in simics-project/modules/device-name/utility.dml
-- [ ] T023 [P] Build device module using `build_simics_project(project_path="./simics-project", module="DEVICE_NAME")`
-- [ ] T024 Main device structure in simics-project/modules/device-name/device-name.dml
-- [ ] T025 **RAG SEARCH**: Use `perform_rag_query("device state management Simics", source_type="source", match_count=5)` for state handling patterns
-- [ ] T026 Register read/write logic implementation
-- [ ] T027 Device state management and attributes
-- [ ] T028 Error handling and logging for device operations
-- [ ] T029 [P] Incremental build validation using `build_simics_project(project_path="./simics-project", module="DEVICE_NAME")`
+- [ ] T022 [P] Build device module using `build_simics_project(project_path="./simics-project", module="DEVICE_NAME")`
+- [ ] T023 Main device structure in simics-project/modules/device-name/device-name.dml
+- [ ] T024 **RAG SEARCH**: Use `perform_rag_query("device state management Simics", source_type="source", match_count=5)` for state handling patterns
+- [ ] T025 Register read/write logic implementation
+- [ ] T026 Device state management and attributes
+- [ ] T027 Error handling and logging for device operations
+- [ ] T028 [P] Incremental build validation using `build_simics_project(project_path="./simics-project", module="DEVICE_NAME")`
 
 ## Phase 3.4: Integration
 - [ ] T015 Connect UserService to DB
@@ -107,12 +106,13 @@
 - [ ] T018 CORS and security headers
 
 **Simics Integration Example:**
-- [ ] T030 **RAG SEARCH**: Use `perform_rag_query("Simics device interface integration", source_type="docs", match_count=5)` for integration patterns
-- [ ] T031 Connect device to memory interface using transact() methods
-- [ ] T032 Implement interrupt line connections and events
-- [ ] T033 Add external port communications and protocols
-- [ ] T034 Integrate with Simics checkpointing and state management
-- [ ] T035 [P] Validate integration with `build_simics_project(project_path="./simics-project")`
+- [ ] T029 **RAG SEARCH**: Use `perform_rag_query("Simics device interface integration", source_type="docs", match_count=5)` for integration patterns
+- [ ] T030 Connect device to memory interface using transact() methods
+- [ ] T031 Implement interrupt line connections and events
+- [ ] T032 Add external port communications and protocols
+- [ ] T033 Integrate with Simics checkpointing and state management
+- [ ] T034 [P] Validate integration with `build_simics_project(project_path="./simics-project")`
+- [ ] T035 [P] Run comprehensive tests using `run_simics_test(project_path="./simics-project", suite="modules/DEVICE_NAME/test")`
 - [ ] T036 [P] Run comprehensive tests using `run_simics_test(project_path="./simics-project", suite="modules/DEVICE_NAME/test")`
 
 ## Phase 3.5: Polish
@@ -137,11 +137,11 @@
 - Documentation study (T012) before validation (T013)
 - Validation (T013) before test RAG search (T014)
 - Test RAG search (T014) before register tests (T015-T018)
-- Register tests (T015-T018) before implementation RAG searches (T019, T025)
-- Implementation RAG searches before actual implementation (T020-T029)
-- Device implementation (T020-T029) before integration RAG search (T030)
-- Integration RAG search (T030) before integration tasks (T031-T036)
-- Integration validation (T035-T036) before polish tasks
+- Register tests (T015-T018) before implementation RAG searches (T019, T024)
+- Implementation RAG searches before actual implementation (T020-T028)
+- Device implementation (T020-T028) before integration RAG search (T029)
+- Integration RAG search (T029) before integration tasks (T030-T035)
+- Integration validation (T034-T035) before polish tasks
 
 ## Parallel Example
 ```
@@ -165,12 +165,12 @@ Task: "Integration test auth in tests/integration/test_auth.py"
    - Each contract file → contract test task [P]
    - Each endpoint → implementation task
    - **Simics**: Each register interface → register test task [P]
-   
+
 2. **From Data Model**:
    - Each entity → model creation task [P]
    - Relationships → service layer tasks
    - **Simics**: Each register group → DML file task [P]
-   
+
 3. **From User Stories**:
    - Each story → integration test [P]
    - Quickstart scenarios → validation tasks
@@ -230,3 +230,16 @@ Task: "Integration test auth in tests/integration/test_auth.py"
 - ❌ **Ignoring test samples**: Not accessing python_test_samples_path from device examples
 - ❌ **Wrong source_type**: Using source_type="all" when specific type (dml/python/source) would be more appropriate
 - ✅ **Correct approach**: Execute MCP function/RAG search → Verify result → Access test samples → Document output → Mark complete
+
+**Simics Error Recovery Rules:**
+1. **If `build_simics_project` fails with syntax error**:
+   - Extract the syntax error keyword from the error message
+   - Call `perform_rag_query(query="Examples of [syntax_error_keyword] in Simics DML 1.4", source_type="dml")`
+   - Study the returned examples before attempting to fix the DML files
+   - Example: For "unknown attribute" error → query "Examples of unknown attribute in Simics DML 1.4"
+
+2. **If `run_simics_test` fails**:
+   - Extract the failure keyword from the test output
+   - Call `perform_rag_query(query="Example of [test_failure_keyword] in Simics Python tests", source_type="python")`
+   - Study the returned test examples before attempting to fix the tests
+   - Example: For "AttributeError" → query "Example of AttributeError in Simics Python tests"
