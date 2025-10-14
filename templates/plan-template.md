@@ -179,12 +179,12 @@ directories captured above]
    If Project Type = simics:
      Task: "MANDATORY: Execute `get_simics_version()` MCP tool to resolve environment NEEDS CLARIFICATION"
      Task: "MANDATORY: Execute `list_installed_packages()` MCP tool to resolve package dependencies NEEDS CLARIFICATION"
-     Task: "IF DML syntax is NEEDS CLARIFICATION: Execute `get_simics_dml_template()` MCP tool first and then `get_simics_dml_1_4_reference_manual()` MCP tool for language reference"
-     Task: "IF modeling approach is NEEDS CLARIFICATION: Execute `get_simics_model_builder_user_guide()` MCP tool for patterns"
-     Task: "IF similar implementations needed for decisions: Execute `get_simics_device_example_i2c()` or `get_simics_device_example_ds12887()` MCP tools"
-     Task: "Research Simics API for memory operations and interfaces (from documentation)"
+     Task: "IF DML syntax is NEEDS CLARIFICATION: Use `perform_rag_query(query='DML 1.4 syntax and language features', source_type='dml')` for language reference and code examples"
+     Task: "IF modeling approach is NEEDS CLARIFICATION: Use `perform_rag_query(query='device modeling patterns and best practices', source_type='dml')` for architectural guidance"
+     Task: "IF implementation examples needed: Use `perform_rag_query(query='[specific feature] implementation examples', source_type='source')` to search both DML and Python sources"
+     Task: "Research Simics API for memory operations and interfaces using `perform_rag_query(query='memory operations and interface specifications', source_type='dml')`"
      Task: "Analyze hardware specification for register mapping requirements"
-     Task: "Document architectural decisions based on MCP tool findings"
+     Task: "Document architectural decisions based on RAG query findings"
      Task: "Validate constitutional compliance for device-first development approach"
    ```
 
@@ -216,13 +216,13 @@ directories captured above]
    - For each user action → endpoint
    - Use standard REST/GraphQL patterns
    - Output OpenAPI/GraphQL schema to `/contracts/`
-   - **Simics projects**: Register access contracts and interface specifications using device examples from `get_simics_device_example_i2c()`, `get_simics_device_example_ds12887()`, and `get_simics_dml_template()` MCP tools
+   - **Simics projects**: Register access contracts and interface specifications using `perform_rag_query(query='register access patterns and interface specifications', source_type='source')` for device examples and templates
 
 3. **Generate contract tests** from contracts:
    - One test file per endpoint
    - Assert request/response schemas
    - Tests must fail (no implementation yet)
-   - **Simics projects**: Register read/write behavior tests using `run_simics_test` MCP tool for validation; sample test patterns available from `get_simics_dml_template()` MCP tool and `get_simics_device_example_i2c()`, `get_simics_device_example_ds12887()` MCP tools via python_test_samples_path
+   - **Simics projects**: Register read/write behavior tests using `run_simics_test` MCP tool for validation; sample test patterns available via `perform_rag_query(query='Simics test patterns and examples', source_type='python')`
 
 4. **Extract test scenarios** from user stories:
    - Each story → integration test scenario
@@ -236,31 +236,31 @@ directories captured above]
    - **Use placeholders**: `[DEVICE_NAME]`, `[REGISTER_NAME]` for unknowns
    - **Include validation criteria**: What constitutes success for each step?
    - **Simics projects**: Focus on device behavior validation, not implementation commands
-   
+
    **Quickstart.md Structure**:
    ```
    # Quick Start: [FEATURE_NAME]
-   
+
    ## Goal
    [One sentence: What will users accomplish by following this guide?]
-   
+
    ## Prerequisites
    [Environment requirements from research.md - actual versions/packages found]
-   
+
    ## Validation Steps
    ### Step 1: [First User Story Validation]
    [What to do]
    **Expected Result**: [What should happen]
    **Success Criteria**: [How to verify it worked]
-   
+
    ### Step 2: [Second User Story Validation]
    [What to do - no implementation details, reference tasks that will create them]
    **Expected Result**: [What should happen]
    **Success Criteria**: [How to verify it worked]
-   
+
    ## Troubleshooting
    [Common failure modes and how to debug them]
-   
+
    ## Next Steps
    [References to contracts/, data-model.md, and tasks.md]
    ```
@@ -283,7 +283,7 @@ directories captured above]
 - Load `.specify/templates/tasks-template.md` as base
 - Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
 - Each contract → contract test task [P]
-- Each entity → model creation task [P] 
+- Each entity → model creation task [P]
 - Each user story → integration test task
 - Implementation tasks to make tests pass
 - **Simics projects**: Include implementation MCP tool tasks:
@@ -337,10 +337,10 @@ directories captured above]
 **Simics Discovery MCP Tool Status** (if Project Type = simics):
 - [ ] `get_simics_version()` executed and documented (MANDATORY)
 - [ ] `list_installed_packages()` executed and documented (MANDATORY)
-- [ ] `get_simics_dml_1_4_reference_manual()` executed (only if DML syntax was NEEDS CLARIFICATION)
-- [ ] `get_simics_model_builder_user_guide()` executed (only if modeling approach was NEEDS CLARIFICATION)
-- [ ] Device example tools executed (only if needed for architectural decisions)
-- [ ] MCP tool outputs incorporated into research.md
+- [ ] `perform_rag_query()` executed for DML syntax clarification (only if DML syntax was NEEDS CLARIFICATION)
+- [ ] `perform_rag_query()` executed for modeling patterns (only if modeling approach was NEEDS CLARIFICATION)
+- [ ] `perform_rag_query()` executed for implementation examples (only if needed for architectural decisions)
+- [ ] All RAG query results incorporated into research.md
 - [ ] Environmental constraints documented for /implement phase
 - [ ] **Implementation MCP tools NOT executed** (reserved for /implement phase)
 
