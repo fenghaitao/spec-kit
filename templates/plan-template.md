@@ -161,114 +161,439 @@ directories captured above]
 **IMPORTANT**: Simics projects must be created at repository root to separate source code from documentation. The specs/ folder contains only documentation artifacts (plan.md, tasks.md, etc.), while the simics-project/ folder at repo root contains the actual implementation.
 
 ## Phase 0: Outline & Research
-1. **Extract unknowns from Technical Context** above:
-   - For each NEEDS CLARIFICATION → research task
-   - For each dependency → best practices task
-   - For each integration → patterns task
 
-2. **Generate and dispatch research agents**:
-   ```
-   For each unknown in Technical Context:
-     Task: "Research {unknown} for {feature context}"
-   For each technology choice:
-     Task: "Find best practices for {tech} in {domain}"
-   ```
+### Step 0.1: Identify Research Needs
+Extract unknowns from Technical Context above:
+- For each NEEDS CLARIFICATION → research task
+- For each dependency → best practices task
+- For each integration → patterns task
 
-   **Simics-specific research tasks**:
-   ```
-   If Project Type = simics:
-     Task: "MANDATORY: Execute `get_simics_version()` MCP tool to resolve environment NEEDS CLARIFICATION"
-     Task: "MANDATORY: Execute `list_installed_packages()` MCP tool to resolve package dependencies NEEDS CLARIFICATION"
-     Task: "IF DML syntax is NEEDS CLARIFICATION: Execute `get_simics_dml_template()` MCP tool first and then `get_simics_dml_1_4_reference_manual()` MCP tool for language reference"
-     Task: "IF modeling approach is NEEDS CLARIFICATION: Execute `get_simics_model_builder_user_guide()` MCP tool for patterns"
-     Task: "IF similar implementations needed for decisions: Execute `get_simics_device_example_i2c()` or `get_simics_device_example_ds12887()` MCP tools"
-     Task: "Research Simics API for memory operations and interfaces (from documentation)"
-     Task: "Analyze hardware specification for register mapping requirements"
-     Task: "Document architectural decisions based on MCP tool findings"
-     Task: "Validate constitutional compliance for device-first development approach"
-   ```
+### Step 0.2: Execute Discovery MCP Tools (Simics Projects)
 
-3. **Execute discovery MCP tools immediately** (for Simics projects):
-   - **Environment tools**: `get_simics_version()` and `list_installed_packages()` are MANDATORY
-   - **Documentation tools**: Only if needed to resolve NEEDS CLARIFICATION for architectural decisions
-   - **RAG documentation search**: Use `perform_rag_query(query, source_type, match_count)` to search Simics documentation
-     * `source_type="dml"` - Search Simics DML device modeling examples
-     * `source_type="python"` - Search Simics device Python test cases
-     * `source_type="source"` - Search both DML and Python sources
-     * `source_type="docs"` - Search general Simics documentation
-     * `source_type="all"` - Search all available sources
-   - **DO NOT execute implementation tools**: `create_simics_project()`, `add_dml_device_skeleton()`, `build_simics_project()`, etc. belong in /implement phase
-   - Include MCP tool outputs and RAG findings directly in research.md to inform design decisions
-   - **Purpose**: Gather information needed for planning, not create implementation artifacts
+**MANDATORY for Simics projects - Execute these tools immediately**:
 
-4. **Consolidate findings** in `research.md` using format:
-   - Decision: [what was chosen]
-   - Rationale: [why chosen]
-   - Alternatives considered: [what else evaluated]
-   - **Simics projects**: Include device architecture decisions, MCP tool outputs, RAG search results, and abstraction strategy
-   - **RAG findings**: Document relevant code examples, API patterns, and best practices discovered
+1. **Environment Discovery** (MANDATORY):
+   - Execute `get_simics_version()` → resolve Simics Version NEEDS CLARIFICATION
+   - Execute `list_installed_packages()` → resolve Required Packages NEEDS CLARIFICATION
+   - Execute `list_simics_platforms()` → resolve Available Platforms NEEDS CLARIFICATION
+
+2. **Documentation Access** (if needed for architectural decisions):
+   - Execute `get_simics_dml_1_4_reference_manual()` → get DML 1.4 language reference
+   - Execute `get_simics_model_builder_user_guide()` → get device modeling patterns
+   - Execute `get_simics_dml_template()` → get base device structure patterns
+
+3. **Device Example Analysis** (if needed for implementation decisions):
+   - Execute `get_simics_device_example_i2c()` → get simple I2C device patterns
+   - Execute `get_simics_device_example_ds12887()` → get complex RTC device patterns
+
+4. **RAG Documentation Search** (optional but recommended):
+   - Use `perform_rag_query(query, source_type, match_count)` to search Simics documentation
+   - `source_type="dml"` for DML device modeling examples
+   - `source_type="python"` for Python test case patterns
+   - `source_type="source"` for combined DML and test examples
+   - `source_type="docs"` for general Simics documentation
+   - `source_type="all"` for comprehensive search
+
+**CRITICAL**: DO NOT execute implementation tools (`create_simics_project()`, `add_dml_device_skeleton()`, `build_simics_project()`) - those belong in Phase 3 (Implementation).
+
+### Step 0.3: Parse MCP Tool Outputs
+
+Extract key information from MCP tool JSON responses:
+- **get_simics_version()** → Extract Simics version for Technical Context
+- **list_installed_packages()** → Extract package list for Technical Context
+- **list_simics_platforms()** → Extract platform list for Technical Context
+- **Documentation tools** → Extract file paths for research.md references
+- **Device examples** → Extract pattern insights for architecture decisions
+- **RAG searches** → Extract code examples and best practices
+
+### Step 0.4: Create research.md File
+
+**MANDATORY**: Create `[SPECS_DIR]/research.md` with this exact structure:
+
+```markdown
+# Research: [FEATURE_NAME]
+
+## Environment Discovery
+
+### Simics Version
+[Document output from get_simics_version() - include version number]
+
+### Installed Packages
+[Document output from list_installed_packages() - list all packages with versions]
+
+### Available Platforms
+[Document output from list_simics_platforms() - list available simulation platforms]
+
+## Documentation Access
+
+### DML 1.4 Reference Manual
+[Document paths from get_simics_dml_1_4_reference_manual()]
+- Path: [manual_root_path]
+- Key files: [list important manual files]
+
+### Model Builder User Guide
+[Document paths from get_simics_model_builder_user_guide()]
+- Path: [guide_root_path]
+- Key sections: [list relevant guide sections]
+
+### DML Device Template
+[Document findings from get_simics_dml_template()]
+- Template path: [template_path]
+- Key patterns: [list important patterns observed]
+
+## Device Example Analysis
+
+### Simple I2C Device (button-i2c)
+[Document findings from get_simics_device_example_i2c()]
+- DML sample path: [dml_samples_path]
+- Test sample path: [python_test_samples_path]
+- Key patterns observed:
+  * [Pattern 1]
+  * [Pattern 2]
+- Relevant code structures: [describe]
+
+### Complex Device (DS12887 RTC)
+[Document findings from get_simics_device_example_ds12887()]
+- DML sample path: [dml_samples_path]
+- Test sample path: [python_test_samples_path]
+- Advanced patterns observed:
+  * [Pattern 1]
+  * [Pattern 2]
+- Architectural approaches: [describe]
+
+## Architecture Decisions
+
+[For each NEEDS CLARIFICATION in Technical Context, create an entry:]
+
+### Decision: [What was decided - e.g., "Use register bank template"]
+- **Rationale**: [Why this choice - based on MCP tool findings and device examples]
+- **Alternatives Considered**: [What else was evaluated]
+- **Source**: [Which MCP tool, device example, or RAG search informed this decision]
+- **Impact**: [How this affects implementation]
+
+## RAG Search Results
+
+[If perform_rag_query() was used, document findings:]
+
+### Search: [Query description]
+- **Query**: "[exact query string]"
+- **Source Type**: [dml/python/source/docs/all]
+- **Match Count**: [number of results]
+- **Key Findings**:
+  * [Finding 1 with code snippet or reference]
+  * [Finding 2 with code snippet or reference]
+- **Application**: [How findings will influence design decisions]
+
+## Implementation Strategy
+
+[Document overall approach based on research findings]
+
+### Device Architecture
+[High-level architecture based on examples and patterns]
+
+### Register Design Approach
+[Strategy for register implementation]
+
+### Test Strategy
+[Approach for testing based on example test patterns]
+
+### Next Steps
+[What Phase 1 should focus on based on research]
+```
+
+### Step 0.5: Update Technical Context in plan.md
+
+**MANDATORY**: Replace ALL "NEEDS CLARIFICATION" placeholders in the Technical Context section with actual discovered values:
+
+- **Simics Version**: Replace with actual version from `get_simics_version()`
+- **Required Packages**: Replace with list from `list_installed_packages()`
+- **Available Platforms**: Replace with list from `list_simics_platforms()`
+- Any other NEEDS CLARIFICATION items resolved through research
+
+### Step 0.6: Update Progress Tracking in plan.md
+
+**MANDATORY**: Update the Progress Tracking section at the end of plan.md. Mark these checkboxes:
+
+```markdown
+**Phase Status**:
+- [x] Phase 0: Research complete (/plan command)
+
+**Simics Discovery MCP Tool Status** (if Project Type = simics):
+- [x] `get_simics_version()` executed and documented (MANDATORY)
+- [x] `list_installed_packages()` executed and documented (MANDATORY)
+- [x] `list_simics_platforms()` executed and documented
+- [x] `get_simics_dml_1_4_reference_manual()` executed
+- [x] `get_simics_model_builder_user_guide()` executed
+- [x] Device example tools executed
+- [x] MCP tool outputs incorporated into research.md
+
+**RAG Documentation Search Status** (if performed):
+- [x] `perform_rag_query()` used for [purpose]
+- [x] RAG search results documented in research.md
+```
+
+### Step 0.7: Validation Checkpoint
+
+**MANDATORY**: Before proceeding to Phase 1, verify:
+- [ ] research.md file exists at `[SPECS_DIR]/research.md`
+- [ ] Technical Context in plan.md has NO "NEEDS CLARIFICATION" text
+- [ ] Progress Tracking shows Phase 0 marked complete
+- [ ] All MANDATORY MCP tool outputs are documented in research.md
+
+Use bash commands to verify:
+```bash
+ls -la [SPECS_DIR]/research.md
+grep "NEEDS CLARIFICATION" [SPECS_DIR]/plan.md
+```
+
+### Step 0.8: Announce Phase Completion
+
+Explicitly state in your response:
+```
+✅ Phase 0 (Research) complete. Proceeding to Phase 1 (Design).
+
+**Phase 0 Summary**:
+- MCP tools executed: [count]
+- RAG searches performed: [count]
+- NEEDS CLARIFICATION resolved: [count]
+- research.md created: ✅
+- Technical Context updated: ✅
+```
 
 **Output**: research.md with all NEEDS CLARIFICATION resolved, MCP tool outputs, and RAG documentation search results documented
 
 ## Phase 1: Design & Contracts
-*Prerequisites: research.md complete*
+*Prerequisites: research.md complete, Phase 0 validated*
 
-1. **Extract entities from feature spec** → `data-model.md`:
-   - Entity name, fields, relationships
-   - Validation rules from requirements
-   - State transitions if applicable
-   - **Simics projects**: Register definitions, interfaces, and device state
+### Step 1.1: Create data-model.md
 
-2. **Generate API contracts** from functional requirements:
-   - For each user action → endpoint
-   - Use standard REST/GraphQL patterns
-   - Output OpenAPI/GraphQL schema to `/contracts/`
-   - **Simics projects**: Register access contracts and interface specifications using device examples from `get_simics_device_example_i2c()`, `get_simics_device_example_ds12887()`, and `get_simics_dml_template()` MCP tools
-   - **RAG support**: Use `perform_rag_query("register interface patterns", source_type="source")` for additional implementation examples
+**MANDATORY**: Create `[SPECS_DIR]/data-model.md` documenting the data structures:
 
-3. **Generate contract tests** from contracts:
-   - One test file per endpoint
-   - Assert request/response schemas
-   - Tests must fail (no implementation yet)
-   - **Simics projects**: Register read/write behavior tests using `run_simics_test` MCP tool for validation; sample test patterns available from `get_simics_dml_template()` MCP tool and `get_simics_device_example_i2c()`, `get_simics_device_example_ds12887()` MCP tools via python_test_samples_path
+**For Software Projects**:
+- Entity name, fields, relationships
+- Validation rules from requirements
+- State transitions if applicable
 
-4. **Extract test scenarios** from user stories:
-   - Each story → integration test scenario
-   - Quickstart test = story validation steps
-   - **Simics projects**: Device operational workflow tests
+**For Simics Projects**:
+- Register definitions (address, size, access type, reset value)
+- Device state variables and attributes
+- Interface specifications
+- Memory-mapped regions
 
-5. **Generate quickstart.md** from user story validation:
-   - **DO NOT assume implementation details**: No specific register names or commands until implemented
-   - **Focus on user validation**: How will users verify the feature works?
-   - **Reference tasks.md**: Steps should align with implementation tasks
-   - **Use placeholders**: `[DEVICE_NAME]`, `[REGISTER_NAME]` for unknowns
-   - **Include validation criteria**: What constitutes success for each step?
-   - **Simics projects**: Focus on device behavior validation, not implementation commands
-   
+Use this structure:
+```markdown
+# Data Model: [FEATURE_NAME]
+
+## Registers (Simics Projects)
+
+### Register: [REGISTER_NAME]
+- **Offset**: [hex address]
+- **Size**: [bits]
+- **Access**: [RO/WO/RW]
+- **Reset Value**: [hex value]
+- **Purpose**: [description]
+- **Fields**: [bit fields if applicable]
+
+## Device State (Simics Projects)
+
+### State Variable: [NAME]
+- **Type**: [type]
+- **Purpose**: [description]
+- **Persistence**: [checkpointed/transient]
+
+## Interfaces (Simics Projects)
+
+### Interface: [INTERFACE_NAME]
+- **Type**: [Simics interface type]
+- **Methods**: [list methods]
+- **Purpose**: [description]
+```
+
+### Step 1.2: Create contracts/ directory
+
+**MANDATORY**: Create `[SPECS_DIR]/contracts/` directory with contract specifications:
+
+**For Software Projects**:
+- API contracts (REST/GraphQL endpoints)
+- Request/response schemas
+- Error codes and messages
+
+**For Simics Projects**:
+- Register access contracts (read/write behavior)
+- Interface behavior specifications
+- Memory transaction patterns
+
+Create files like:
+- `contracts/register-access.md` - Register read/write specifications
+- `contracts/interface-behavior.md` - Interface method contracts
+
+### Step 1.3: Generate contract tests (planning only)
+
+**Note**: Don't create test files yet - just plan them in contracts/
+
+**For Simics Projects**: Document expected register read/write behavior tests:
+- Reference device examples from `get_simics_device_example_i2c()` python_test_samples_path
+- Reference device examples from `get_simics_device_example_ds12887()` python_test_samples_path
+- Use test patterns from research.md Device Example Analysis
+
+### Step 1.4: Extract test scenarios from user stories
+
+Identify integration test scenarios:
+- Each user story → integration test scenario
+- Quickstart validation steps
+
+**For Simics Projects**: Device operational workflow tests
+
+### Step 1.5: Create quickstart.md
+
+**MANDATORY**: Create `[SPECS_DIR]/quickstart.md` with user validation guide:
+
+**CRITICAL RULES for quickstart.md**:
+- ❌ DO NOT use MCP tool syntax (no `create_simics_project()` calls)
+- ❌ DO NOT assume implementation details (no specific register names until implemented)
+- ✅ DO use generic descriptions ("Create Simics project", "Build device module")
+- ✅ DO focus on Simics CLI commands users will actually run
+- ✅ DO use placeholders: `[DEVICE_NAME]`, `[REGISTER_NAME]` for unknowns
+- ✅ DO include validation criteria: "What constitutes success for each step?"
+
+Use this structure:
+```markdown
+# Quick Start: [FEATURE_NAME]
+
+## Goal
+[One sentence: What will users accomplish by following this guide?]
+
+## Prerequisites
+[Environment requirements from research.md - actual versions/packages found]
+- Simics Base [version from research.md]
+- Required packages: [list from research.md]
+
+## Validation Steps
+
+### Step 1: [First User Story Validation]
+**What to do**:
+[Conceptual steps - no specific implementation commands]
+
+**Expected Result**:
+[What should happen]
+
+**Success Criteria**:
+[How to verify it worked - observable behavior]
+
+### Step 2: [Second User Story Validation]
+**What to do**:
+[Reference that implementation will create the necessary files]
+
+**Expected Result**:
+[What should happen]
+
+**Success Criteria**:
+[How to verify it worked]
+
+## Troubleshooting
+[Common failure modes and how to debug them]
+
+## Next Steps
+[References to contracts/, data-model.md, and tasks.md]
+```
+
+### Step 1.6: Update agent context file
+
+**MANDATORY**: Run the agent context update script:
+
+```bash
+.specify/scripts/bash/update-agent-context.sh adk
+```
+
+**IMPORTANT**: Execute it exactly as specified above. Do not add or remove any arguments.
+
+This updates the agent-specific file (e.g., `ADK.md` for ADK agent) with:
+- New technologies from current plan
+- Preserved manual additions between markers
+- Updated recent changes (keep last 3)
+- Kept under 150 lines for token efficiency
+
+### Step 1.7: Update Progress Tracking in plan.md
+
+**MANDATORY**: Update the Progress Tracking section in plan.md. Mark these checkboxes:
+
+```markdown
+**Phase Status**:
+- [x] Phase 0: Research complete (/plan command)
+- [x] Phase 1: Design complete (/plan command)
+
+**Gate Status**:
+- [x] Post-Design Constitution Check: PASS
+- [x] All NEEDS CLARIFICATION resolved
+```
+
+### Step 1.8: Re-evaluate Constitution Check
+
+After completing design artifacts, re-check constitutional compliance:
+- Review data-model.md against constitution principles
+- Verify design doesn't introduce violations
+- If new violations: Document in Complexity Tracking section
+- If violations cannot be justified: Refactor design and return to Step 1.1
+
+### Step 1.9: Validation Checkpoint
+
+**MANDATORY**: Before proceeding, verify all Phase 1 deliverables exist:
+
+```bash
+ls -la [SPECS_DIR]/data-model.md
+ls -la [SPECS_DIR]/quickstart.md
+ls -la [SPECS_DIR]/contracts/
+ls -la ADK.md  # or agent-specific file
+```
+
+Checklist:
+- [ ] data-model.md file exists and contains register/entity definitions
+- [ ] contracts/ directory exists with contract specifications
+- [ ] quickstart.md file exists with user validation steps
+- [ ] Agent context file updated (ADK.md or equivalent)
+- [ ] Progress Tracking shows Phase 1 marked complete
+- [ ] Constitution check passed (no new violations)
+
+### Step 1.10: Announce Phase Completion
+
+Explicitly state in your response:
+```
+✅ Phase 1 (Design) complete. Ready for /tasks command.
+
+**Phase 1 Summary**:
+- data-model.md created: ✅
+- contracts/ created: ✅
+- quickstart.md created: ✅
+- Agent context updated: ✅
+- Constitutional compliance: ✅
+```
+
+**Output**: data-model.md, /contracts/*, quickstart.md, agent-specific context file (e.g., ADK.md)
+
    **Quickstart.md Structure**:
    ```
    # Quick Start: [FEATURE_NAME]
-   
+
    ## Goal
    [One sentence: What will users accomplish by following this guide?]
-   
+
    ## Prerequisites
    [Environment requirements from research.md - actual versions/packages found]
-   
+
    ## Validation Steps
    ### Step 1: [First User Story Validation]
    [What to do]
    **Expected Result**: [What should happen]
    **Success Criteria**: [How to verify it worked]
-   
+
    ### Step 2: [Second User Story Validation]
    [What to do - no implementation details, reference tasks that will create them]
    **Expected Result**: [What should happen]
    **Success Criteria**: [How to verify it worked]
-   
+
    ## Troubleshooting
    [Common failure modes and how to debug them]
-   
+
    ## Next Steps
    [References to contracts/, data-model.md, and tasks.md]
    ```
@@ -291,7 +616,7 @@ directories captured above]
 - Load `.specify/templates/tasks-template.md` as base
 - Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
 - Each contract → contract test task [P]
-- Each entity → model creation task [P] 
+- Each entity → model creation task [P]
 - Each user story → integration test task
 - Implementation tasks to make tests pass
 - **Simics projects**: Include implementation MCP tool tasks:
@@ -315,6 +640,106 @@ directories captured above]
 **Phase 3**: Task execution (/tasks command creates tasks.md)
 **Phase 4**: Implementation (execute tasks.md following constitutional principles)
 **Phase 5**: Validation (run tests, execute quickstart.md, performance validation)
+
+## Completion Validation (MANDATORY)
+
+Before reporting /plan command completion, the agent MUST verify ALL these conditions:
+
+### Phase 0 Verification Checklist
+Run these checks to verify Phase 0 is complete:
+
+```bash
+# Verify research.md exists
+ls -la [SPECS_DIR]/research.md
+
+# Verify no NEEDS CLARIFICATION remains
+grep "NEEDS CLARIFICATION" [SPECS_DIR]/plan.md
+```
+
+- [ ] research.md file exists and contains MCP tool outputs
+- [ ] Technical Context in plan.md has NO "NEEDS CLARIFICATION" text
+- [ ] Progress Tracking shows "Phase 0: Research complete" checked
+- [ ] All Simics Discovery MCP Tool Status checkboxes marked (if Simics project)
+- [ ] MCP tool outputs are documented in research.md with proper structure
+
+### Phase 1 Verification Checklist
+Run these checks to verify Phase 1 is complete:
+
+```bash
+# Verify all Phase 1 files exist
+ls -la [SPECS_DIR]/data-model.md
+ls -la [SPECS_DIR]/quickstart.md
+ls -la [SPECS_DIR]/contracts/
+ls -la ADK.md  # or agent-specific file
+```
+
+- [ ] data-model.md file exists with register/entity definitions
+- [ ] contracts/ directory exists with contract specifications
+- [ ] quickstart.md file exists with user validation steps (NO MCP tool syntax)
+- [ ] Agent context file updated (ADK.md, CLAUDE.md, or equivalent)
+- [ ] Progress Tracking shows "Phase 1: Design complete" checked
+- [ ] Post-Design Constitution Check shows PASS
+
+### Overall Completion Checklist
+
+- [ ] Both Phase 0 and Phase 1 are complete
+- [ ] All generated files follow their respective templates
+- [ ] No ERROR states in execution flow
+- [ ] All MANDATORY steps completed
+- [ ] Ready for /tasks command
+
+## Final Report Format (MANDATORY)
+
+After completing ALL verification checks, the agent MUST provide this exact report format:
+
+```
+✅ /plan command complete
+
+**Branch**: [branch_name from setup script]
+
+**Files Created**:
+- ✅ plan.md (updated with resolved Technical Context and Progress Tracking)
+- ✅ research.md (MCP tool outputs, device examples, architecture decisions)
+- ✅ data-model.md (register definitions, device state, interfaces)
+- ✅ quickstart.md (user validation guide - no MCP syntax)
+- ✅ contracts/ (register access contracts, interface specifications)
+- ✅ [agent-file].md (updated agent context - e.g., ADK.md, CLAUDE.md)
+
+**Phase Status**:
+- ✅ Phase 0 (Research): Complete
+- ✅ Phase 1 (Design): Complete
+- ⏭️  Phase 2 (Task Planning): Approach described in plan.md
+- 📋 Phase 2 Execution: Ready for /tasks command
+
+**Progress Summary**:
+- Constitutional checks: [PASS/ISSUES]
+- MCP tools executed: [count] tools
+- RAG searches performed: [count] searches
+- NEEDS CLARIFICATION resolved: [count] items
+- Files generated: [count] files
+- Total phases completed: 2 of 2
+
+**Generated Artifacts**:
+```
+[SPECS_DIR]/
+├── plan.md              # ✅ Updated
+├── research.md          # ✅ Created
+├── data-model.md        # ✅ Created
+├── quickstart.md        # ✅ Created
+└── contracts/           # ✅ Created
+    ├── register-access.md
+    └── interface-behavior.md
+```
+
+**Next Steps**:
+1. Review the generated artifacts in `[SPECS_DIR]/`
+2. Run `/tasks` to generate actionable task breakdown from design artifacts
+3. The /tasks command will create tasks.md based on plan.md, data-model.md, and contracts/
+
+**Ready For**: `/tasks` command execution
+```
+
+**CRITICAL**: Do NOT report completion until BOTH Phase 0 and Phase 1 are fully complete with all files created and verified.
 
 ## Complexity Tracking
 *Fill ONLY if Constitution Check has violations that must be justified*
