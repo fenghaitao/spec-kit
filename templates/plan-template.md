@@ -177,34 +177,55 @@ Extract unknowns from Technical Context above:
    - Execute `list_installed_packages()` → resolve Required Packages NEEDS CLARIFICATION
    - Execute `list_simics_platforms()` → resolve Available Platforms NEEDS CLARIFICATION
 
-2. **Documentation Access** (if needed for architectural decisions):
-   - Execute `get_simics_dml_1_4_reference_manual()` → get DML 1.4 language reference
-   - Execute `get_simics_model_builder_user_guide()` → get device modeling patterns
-   - Execute `get_simics_dml_template()` → get base device structure patterns
+2. **Documentation Access via RAG** (MANDATORY):
+   - Execute `perform_rag_query("DML 1.4 reference manual register and device modeling", source_type="docs", match_count=5)` → get DML 1.4 language reference excerpts
+   - Execute `perform_rag_query("Simics Model Builder device creation and structure patterns", source_type="docs", match_count=5)` → get device modeling patterns
+   - Execute `perform_rag_query("DML device template base structure and skeleton", source_type="dml", match_count=5)` → get base device structure patterns
 
-3. **Device Example Analysis** (if needed for implementation decisions):
-   - Execute `get_simics_device_example_i2c()` → get simple I2C device patterns
-   - Execute `get_simics_device_example_ds12887()` → get complex RTC device patterns
+3. **Device Example Analysis via RAG** (MANDATORY - use RAG queries for targeted examples):
+   - Execute `perform_rag_query("Best practices for [DEVICE_NAME] device modeling with Simics DML 1.4", source_type="source", match_count=5)` → get device-specific patterns and best practices
+   - Execute `perform_rag_query("Simics device implementation example [DEVICE_NAME] or similar peripheral", source_type="source", match_count=5)` → get Simics device patterns as reference
+   - Execute `perform_rag_query("DML register bank implementation patterns", source_type="dml", match_count=5)` → get register implementation patterns and best practices
 
-4. **RAG Documentation Search** (optional but recommended):
-   - Use `perform_rag_query(query, source_type, match_count)` to search Simics documentation
+4. **Test Example Analysis via RAG** (MANDATORY - use RAG queries for test patterns):
+   - Execute `perform_rag_query("Simics Python test patterns and examples", source_type="python", match_count=5)` → get Python test case patterns and structures
+   - Execute `perform_rag_query("Simics device testing best practices", source_type="source", match_count=5)` → get device testing approaches and validation strategies
+
+5. **Additional RAG Documentation Search** (optional but recommended):
+   - Use `perform_rag_query(query, source_type, match_count)` for targeted searches
    - `source_type="dml"` for DML device modeling examples
    - `source_type="python"` for Python test case patterns
    - `source_type="source"` for combined DML and test examples
    - `source_type="docs"` for general Simics documentation
    - `source_type="all"` for comprehensive search
+   - Recommended `match_count=5` for focused, relevant results
 
 **CRITICAL**: DO NOT execute implementation tools (`create_simics_project()`, `add_dml_device_skeleton()`, `build_simics_project()`) - those belong in Phase 3 (Implementation).
 
-### Step 0.3: Parse MCP Tool Outputs
+### Step 0.3: Parse MCP Tool and RAG Query Outputs
 
-Extract key information from MCP tool JSON responses:
+Extract key information from MCP tool JSON and RAG query responses:
 - **get_simics_version()** → Extract Simics version for Technical Context
 - **list_installed_packages()** → Extract package list for Technical Context
 - **list_simics_platforms()** → Extract platform list for Technical Context
-- **Documentation tools** → Extract file paths for research.md references
-- **Device examples** → Extract pattern insights for architecture decisions
-- **RAG searches** → Extract code examples and best practices
+- **RAG queries for documentation** → Extract key patterns, best practices, and reference information
+- **RAG queries for device examples** → Extract pattern insights, code structures, and architecture approaches
+  * **CRITICAL**: Extract and include actual code examples from RAG results:
+    - Parse the JSON response `results[].content` field to locate code snippets
+    - Look for code patterns: lines containing `dml 1.4;`, `device`, `bank`, `register`, `field`, `method`, etc.
+    - Extract 10-20 lines of actual DML code per example (not just descriptions)
+    - Format as markdown code blocks with ```dml fencing
+    - Example: If RAG returns "device contraption; bank regs { register r0 ... }", extract and format it as a proper code block
+    - DO NOT write descriptions like "Sample timer device with counter" - show the actual code
+- **RAG queries for test patterns** → Extract test structures, validation approaches, and Python test examples
+  * **CRITICAL**: Extract and include actual Python test code snippets:
+    - Parse the JSON response `results[].content` field to locate Python test code
+    - Look for Python patterns: `def test_`, `simics.SIM_create_object()`, `dev_util.Register_LE()`, `stest.expect_equal()`
+    - Extract 10-20 lines of actual Python test code per example (not just descriptions)
+    - Format as markdown code blocks with ```python fencing
+    - Example: If RAG returns test code with device creation and assertions, extract and format the actual Python code
+    - DO NOT write descriptions like "Tests that create devices" - show the actual test code
+- **Additional RAG searches** → Extract code examples, implementation patterns, and design recommendations
 
 ### Step 0.4: Create research.md File
 
@@ -219,70 +240,160 @@ Extract key information from MCP tool JSON responses:
 [Document output from get_simics_version() - include version number]
 
 ### Installed Packages
-[Document output from list_installed_packages() - list all packages with versions]
+[Document output from list_installed_packages() - format as table with package details]
+
+| Package Name | Package Number | Package Version |
+|-------------|----------------|-----------------|
+| [package-1-name] | [package-1-number] | [package-1-version] |
+| [package-2-name] | [package-2-number] | [package-2-version] |
+| [additional packages...] | [...] | [...] |
 
 ### Available Platforms
 [Document output from list_simics_platforms() - list available simulation platforms]
 
-## Documentation Access
+## Documentation Access (via RAG Queries)
 
 ### DML 1.4 Reference Manual
-[Document paths from get_simics_dml_1_4_reference_manual()]
-- Path: [manual_root_path]
-- Key files: [list important manual files]
+[Document findings from RAG query: "DML 1.4 reference manual register and device modeling"]
+- **Query**: "DML 1.4 reference manual register and device modeling"
+- **Source Type**: docs
+- **Key Findings**:
+  * [Finding 1 with relevant excerpt: Register modeling patterns and constructs]
+  * [Finding 2 with relevant excerpt: Device structure requirements and organization]
+  * [Finding 3 with relevant excerpt: DML language features for hardware modeling]
+  * [Additional findings as discovered from RAG results]
+- **References**: [List any specific manual sections or topics found]
+- **Application**: Structure the [DEVICE_NAME] with appropriate register definitions and field breakdowns
 
 ### Model Builder User Guide
-[Document paths from get_simics_model_builder_user_guide()]
-- Path: [guide_root_path]
-- Key sections: [list relevant guide sections]
+[Document findings from RAG query: "Simics Model Builder device creation and structure patterns"]
+- **Query**: "Simics Model Builder device creation and structure patterns"
+- **Source Type**: docs
+- **Key Findings**:
+  * [Finding 1 with relevant excerpt: Device creation workflow and build process]
+  * [Finding 2 with relevant excerpt: Structure patterns and organization]
+  * [Finding 3 with relevant excerpt: Best practices for device modeling]
+  * [Finding 4 with relevant excerpt: Example device structures (e.g., DS12887, AM79C960, etc.)]
+- **References**: [List relevant guide sections and chapters]
+- **Application**: Follow established patterns for device structure and implementation approach
 
 ### DML Device Template
-[Document findings from get_simics_dml_template()]
-- Template path: [template_path]
-- Key patterns: [list important patterns observed]
+[Document findings from RAG query: "DML device template base structure and skeleton"]
+- **Query**: "DML device template base structure and skeleton"
+- **Source Type**: dml
+- **Key Patterns**:
+  * [Pattern 1: Device declaration with dml 1.4; and device name]
+  * [Pattern 2: Register banks with parameters (register_size, byte_order)]
+  * [Pattern 3: Register declarations with size, offset, and behavior templates]
+  * [Additional patterns discovered from RAG results]
+- **Code Examples**:
+  * [code example 1]
+  * [code example 2]
+- **Application**: Structure the [DEVICE_NAME] device following standard DML skeleton patterns
 
-## Device Example Analysis
+## Device Example Analysis (via RAG Queries)
 
-### Simple I2C Device (button-i2c)
-[Document findings from get_simics_device_example_i2c()]
-- DML sample path: [dml_samples_path]
-- Test sample path: [python_test_samples_path]
-- Key patterns observed:
-  * [Pattern 1]
-  * [Pattern 2]
-- Relevant code structures: [describe]
+### Device-Specific Best Practices
+[Document findings from RAG query: "Best practices for [DEVICE_NAME] device modeling with Simics DML 1.4"]
+- **Query**: "Best practices for [DEVICE_NAME] device modeling with Simics DML 1.4"
+- **Source Type**: source
+- **Key Patterns Observed**:
+  * [Pattern 1: Device-specific implementation approach and architecture]
+  * [Pattern 2: Recommended architecture for this device type]
+  * [Pattern 3: Common pitfalls to avoid and solutions]
+  * [Pattern 4: Performance or accuracy considerations]
+- **Code Examples**:
+  * [code example 1]
+  * [code example 2]
+- **Relevant Structures**: [Describe patterns directly applicable to [DEVICE_NAME]]
+- **Application**: Apply [DEVICE_NAME]-specific patterns to avoid common issues and follow best practices
 
-### Complex Device (DS12887 RTC)
-[Document findings from get_simics_device_example_ds12887()]
-- DML sample path: [dml_samples_path]
-- Test sample path: [python_test_samples_path]
-- Advanced patterns observed:
-  * [Pattern 1]
-  * [Pattern 2]
-- Architectural approaches: [describe]
+### Simics Device Reference Example
+[Document findings from RAG query: "Simics device implementation example [DEVICE_NAME] or similar peripheral"]
+- **Query**: "Simics device implementation example [DEVICE_NAME] or similar peripheral"
+- **Source Type**: source
+- **Key Patterns Observed**:
+  * [Pattern 1: Basic register implementation and organization]
+  * [Pattern 2: Device initialization and lifecycle]
+  * [Pattern 3: Interface implementation (e.g., io_memory, signal, port, connect)]
+  * [Pattern 4: Event handling and timing mechanisms]
+- **Code Examples**:
+  * [code example 1]
+  * [code example 2]
+- **Applicable Patterns**: [Which patterns apply to [DEVICE_NAME] and how to adapt them]
+- **Application**: Adapt similar device patterns to [DEVICE_NAME] implementation requirements
+
+### Register Implementation Patterns
+[Document findings from RAG query: "DML register bank implementation patterns"]
+- **Query**: "DML register bank implementation patterns"
+- **Source Type**: dml
+- **Implementation Patterns**:
+  * [Pattern 1: Register bank definition with parameters]
+  * [Pattern 2: Register access methods (read, write, get, set)]
+  * [Pattern 3: Register callbacks and custom behaviors]
+  * [Pattern 4: Field definitions and bit-level access]
+- **Code Examples**:
+  * [code example 1]
+  * [code example 2]
+- **Application**: Implement [DEVICE_NAME] register bank following standard patterns with appropriate customization
+
+## Test Example Analysis (via RAG Queries)
+
+### Simics Python Test Patterns
+[Document findings from RAG query: "Simics Python test patterns and examples"]
+- **Query**: "Simics Python test patterns and examples"
+- **Source Type**: python
+- **Key Test Patterns Observed**:
+  * [Pattern 1: Test suite structure and organization]
+  * [Pattern 2: Device instance creation using simics.SIM_create_object()]
+  * [Pattern 3: Register access testing using dev_util.Register_LE()]
+  * [Pattern 4: Assertions and validation using stest.expect_equal()]
+- **Code Examples**:
+  * [test code example 1]
+  * [test code example 2]
+- **Test Framework**: [Document testing framework and utilities used (e.g., stest, dev_util, simics modules)]
+- **Application**: Structure tests for [DEVICE_NAME] following established test patterns and conventions
+
+### Device Testing Best Practices
+[Document findings from RAG query: "Simics device testing best practices"]
+- **Query**: "Simics device testing best practices"
+- **Source Type**: source
+- **Best Practices Identified**:
+  * [Practice 1: Test coverage strategies and completeness criteria]
+  * [Practice 2: Validation approaches for device behavior verification]
+  * [Practice 3: Error condition testing and edge case handling]
+  * [Practice 4: Performance testing and regression detection]
+- **Code Examples**:
+  * [test code example 1]
+  * [test code example 2]
+- **Applicable Practices**: [Which practices apply to [DEVICE_NAME] testing and how to implement them]
+- **Application**: Apply comprehensive testing practices to ensure [DEVICE_NAME] correctness and reliability
 
 ## Architecture Decisions
 
 [For each NEEDS CLARIFICATION in Technical Context, create an entry:]
 
 ### Decision: [What was decided - e.g., "Use register bank template"]
-- **Rationale**: [Why this choice - based on MCP tool findings and device examples]
+- **Rationale**: [Why this choice - based on MCP tool and RAG findings and examples]
 - **Alternatives Considered**: [What else was evaluated]
-- **Source**: [Which MCP tool, device example, or RAG search informed this decision]
+- **Source**: [Which MCP tool, RAG query (Search #) informed this decision]
 - **Impact**: [How this affects implementation]
 
-## RAG Search Results
+## RAG Search Results Summary
 
-[If perform_rag_query() was used, document findings:]
+[Quick reference table for all RAG queries executed - verify all 8 MANDATORY searches completed]
 
-### Search: [Query description]
-- **Query**: "[exact query string]"
-- **Source Type**: [dml/python/source/docs/all]
-- **Match Count**: [number of results]
-- **Key Findings**:
-  * [Finding 1 with code snippet or reference]
-  * [Finding 2 with code snippet or reference]
-- **Application**: [How findings will influence design decisions]
+| # | Query Focus | Source Type | Match Count | Status | Reference Section |
+|---|-------------|-------------|-------------|--------|-------------------|
+| 1 | DML 1.4 Reference Manual | docs | 5 | ✅ | Documentation Access |
+| 2 | Model Builder Patterns | docs | 5 | ✅ | Documentation Access |
+| 3 | DML Device Template | dml | 5 | ✅ | Documentation Access |
+| 4 | Device-Specific Best Practices | source | 5 | ✅ | Device Example Analysis |
+| 5 | Simics Device Reference | source | 5 | ✅ | Device Example Analysis |
+| 6 | Register Implementation | dml | 5 | ✅ | Device Example Analysis |
+| 7 | Python Test Patterns | python | 5 | ✅ | Test Example Analysis |
+| 8 | Device Testing Best Practices | source | 5 | ✅ | Test Example Analysis |
+| 9+ | [Optional Additional Query] | [type] | [N] | [ ] | [where documented] |
 
 ## Implementation Strategy
 
@@ -321,15 +432,26 @@ Extract key information from MCP tool JSON responses:
 **Simics Discovery MCP Tool Status** (if Project Type = simics):
 - [x] `get_simics_version()` executed and documented (MANDATORY)
 - [x] `list_installed_packages()` executed and documented (MANDATORY)
-- [x] `list_simics_platforms()` executed and documented
-- [x] `get_simics_dml_1_4_reference_manual()` executed
-- [x] `get_simics_model_builder_user_guide()` executed
-- [x] Device example tools executed
+- [x] `list_simics_platforms()` executed and documented (MANDATORY)
 - [x] MCP tool outputs incorporated into research.md
 
-**RAG Documentation Search Status** (if performed):
-- [x] `perform_rag_query()` used for [purpose]
+**RAG Documentation Search Status** (if Project Type = simics):
+- [x] `perform_rag_query()` used for DML 1.4 reference documentation (source_type="docs")
+- [x] `perform_rag_query()` used for Model Builder patterns (source_type="docs")
+- [x] `perform_rag_query()` used for DML device templates (source_type="dml")
+- [x] `perform_rag_query()` used for device-specific best practices (source_type="source")
+- [x] `perform_rag_query()` used for register implementation patterns (source_type="dml")
+- [x] `perform_rag_query()` used for Python test patterns (source_type="python")
+- [x] `perform_rag_query()` used for device testing best practices (source_type="source")
 - [x] RAG search results documented in research.md
+
+**RAG Quality Verification** (if Project Type = simics):
+- [x] All 8 MANDATORY RAG queries executed and documented in research.md
+- [x] Code examples extracted and included in relevant sections
+- [x] Key findings documented with excerpts and references
+- [x] Application guidance provided for [DEVICE_NAME] implementation
+- [x] Any additional queries (9+) documented with justification in research.md
+- [x] RAG Search Results Summary table completed with status checkmarks
 ```
 
 ### Step 0.7: Validation Checkpoint
@@ -338,7 +460,6 @@ Extract key information from MCP tool JSON responses:
 - [ ] research.md file exists at `[SPECS_DIR]/research.md`
 - [ ] Technical Context in plan.md has NO "NEEDS CLARIFICATION" text
 - [ ] Progress Tracking shows Phase 0 marked complete
-- [ ] All MANDATORY MCP tool outputs are documented in research.md
 
 Use bash commands to verify:
 ```bash
@@ -432,9 +553,9 @@ Create files like:
 **Note**: Don't create test files yet - just plan them in contracts/
 
 **For Simics Projects**: Document expected register read/write behavior tests:
-- Reference device examples from `get_simics_device_example_i2c()` python_test_samples_path
-- Reference device examples from `get_simics_device_example_ds12887()` python_test_samples_path
-- Use test patterns from research.md Device Example Analysis
+- Reference device test patterns from research.md Device Example Analysis section
+- Use test patterns discovered via `perform_rag_query()` for [DEVICE_NAME] and similar devices
+- Extract test structure patterns from RAG search results (simple and complex device references)
 
 ### Step 1.4: Extract test scenarios from user stories
 
@@ -770,9 +891,7 @@ After completing ALL verification checks, the agent MUST provide this exact repo
 **Simics Discovery MCP Tool Status** (if Project Type = simics):
 - [ ] `get_simics_version()` executed and documented (MANDATORY)
 - [ ] `list_installed_packages()` executed and documented (MANDATORY)
-- [ ] `get_simics_dml_1_4_reference_manual()` executed (only if DML syntax was NEEDS CLARIFICATION)
-- [ ] `get_simics_model_builder_user_guide()` executed (only if modeling approach was NEEDS CLARIFICATION)
-- [ ] Device example tools executed (only if needed for architectural decisions)
+- [ ] `list_simics_platforms()` executed and documented (MANDATORY)
 - [ ] MCP tool outputs incorporated into research.md
 - [ ] Environmental constraints documented for /implement phase
 - [ ] **Implementation MCP tools NOT executed** (reserved for /implement phase)

@@ -54,15 +54,7 @@
 - [ ] T002 Create Simics project structure using `create_simics_project(project_path="./simics-project")`
 - [ ] T003 Add device skeleton using `add_dml_device_skeleton(project_path="./simics-project", device_name="DEVICE_NAME")`
 - [ ] T004 [P] Verify project structure and build system using `build_simics_project(project_path="./simics-project", module="DEVICE_NAME")`
-- [ ] T005 **MANDATORY**: Access DML 1.4 reference documentation using `get_simics_dml_1_4_reference_manual()`
-- [ ] T006 **MANDATORY**: Access Model Builder User Guide using `get_simics_model_builder_user_guide()`
-- [ ] T007 **MANDATORY**: Retrieve DML template using `get_simics_dml_template()` for base device structure patterns
-- [ ] T008 **MANDATORY**: Retrieve I2C device example using `get_simics_device_example_i2c()` for reference patterns
-- [ ] T009 **MANDATORY**: Retrieve DS12887 device example using `get_simics_device_example_ds12887()` for advanced patterns
-- [ ] T010 **RAG SEARCH**: Use `perform_rag_query("DML device implementation patterns", source_type="source", match_count=5)` for additional examples
-- [ ] T011 **RAG SEARCH**: Use `perform_rag_query("Simics register modeling", source_type="dml", match_count=5)` for register-specific guidance
-- [ ] T012 **CRITICAL**: Study and document the retrieved documentation, examples, DML template, and RAG search results before proceeding to test or implementation phases
-- [ ] T013 **VALIDATION**: Verify that documentation, examples, and RAG searches have been successfully retrieved and analyzed
+- [ ] T005 **CRITICAL**: Review and reference research.md for documented RAG search results (DML reference, Model Builder patterns, device templates, device-specific best practices, register patterns, test patterns)
 
 ## Phase 3.2: Tests First (TDD) ⚠️ MUST COMPLETE BEFORE 3.3
 **CRITICAL: These tests MUST be written and MUST FAIL before ANY implementation**
@@ -72,11 +64,10 @@
 - [ ] T007 [P] Integration test auth flow in tests/integration/test_auth.py
 
 **Simics TDD Example:**
-- [ ] T014 [P] **RAG SEARCH**: Use `perform_rag_query("Simics Python test patterns", source_type="python", match_count=5)` for test examples
-- [ ] T015 [P] Register access test in simics-project/modules/device-name/test/s-registers.py (use python_test_samples_path from device examples and RAG results for patterns)
-- [ ] T016 [P] Interface behavior test in simics-project/modules/device-name/test/s-interfaces.py
-- [ ] T017 [P] Device workflow test in simics-project/modules/device-name/test/s-device-name.py (main test file)
-- [ ] T018 [P] Set up and validate test environment using `run_simics_test(project_path="./simics-project", suite="modules/DEVICE_NAME/test")`
+- [ ] T006 [P] Register access test in simics-project/modules/device-name/test/s-registers.py (reference test patterns from research.md)
+- [ ] T007 [P] Interface behavior test in simics-project/modules/device-name/test/s-interfaces.py (reference interface patterns from research.md)
+- [ ] T008 [P] Device workflow test in simics-project/modules/device-name/test/s-device-name.py (main test file, reference device patterns from research.md)
+- [ ] T009 [P] Set up and validate test environment using `run_simics_test(project_path="./simics-project", suite="modules/DEVICE_NAME/test")`
 
 ## Phase 3.3: Core Implementation (ONLY after tests are failing)
 - [ ] T008 [P] User model in src/models/user.py
@@ -88,16 +79,16 @@
 - [ ] T014 Error handling and logging
 
 **Simics Implementation Example:**
-- [ ] T019 [P] **RAG SEARCH**: Use `perform_rag_query("DML register implementation", source_type="dml", match_count=5)` for implementation patterns
-- [ ] T020 [P] Register definitions in simics-project/modules/device-name/registers.dml
-- [ ] T021 [P] Interface declarations in simics-project/modules/device-name/interfaces.dml
-- [ ] T022 [P] Build device module using `build_simics_project(project_path="./simics-project", module="DEVICE_NAME")`
-- [ ] T023 Main device structure in simics-project/modules/device-name/device-name.dml
-- [ ] T024 **RAG SEARCH**: Use `perform_rag_query("device state management Simics", source_type="source", match_count=5)` for state handling patterns
-- [ ] T025 Register read/write logic implementation
-- [ ] T026 Device state management and attributes
-- [ ] T027 Error handling and logging for device operations
-- [ ] T028 [P] Incremental build validation using `build_simics_project(project_path="./simics-project", module="DEVICE_NAME")`
+- [ ] T010 [P] **RAG SEARCH**: Use `perform_rag_query("DML register read write implementation methods and callbacks", source_type="dml", match_count=5)` for detailed implementation guidance (OPTIONAL - if research.md insufficient)
+- [ ] T011 [P] Register definitions in simics-project/modules/device-name/registers.dml (reference register patterns from research.md)
+- [ ] T012 [P] Interface declarations in simics-project/modules/device-name/interfaces.dml (reference interface patterns from research.md)
+- [ ] T013 [P] Build device module using `build_simics_project(project_path="./simics-project", module="DEVICE_NAME")`
+- [ ] T014 Main device structure in simics-project/modules/device-name/device-name.dml (reference DML template from research.md)
+- [ ] T015 **RAG SEARCH**: Use `perform_rag_query("device state management Simics", source_type="source", match_count=5)` for state handling patterns (OPTIONAL - if research.md insufficient)
+- [ ] T016 Register read/write logic implementation
+- [ ] T017 Device state management and attributes
+- [ ] T018 Error handling and logging for device operations
+- [ ] T019 [P] Incremental build validation using `build_simics_project(project_path="./simics-project", module="DEVICE_NAME")`
 
 ## Phase 3.4: Integration
 - [ ] T015 Connect UserService to DB
@@ -131,17 +122,12 @@
 - MCP server connection (T001) before project creation (T002)
 - Project structure (T002) before device skeleton (T003)
 - Device skeleton (T003) before build validation (T004)
-- Build validation (T004) before documentation access (T005-T009)
-- Documentation access (T005-T009) before RAG searches (T010-T011)
-- RAG searches (T010-T011) before study phase (T012)
-- Documentation study (T012) before validation (T013)
-- Validation (T013) before test RAG search (T014)
-- Test RAG search (T014) before register tests (T015-T018)
-- Register tests (T015-T018) before implementation RAG searches (T019, T024)
-- Implementation RAG searches before actual implementation (T020-T028)
-- Device implementation (T020-T028) before integration RAG search (T029)
-- Integration RAG search (T029) before integration tasks (T030-T035)
-- Integration validation (T034-T035) before polish tasks
+- Build validation (T004) before research review (T005)
+- Research review (T005) before test implementation (T006-T009)
+- Tests (T006-T009) before implementation (T010-T019)
+- Optional implementation RAG queries (T010, T015) only if research.md insufficient
+- Device implementation (T011-T019) references patterns from research.md
+- Error recovery RAG queries executed only when build errors occur
 
 ## Parallel Example
 ```
@@ -197,37 +183,77 @@ Task: "Integration test auth in tests/integration/test_auth.py"
 - [ ] Build validation tasks after implementation changes
 - [ ] Test execution tasks use appropriate suite parameter
 - [ ] Device name consistently used across MCP tool calls
-- [ ] RAG searches use appropriate source_type for each phase
-- [ ] RAG search results documented before proceeding to implementation
-- [ ] match_count parameter set to 5 for all searches
+- [ ] research.md from /plan phase is available and referenced
+- [ ] Optional RAG searches are only used when research.md is insufficient
+- [ ] All new RAG search results are documented
 
-## Critical MCP Tool Execution Gate
-**⚠️ MANDATORY: These MCP tools MUST be executed before proceeding to Phase 3.2 (Tests)**
+## Critical Prerequisites Gate
+**⚠️ MANDATORY: research.md from /plan phase MUST be available before proceeding to Phase 3.2 (Tests)**
 
 ### Pre-Test Phase Gate Checklist:
-- [ ] **GATE T005**: `get_simics_dml_1_4_reference_manual()` has been successfully executed and returned valid documentation paths
-- [ ] **GATE T006**: `get_simics_model_builder_user_guide()` has been successfully executed and returned valid guide paths
-- [ ] **GATE T007**: `get_simics_dml_template()` has been successfully executed and returned valid DML template code
-- [ ] **GATE T008**: `get_simics_device_example_i2c()` has been successfully executed and returned valid I2C device example code
-- [ ] **GATE T009**: `get_simics_device_example_ds12887()` has been successfully executed and returned valid DS12887 device example code
-- [ ] **GATE T010**: `perform_rag_query()` executed for DML device patterns with valid results
-- [ ] **GATE T011**: `perform_rag_query()` executed for Simics register modeling with valid results
-- [ ] **GATE T012**: Retrieved documentation, examples, DML template, and RAG search results have been studied and documented for reference during implementation
-- [ ] **GATE T013**: Validation confirms that all MCP tools and RAG searches returned non-empty, valid content
+- [ ] **GATE**: research.md file exists and is accessible from /plan phase
+- [ ] **GATE T005**: research.md contains documented RAG results for:
+  * DML 1.4 Reference Manual (source_type="docs")
+  * Model Builder User Guide (source_type="docs")
+  * DML Device Template (source_type="dml")
+  * Device-Specific Best Practices (source_type="source")
+  * Simics Device Reference Example (source_type="source")
+  * Register Implementation Patterns (source_type="dml")
+  * Simics Python Test Patterns (source_type="python")
+  * Device Testing Best Practices (source_type="source")
+- [ ] **GATE T005**: Reviewed research.md and understood the documented patterns and examples
+- [ ] **GATE T005**: Identified which patterns from research.md apply to this specific implementation
 
 ### Execution Validation Rules:
-1. **Immediate Execution**: When T005-T011 are encountered, the MCP functions and RAG searches MUST be called immediately
-2. **Success Verification**: Each MCP call and RAG search must return valid content before marking task complete
-3. **Documentation Required**: Results must be saved and documented for later reference
-4. **python_test_samples_path Access**: Device examples must include access to test sample paths for TDD phase
-5. **RAG Search Parameters**: Use appropriate source_type and match_count=5 for all searches
-6. **Blocking Dependency**: No Phase 3.2+ tasks can proceed until ALL setup MCP tools and RAG searches are successfully executed
+1. **Prerequisites First**: T005 MUST verify research.md exists and contains all required RAG results from /plan phase
+2. **Research Reference**: Implementation tasks should reference patterns documented in research.md
+3. **Optional RAG Queries**: T010 and T015 are OPTIONAL - only use if research.md lacks specific implementation details
+4. **New Query Documentation**: Any new RAG queries during tasks phase must be documented and added to research.md
+5. **Blocking Dependency**: No Phase 3.2+ tasks can proceed until research.md is verified and reviewed
 
 ### Common Execution Failures:
-- ❌ **Stating intention without execution**: "Let's call get_simics_device_example_i2c" or "Let's search with RAG" without actually invoking
-- ❌ **Skipping to file operations**: Moving to task file updates instead of executing MCP calls and RAG searches
-- ❌ **Assuming completion**: Marking tasks complete without verifying MCP tool and RAG execution
-- ❌ **Ignoring test samples**: Not accessing python_test_samples_path from device examples
+- ❌ **Ignoring research.md**: Running duplicate RAG queries instead of using research.md from /plan phase
+- ❌ **Skipping review**: Proceeding to implementation without reviewing documented patterns in research.md
+- ❌ **Missing prerequisites**: Starting tasks without verifying /plan phase completed and generated research.md
+- ❌ **Unnecessary queries**: Running RAG queries for information already documented in research.md
+- ✅ **Correct approach**: Verify research.md exists → Review documented patterns → Reference during implementation → Only query if gaps exist
+
+**Simics Error Recovery Rules:**
+1. **If `build_simics_project` fails with syntax error**:
+   - First, check research.md for relevant DML patterns and examples
+   - If research.md lacks specific error-related examples, extract the syntax error keyword
+   - Call `perform_rag_query(query="Examples of [syntax_error_keyword] in Simics DML 1.4", source_type="dml")`
+   - Document the new RAG results before attempting to fix the DML files
+   - Example: For "unknown attribute" error → check research.md first → query only if needed
+
+```
+
+## Critical RAG Search Execution Gate
+**⚠️ MANDATORY: These RAG searches MUST be executed before proceeding to Phase 3.2 (Tests)**
+
+### Pre-Test Phase Gate Checklist:
+- [ ] **GATE T005**: `perform_rag_query("DML 1.4 reference manual register and device modeling", source_type="docs", match_count=5)` successfully executed with valid results
+- [ ] **GATE T006**: `perform_rag_query("Simics Model Builder device creation and structure patterns", source_type="docs", match_count=5)` successfully executed with valid results
+- [ ] **GATE T007**: `perform_rag_query("DML device template base structure and skeleton", source_type="dml", match_count=5)` successfully executed with valid DML patterns
+- [ ] **GATE T008**: `perform_rag_query("Best practices for [DEVICE_NAME] device modeling with Simics DML 1.4", source_type="source", match_count=5)` successfully executed with device-specific patterns
+- [ ] **GATE T009**: `perform_rag_query("Simics device implementation example [DEVICE_NAME] or similar peripheral", source_type="source", match_count=5)` successfully executed with reference examples
+- [ ] **GATE T010**: `perform_rag_query("DML register bank implementation patterns", source_type="dml", match_count=5)` successfully executed with register patterns
+- [ ] **GATE T011**: Retrieved RAG search results have been studied and documented for reference during implementation
+- [ ] **GATE T012**: Validation confirms that all RAG searches returned non-empty, valid content with at least 3 relevant matches each
+
+### Execution Validation Rules:
+1. **Immediate Execution**: When T005-T010 are encountered, the `perform_rag_query()` calls MUST be executed immediately
+2. **Success Verification**: Each RAG search must return valid content (at least 3 matches) before marking task complete
+3. **Documentation Required**: Results must be saved and documented for later reference in implementation and test phases
+4. **Source Type Specificity**: Use appropriate source_type for each query ("docs", "dml", "source", "python")
+5. **Match Count**: Use match_count=5 for all searches to get focused, relevant results
+6. **Blocking Dependency**: No Phase 3.2+ tasks can proceed until ALL setup RAG searches are successfully executed
+
+### Common Execution Failures:
+- ❌ **Stating intention without execution**: "Let's search with RAG" without actually invoking `perform_rag_query()`
+- ❌ **Skipping to file operations**: Moving to task file updates instead of executing RAG searches
+- ❌ **Assuming completion**: Marking tasks complete without verifying RAG execution and results
+- ❌ **Wrong source_type**: Using incorrect source_type parameter (e.g., "all" instead of "dml" for DML-specific queries)
 - ❌ **Wrong source_type**: Using source_type="all" when specific type (dml/python/source) would be more appropriate
 - ✅ **Correct approach**: Execute MCP function/RAG search → Verify result → Access test samples → Document output → Mark complete
 
