@@ -191,14 +191,21 @@ Extract unknowns from Technical Context above:
    - Execute `perform_rag_query("Simics Python test patterns and examples", source_type="python", match_count=5)` → get Python test case patterns and structures
    - Execute `perform_rag_query("Simics device testing best practices", source_type="source", match_count=5)` → get device testing approaches and validation strategies
 
-5. **Additional RAG Documentation Search** (optional but recommended):
-   - Use `perform_rag_query(query, source_type, match_count)` for targeted searches
-   - `source_type="dml"` for DML device modeling examples
-   - `source_type="python"` for Python test case patterns
-   - `source_type="source"` for combined DML and test examples
-   - `source_type="docs"` for general Simics documentation
-   - `source_type="all"` for comprehensive search
-   - Recommended `match_count=5` for focused, relevant results
+5. **Additional RAG Documentation Search** (recommended - query knowledge gaps):
+   - **Review Functional Requirements**: Examine the "Functional Requirements" section in the feature spec (`specs/[###-feature-name]/spec.md`)
+   - **Identify Knowledge Gaps**: For each functional requirement, determine what knowledge is NOT covered by the 8 mandatory queries above
+   - **Execute Targeted Queries**: Use `perform_rag_query(query, source_type, match_count)` for each knowledge gap:
+     * **Requirement-Specific Queries**: Query for specific hardware features, interfaces, or behaviors mentioned in requirements
+     * **Pattern Queries**: Search for implementation patterns for specific device capabilities (e.g., "DMA implementation patterns", "interrupt handling in DML")
+     * **Integration Queries**: Search for examples of devices with similar integration requirements (e.g., "PCI device configuration space", "memory-mapped I/O patterns")
+   - **Source Type Selection**:
+     * `source_type="dml"` for DML device modeling examples specific to requirements
+     * `source_type="python"` for Python test case patterns for specific behaviors
+     * `source_type="source"` for combined DML and test examples
+     * `source_type="docs"` for general Simics documentation on specific topics
+     * `source_type="all"` for comprehensive search across all sources
+   - **Best Practices**: Use `match_count=5` for focused results; increase to 10 for complex requirements
+   - **Document Rationale**: In research.md, document why each additional query was needed and which requirement(s) it addresses
 
 **CRITICAL**: DO NOT execute implementation tools (`create_simics_project()`, `add_dml_device_skeleton()`, `build_simics_project()`) - those belong in Phase 3 (Implementation).
 
@@ -369,6 +376,40 @@ Extract key information from MCP tool JSON and RAG query responses:
 - **Applicable Practices**: [Which practices apply to [DEVICE_NAME] testing and how to implement them]
 - **Application**: Apply comprehensive testing practices to ensure [DEVICE_NAME] correctness and reliability
 
+## Additional Research (Requirement-Driven RAG Queries)
+
+[Document additional RAG queries executed to address specific functional requirements not covered by mandatory queries]
+
+### Additional Query #9: [Query Focus - tied to specific requirement]
+[Document findings from additional RAG query addressing a knowledge gap]
+- **Query**: "[exact query string used]"
+- **Source Type**: [dml/python/source/docs/all]
+- **Match Count**: [number]
+- **Requirement Addressed**: [Reference specific functional requirement from spec.md that necessitated this query]
+- **Knowledge Gap**: [What wasn't covered by mandatory queries 1-8]
+- **Key Findings**:
+  * [Finding 1: Specific pattern, feature, or approach discovered]
+  * [Finding 2: Implementation detail or best practice]
+  * [Finding 3: Integration or interface pattern]
+  * [Additional findings as relevant]
+- **Code Examples**:
+  * [code example 1 - 10-20 lines of actual DML/Python code]
+  * [code example 2 - showing specific pattern or feature]
+- **Application**: [How these findings will be applied to [DEVICE_NAME] implementation]
+
+### Additional Query #10: [Query Focus - tied to specific requirement]
+[Repeat structure above for each additional query]
+- **Query**: "[exact query string]"
+- **Source Type**: [type]
+- **Match Count**: [number]
+- **Requirement Addressed**: [Reference specific functional requirement]
+- **Knowledge Gap**: [What knowledge was needed]
+- **Key Findings**: [...]
+- **Code Examples**: [...]
+- **Application**: [...]
+
+[Continue with Additional Query #11, #12, etc. as needed based on functional requirements]
+
 ## Architecture Decisions
 
 [For each NEEDS CLARIFICATION in Technical Context, create an entry:]
@@ -381,7 +422,7 @@ Extract key information from MCP tool JSON and RAG query responses:
 
 ## RAG Search Results Summary
 
-[Quick reference table for all RAG queries executed - verify all 8 MANDATORY searches completed]
+[Quick reference table for all RAG queries executed - verify all 8 MANDATORY searches completed, plus any additional requirement-driven queries]
 
 | # | Query Focus | Source Type | Match Count | Status | Reference Section |
 |---|-------------|-------------|-------------|--------|-------------------|
@@ -393,7 +434,9 @@ Extract key information from MCP tool JSON and RAG query responses:
 | 6 | Register Implementation | dml | 5 | ✅ | Device Example Analysis |
 | 7 | Python Test Patterns | python | 5 | ✅ | Test Example Analysis |
 | 8 | Device Testing Best Practices | source | 5 | ✅ | Test Example Analysis |
-| 9+ | [Optional Additional Query] | [type] | [N] | [ ] | [where documented] |
+| 9+ | [Additional Query - specify requirement addressed] | [type] | [N] | ✅ | Additional Research |
+
+**Note**: Queries 9+ are requirement-driven queries executed to address specific knowledge gaps identified from the "Functional Requirements" section in spec.md. Each additional query should document which requirement it addresses and what knowledge gap it fills.
 
 ## Implementation Strategy
 
