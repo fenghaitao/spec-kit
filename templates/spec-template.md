@@ -2,8 +2,8 @@
 
 **Feature Branch**: `[###-feature-name]`
 **Created**: [DATE]
-**Status**: Draft
-**Input**: User description: "$ARGUMENTS"
+**Status**: Draft (changes to "Ready for Planning" when all [NEEDS CLARIFICATION] markers are resolved)
+**Input**: User description: "$ARGUMENTS" (text provided after /specify command)
 
 ## Execution Flow (main)
 ```
@@ -17,16 +17,15 @@
    → If no clear user flow: ERROR "Cannot determine user scenarios"
 5. Generate Functional Requirements
    → Each requirement must be testable
-   → Mark ambiguous requirements
+   → Mark ambiguous requirements with [NEEDS CLARIFICATION: ...]
 6. Identify Key Entities (if data involved)
 7. Run Review Checklist and Update Status
-   → Search entire spec for [NEEDS CLARIFICATION: markers
-   → If found: WARN "Spec has uncertainties", keep box unchecked
+   → Search entire spec for [NEEDS CLARIFICATION] markers
+   → If found: WARN "Spec has uncertainties - this is EXPECTED for Draft status", keep "No [NEEDS CLARIFICATION] markers remain" box UNCHECKED
    → If NOT found: Mark [x] "No [NEEDS CLARIFICATION] markers remain"
-   → Check for implementation details
-   → If found: ERROR "Remove tech details"
-   → If NOT found: Mark [x] other checklist items as appropriate
-8. Return: SUCCESS (spec ready for planning) with all checklist items marked
+   → For objective items (no implementation details, mandatory sections completed): Mark [x] if passing
+   → For subjective items (testable requirements, measurable criteria): Leave unchecked for human review
+8. Return: SUCCESS (spec ready for planning) with all applicable checklist items marked
 ```
 
 ---
@@ -39,7 +38,12 @@
 ### Section Requirements
 - **Mandatory sections**: Must be completed for every feature
 - **Optional sections**: Include only when relevant to the feature
-- **Simics sections**: Include only for hardware device modeling projects
+- **Simics sections**: Include "Hardware Specification" section only for hardware device modeling projects
+- **Simics project detection**: Look for keywords in feature description:
+  * "device modeling", "DML device", or "DML 1.4"
+  * "hardware simulation" or "Simics platform"
+  * "register map" or "memory-mapped registers"
+  * "device model" with hardware context
 - When a section doesn't apply, remove it entirely (don't leave as "N/A")
 
 ### For AI Generation
@@ -54,6 +58,25 @@ When creating this spec from a user prompt:
    - Error handling behaviors
    - Integration requirements
    - Security/compliance needs
+
+### Best Practices for Marking Uncertainties
+- **Be specific**: Not "auth method unclear" but "[NEEDS CLARIFICATION: authentication method - email/password, SSO, OAuth, or other?]"
+- **Don't over-mark**: If requirement is clear from context, don't mark it
+- **Test mindset**: If you can't write a test case without guessing, mark it
+- **Common areas to check**: User types, retention policies, performance targets, error handling, integration points
+
+---
+
+## 📝 Example Feature Descriptions
+
+### Example 1: Simple Feature
+"Add a dark mode toggle to the application settings that persists user preference across sessions."
+
+### Example 2: Data-Heavy Feature
+"Create a product inventory system where users can add products with name, SKU, price, and quantity. Support bulk import from CSV and export to Excel. Send email alerts when stock falls below reorder threshold."
+
+### Example 3: Simics Hardware Feature
+"Implement a DML 1.4 watchdog timer device model for Simics with configurable timeout, hardware reset capability, and memory-mapped control registers. The device should support interrupt generation and integration with QSP-x86 platform."
 
 ---
 
@@ -111,10 +134,15 @@ When creating this spec from a user prompt:
 - [ ] Scope is clearly bounded
 - [ ] Dependencies and assumptions identified
 
+### Simics Hardware Completeness *(if applicable)*
+- [ ] Device type identified and specified
+- [ ] Register map described at high level (no implementation details)
+- [ ] External interfaces and software visibility documented
+
 ---
 
 ## Execution Status
-*Updated by main() during processing*
+*Conceptual checklist - agents should mark items as they complete each workflow step*
 
 - [ ] User description parsed
 - [ ] Key concepts extracted
