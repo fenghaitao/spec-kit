@@ -40,7 +40,7 @@ scripts:
 [Extract from feature spec: primary requirement + technical approach from research]
 
 ## Technical Context
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75, DML 1.4 or NEEDS CLARIFICATION]
+**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75, Simics C++ or C++ NEEDS CLARIFICATION]
 **Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM, Simics API or NEEDS CLARIFICATION]
 **Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
 **Testing**: [e.g., pytest, XCTest, cargo test, Simics test scripts or NEEDS CLARIFICATION]
@@ -121,17 +121,19 @@ ios/ or android/
 # [REMOVE IF UNUSED] Option 4: Simics device project (when "simics" detected)
 # Use MCP tools for automated project creation AT REPO ROOT:
 # 1. `create_simics_project(project_path="./simics-project")` → generates base structure at repo root
-# 2. `add_dml_device_skeleton(project_path="./simics-project", device_name=DEVICE_NAME)` → adds device modeling files
+# 2. `add_cpp_device_skeleton(project_path="./simics-project", device_name=DEVICE_NAME)` → adds device modeling files
 # The structure shown below will be created automatically during Phase 3.1 Setup AT REPOSITORY ROOT.
 
 ## Repository Structure
 repo-root/
 ├── simics-project/              # ← Source code (implementation)
 │   └── modules/device-name/
-│       ├── device-name.dml      # Main device implementation
-│       ├── registers.dml        # Register definitions and mappings (optional)
-│       ├── interfaces.dml       # Device interface implementations (optional)
-│       ├── sub-feature.dml      # Device sub-feature modules (optional)
+│       ├── device-name.h        # Device class header file
+│       ├── device-name.cc       # Main device implementation (C++)
+│       ├── registers.h          # Register definitions and mappings (optional)
+│       ├── registers.cc         # Register implementation (optional)
+│       ├── interfaces.h         # Device interface declarations (optional)
+│       ├── interfaces.cc        # Device interface implementations (optional)
 │       ├── module_load.py       # Simics module load action definitions
 │       ├── CMakeLists.txt       # CMake file
 │       └── test/
@@ -156,7 +158,7 @@ directories captured above]
 
 **For Simics projects**: The structure above shows the template that will be generated AT REPOSITORY ROOT (not in specs/ folder). The actual project structure will be created by the simics-mcp-server's MCP tools during task execution (Phase 3.1 Setup):
 - `create_simics_project(project_path="./simics-project")` creates the base project structure at repo root
-- `add_dml_device_skeleton(project_path="./simics-project", device_name=DEVICE_NAME)` adds device-specific modeling files
+- `add_cpp_device_skeleton(project_path="./simics-project", device_name=DEVICE_NAME)` adds C++ device-specific modeling files
 
 **IMPORTANT**: Simics projects must be created at repository root to separate source code from documentation. The specs/ folder contains only documentation artifacts (plan.md, tasks.md, etc.), while the simics-project/ folder at repo root contains the actual implementation.
 
@@ -178,14 +180,14 @@ Extract unknowns from Technical Context above:
    - Execute `list_simics_platforms()` → resolve Available Platforms NEEDS CLARIFICATION
 
 2. **Documentation Access via RAG** (MANDATORY):
-   - Execute `perform_rag_query("DML 1.4 reference manual register and device modeling", source_type="docs", match_count=5)` → get DML 1.4 language reference excerpts
+   - Execute `perform_rag_query("Simics C++ APIs for device modeling", source_type="docs", match_count=5)` → get C++ API reference excerpts
    - Execute `perform_rag_query("Simics Model Builder device creation and structure patterns", source_type="docs", match_count=5)` → get device modeling patterns
-   - Execute `perform_rag_query("DML device template base structure and skeleton", source_type="dml", match_count=5)` → get base device structure patterns
+   - Execute `perform_rag_query("C++ device template base structure and skeleton", source_type="source", match_count=5)` → get base C++ device structure patterns
 
 3. **Device Example Analysis via RAG** (MANDATORY - use RAG queries for targeted examples):
-   - Execute `perform_rag_query("Best practices for [DEVICE_NAME] device modeling with Simics DML 1.4", source_type="source", match_count=5)` → get device-specific patterns and best practices
-   - Execute `perform_rag_query("Simics device implementation example [DEVICE_NAME] or similar peripheral", source_type="source", match_count=5)` → get Simics device patterns as reference
-   - Execute `perform_rag_query("DML register bank implementation patterns", source_type="dml", match_count=5)` → get register implementation patterns and best practices
+   - Execute `perform_rag_query("Best practices for [DEVICE_NAME] device modeling with Simics C++", source_type="source", match_count=5)` → get device-specific patterns and best practices
+   - Execute `perform_rag_query("Simics C++ device implementation example [DEVICE_NAME] or similar peripheral", source_type="source", match_count=5)` → get Simics device patterns as reference
+   - Execute `perform_rag_query("C++ register bank implementation patterns for Simics devices", source_type="source", match_count=5)` → get register implementation patterns and best practices
 
 4. **Test Example Analysis via RAG** (MANDATORY - use RAG queries for test patterns):
    - Execute `perform_rag_query("Simics Python test patterns and examples", source_type="python", match_count=5)` → get Python test case patterns and structures
@@ -199,9 +201,8 @@ Extract unknowns from Technical Context above:
      * **Pattern Queries**: Search for implementation patterns for specific device capabilities (e.g., "DMA implementation patterns", "interrupt handling in DML")
      * **Integration Queries**: Search for examples of devices with similar integration requirements (e.g., "PCI device configuration space", "memory-mapped I/O patterns")
    - **Source Type Selection**:
-     * `source_type="dml"` for DML device modeling examples specific to requirements
+     * `source_type="source"` for C++ device modeling examples specific to requirements
      * `source_type="python"` for Python test case patterns for specific behaviors
-     * `source_type="source"` for combined DML and test examples
      * `source_type="docs"` for general Simics documentation on specific topics
      * `source_type="all"` for comprehensive search across all sources
    - **Best Practices**: Use `match_count=5` for focused results; increase to 10 for complex requirements
@@ -219,10 +220,10 @@ Extract key information from MCP tool JSON and RAG query responses:
 - **RAG queries for device examples** → Extract pattern insights, code structures, and architecture approaches
   * **CRITICAL**: Extract and include actual code examples from RAG results:
     - Parse the JSON response `results[].content` field to locate code snippets
-    - Look for code patterns: lines containing `dml 1.4;`, `device`, `bank`, `register`, `field`, `method`, etc.
-    - Extract 10-20 lines of actual DML code per example (not just descriptions)
-    - Format as markdown code blocks with ```dml fencing
-    - Example: If RAG returns "device contraption; bank regs { register r0 ... }", extract and format it as a proper code block
+    - Look for code patterns: lines containing class declarations, Simics API calls, register definitions, etc.
+    - Extract 10-20 lines of actual C++ code per example (not just descriptions)
+    - Format as markdown code blocks with ```cpp fencing
+    - Example: If RAG returns C++ class with device implementation, extract and format it as a proper code block
     - DO NOT write descriptions like "Sample timer device with counter" - show the actual code
 - **RAG queries for test patterns** → Extract test structures, validation approaches, and Python test examples
   * **CRITICAL**: Extract and include actual Python test code snippets:
@@ -260,17 +261,17 @@ Extract key information from MCP tool JSON and RAG query responses:
 
 ## Documentation Access (via RAG Queries)
 
-### DML 1.4 Reference Manual
-[Document findings from RAG query: "DML 1.4 reference manual register and device modeling"]
-- **Query**: "DML 1.4 reference manual register and device modeling"
+### Simics C++ API Reference Manual
+[Document findings from RAG query: "Simics C++ APIs for device modeling"]
+- **Query**: "Simics C++ APIs for device modeling"
 - **Source Type**: docs
 - **Key Findings**:
-  * [Finding 1 with relevant excerpt: Register modeling patterns and constructs]
-  * [Finding 2 with relevant excerpt: Device structure requirements and organization]
-  * [Finding 3 with relevant excerpt: DML language features for hardware modeling]
+  * [Finding 1 with relevant excerpt: C++ API patterns and device modeling constructs]
+  * [Finding 2 with relevant excerpt: Device class structure requirements and organization]
+  * [Finding 3 with relevant excerpt: Simics C++ API features for hardware modeling]
   * [Additional findings as discovered from RAG results]
 - **References**: [List any specific manual sections or topics found]
-- **Application**: Structure the [DEVICE_NAME] with appropriate register definitions and field breakdowns
+- **Application**: Structure the [DEVICE_NAME] with appropriate C++ class definitions and register implementations
 
 ### Model Builder User Guide
 [Document findings from RAG query: "Simics Model Builder device creation and structure patterns"]
@@ -284,25 +285,25 @@ Extract key information from MCP tool JSON and RAG query responses:
 - **References**: [List relevant guide sections and chapters]
 - **Application**: Follow established patterns for device structure and implementation approach
 
-### DML Device Template
-[Document findings from RAG query: "DML device template base structure and skeleton"]
-- **Query**: "DML device template base structure and skeleton"
-- **Source Type**: dml
+### C++ Device Template
+[Document findings from RAG query: "C++ device template base structure and skeleton"]
+- **Query**: "C++ device template base structure and skeleton"
+- **Source Type**: source
 - **Key Patterns**:
-  * [Pattern 1: Device declaration with dml 1.4; and device name]
-  * [Pattern 2: Register banks with parameters (register_size, byte_order)]
-  * [Pattern 3: Register declarations with size, offset, and behavior templates]
+  * [Pattern 1: Device class declaration with Simics configuration class]
+  * [Pattern 2: Register banks with memory mapping and access methods]
+  * [Pattern 3: Register declarations with size, offset, and callback handlers]
   * [Additional patterns discovered from RAG results]
 - **Code Examples**:
   * [code example 1]
   * [code example 2]
-- **Application**: Structure the [DEVICE_NAME] device following standard DML skeleton patterns
+- **Application**: Structure the [DEVICE_NAME] device following standard C++ skeleton patterns
 
 ## Device Example Analysis (via RAG Queries)
 
 ### Device-Specific Best Practices
-[Document findings from RAG query: "Best practices for [DEVICE_NAME] device modeling with Simics DML 1.4"]
-- **Query**: "Best practices for [DEVICE_NAME] device modeling with Simics DML 1.4"
+[Document findings from RAG query: "Best practices for [DEVICE_NAME] device modeling with Simics C++"]
+- **Query**: "Best practices for [DEVICE_NAME] device modeling with Simics C++"
 - **Source Type**: source
 - **Key Patterns Observed**:
   * [Pattern 1: Device-specific implementation approach and architecture]
@@ -316,8 +317,8 @@ Extract key information from MCP tool JSON and RAG query responses:
 - **Application**: Apply [DEVICE_NAME]-specific patterns to avoid common issues and follow best practices
 
 ### Simics Device Reference Example
-[Document findings from RAG query: "Simics device implementation example [DEVICE_NAME] or similar peripheral"]
-- **Query**: "Simics device implementation example [DEVICE_NAME] or similar peripheral"
+[Document findings from RAG query: "Simics C++ device implementation example [DEVICE_NAME] or similar peripheral"]
+- **Query**: "Simics C++ device implementation example [DEVICE_NAME] or similar peripheral"
 - **Source Type**: source
 - **Key Patterns Observed**:
   * [Pattern 1: Basic register implementation and organization]
@@ -331,9 +332,9 @@ Extract key information from MCP tool JSON and RAG query responses:
 - **Application**: Adapt similar device patterns to [DEVICE_NAME] implementation requirements
 
 ### Register Implementation Patterns
-[Document findings from RAG query: "DML register bank implementation patterns"]
-- **Query**: "DML register bank implementation patterns"
-- **Source Type**: dml
+[Document findings from RAG query: "C++ register bank implementation patterns for Simics devices"]
+- **Query**: "C++ register bank implementation patterns for Simics devices"
+- **Source Type**: source
 - **Implementation Patterns**:
   * [Pattern 1: Register bank definition with parameters]
   * [Pattern 2: Register access methods (read, write, get, set)]
@@ -393,7 +394,7 @@ Extract key information from MCP tool JSON and RAG query responses:
   * [Finding 3: Integration or interface pattern]
   * [Additional findings as relevant]
 - **Code Examples**:
-  * [code example 1 - 10-20 lines of actual DML/Python code]
+  * [code example 1 - 10-20 lines of actual C++/Python code]
   * [code example 2 - showing specific pattern or feature]
 - **Application**: [How these findings will be applied to [DEVICE_NAME] implementation]
 
@@ -426,12 +427,12 @@ Extract key information from MCP tool JSON and RAG query responses:
 
 | # | Query Focus | Source Type | Match Count | Status | Reference Section |
 |---|-------------|-------------|-------------|--------|-------------------|
-| 1 | DML 1.4 Reference Manual | docs | 5 | ✅ | Documentation Access |
+| 1 | C++ API Reference Manual | docs | 5 | ✅ | Documentation Access |
 | 2 | Model Builder Patterns | docs | 5 | ✅ | Documentation Access |
-| 3 | DML Device Template | dml | 5 | ✅ | Documentation Access |
+| 3 | C++ Device Template | source | 5 | ✅ | Documentation Access |
 | 4 | Device-Specific Best Practices | source | 5 | ✅ | Device Example Analysis |
 | 5 | Simics Device Reference | source | 5 | ✅ | Device Example Analysis |
-| 6 | Register Implementation | dml | 5 | ✅ | Device Example Analysis |
+| 6 | Register Implementation | source | 5 | ✅ | Device Example Analysis |
 | 7 | Python Test Patterns | python | 5 | ✅ | Test Example Analysis |
 | 8 | Device Testing Best Practices | source | 5 | ✅ | Test Example Analysis |
 | 9+ | [Additional Query - specify requirement addressed] | [type] | [N] | ✅ | Additional Research |
@@ -784,7 +785,7 @@ Explicitly state in your response:
 - Each user story → integration test task
 - Implementation tasks to make tests pass
 - **Simics projects**: Include implementation MCP tool tasks:
-  - **Setup tasks**: `create_simics_project()`, `add_dml_device_skeleton()`
+  - **Setup tasks**: `create_simics_project()`, `add_cpp_device_skeleton()`
   - **Build tasks**: `build_simics_project()`
   - **Test tasks**: `run_simics_test()`
   - **Note**: Discovery MCP tools (`get_simics_version`, `list_installed_packages`) already executed in /plan phase
@@ -940,9 +941,9 @@ After completing ALL verification checks, the agent MUST provide this exact repo
 - [ ] **Implementation MCP tools NOT executed** (reserved for /implement phase)
 
 **RAG Documentation Search Status** (if Project Type = simics):
-- [ ] `perform_rag_query()` used for DML-specific research (source_type="dml")
-- [ ] `perform_rag_query()` used for Python API research (source_type="python")
-- [ ] `perform_rag_query()` used for implementation patterns (source_type="source")
+- [ ] `perform_rag_query()` used for C++ API research (source_type="docs" and "source")
+- [ ] `perform_rag_query()` used for Python test API research (source_type="python")
+- [ ] `perform_rag_query()` used for C++ implementation patterns (source_type="source")
 - [ ] `perform_rag_query()` used for architectural guidance (source_type="docs")
 - [ ] RAG search results documented in research.md
 - [ ] Code examples and patterns extracted from RAG results

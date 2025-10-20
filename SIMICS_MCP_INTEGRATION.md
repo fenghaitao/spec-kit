@@ -23,7 +23,7 @@ Replaced manual project creation with MCP tool workflow:
 ```markdown
 # Use MCP tools for automated project creation:
 # 1. `create_simics_project(project_name=DEVICE_NAME, project_path=".")` → generates base structure
-# 2. `add_dml_device_skeleton(project_path=".", device_name=DEVICE_NAME)` → adds device modeling files
+# 2. `add_cpp_device_skeleton(project_path=".", device_name=DEVICE_NAME)` → adds C++ device modeling files
 # 3. `build_simics_project(project_path=".")` → validates build system
 # The structure shown below will be created automatically during Phase 3.1 Setup.
 ```
@@ -41,7 +41,7 @@ Added MCP-specific research tasks:
 Replaced manual setup with automated MCP tool calls:
 - **T001**: Verify connection with `get_simics_version()`
 - **T002**: Create project structure with `create_simics_project(project_name="DEVICE_NAME", project_path=".")`
-- **T003**: Add device skeleton with `add_dml_device_skeleton(project_path=".", device_name="DEVICE_NAME")`
+- **T003**: Add device skeleton with `add_cpp_device_skeleton(project_path=".", device_name="DEVICE_NAME")`
 - **T004**: Verify build system with `build_simics_project(project_path=".")`
 
 #### 2. Enhanced TDD Phase (Lines 66-69)
@@ -53,11 +53,11 @@ Updated test setup with correct Simics project paths:
 
 #### 3. Build-Integrated Implementation (Lines 81-89)
 Added continuous build validation with correct Simics paths:
-- **T009**: Register definitions in `modules/device-name/registers.dml`
-- **T010**: Interface declarations in `modules/device-name/interfaces.dml`
-- **T011**: Utility methods in `modules/device-name/utility.dml`
+- **T009**: Register definitions in `modules/device-name/registers.h` and `registers.cc`
+- **T010**: Interface declarations in `modules/device-name/interfaces.h` and `interfaces.cc`
+- **T011**: Utility methods in C++ helper files
 - **T012**: Build device module using `build_simics_project(project_path=".", module="DEVICE_NAME")`
-- **T013**: Main device structure in `modules/device-name/device-name.dml`
+- **T013**: Main device structure in `modules/device-name/device-name.h` and `device-name.cc`
 - **T017**: Incremental build validation using `build_simics_project(project_path=".")`
 
 #### 4. Comprehensive Integration Testing (Lines 98-103)
@@ -84,7 +84,7 @@ The templates now reference these simics-mcp-server MCP tools:
 ### Project Management
 - `get_simics_version()` - Verify installation and get version info
 - `create_simics_project(project_name, project_path)` - Create project structure
-- `add_dml_device_skeleton(project_path, device_name)` - Add device modeling files
+- `add_cpp_device_skeleton(project_path, device_name)` - Add C++ device modeling files
 
 ### Package Management  
 - `search_packages(query)` - Search available packages
@@ -135,7 +135,7 @@ When executing generated tasks:
 # Instead of manual project creation, tasks will specify:
 # - T001: Verify simics-mcp-server connection and Simics installation using `get_simics_version()`
 # - T002: Create Simics project structure using `create_simics_project(project_name="DEVICE_NAME", project_path=".")`
-# - T003: Add device skeleton using `add_dml_device_skeleton(project_path=".", device_name="DEVICE_NAME")`
+# - T003: Add device skeleton using `add_cpp_device_skeleton(project_path=".", device_name="DEVICE_NAME")`
 ```
 
 #### Implementation Phase

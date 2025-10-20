@@ -40,7 +40,7 @@
 - **Optional sections**: Include only when relevant to the feature
 - **Simics sections**: Include "Hardware Specification" section only for hardware device modeling projects
 - **Simics project detection**: Look for keywords in feature description:
-  * "device modeling", "DML device", or "DML 1.4"
+  * "device modeling", "C++ device", or "Simics C++ API"
   * "hardware simulation" or "Simics platform"
   * "register map" or "memory-mapped registers"
   * "device model" with hardware context
@@ -76,7 +76,7 @@ When creating this spec from a user prompt:
 "Create a product inventory system where users can add products with name, SKU, price, and quantity. Support bulk import from CSV and export to Excel. Send email alerts when stock falls below reorder threshold."
 
 ### Example 3: Simics Hardware Feature
-"Implement a DML 1.4 watchdog timer device model for Simics with configurable timeout, hardware reset capability, and memory-mapped control registers. The device should support interrupt generation and integration with QSP-x86 platform."
+"Implement a C++ watchdog timer device model for Simics with configurable timeout, hardware reset capability, and memory-mapped control registers. The device should support interrupt generation and integration with QSP-x86 platform."
 
 ---
 
