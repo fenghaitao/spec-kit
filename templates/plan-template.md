@@ -14,6 +14,7 @@ scripts:
 ```
 1. Load feature spec from Input path
    → If not found: ERROR "No feature spec at {path}"
+   → Extract: Functional Requirements, Key Entities, Hardware Specification (if Simics project)
 2. Fill Technical Context (scan for NEEDS CLARIFICATION)
    → Detect Project Type from context (web=frontend+backend, mobile=app+api, simics=hardware device)
    → Set Structure Decision based on project type
@@ -555,10 +556,11 @@ Explicitly state in your response:
 - State transitions if applicable
 
 **For Simics Projects**:
-- Register definitions (address, size, access type, reset value)
-- Device state variables and attributes
-- Interface specifications
-- Memory-mapped regions
+- **Read Hardware Specification section from spec.md** (loaded in step 1 of Execution Flow)
+- Extract register inventory from spec.md Register Map table (register names, purposes, software operations)
+- Extract interface requirements from spec.md External Interfaces section
+- Add implementation details: offsets, sizes, access types, bit fields, reset values
+- Reference research.md for DML patterns and register implementation examples
 
 Use this structure:
 ```markdown
@@ -566,13 +568,23 @@ Use this structure:
 
 ## Registers (Simics Projects)
 
-### Register: [REGISTER_NAME]
-- **Offset**: [hex address]
-- **Size**: [bits]
-- **Access**: [RO/WO/RW]
-- **Reset Value**: [hex value]
-- **Purpose**: [description]
-- **Fields**: [bit fields if applicable]
+*For each register listed in spec.md Hardware Specification → Register Map table, create a detailed entry:*
+
+### Register: [REGISTER_NAME from spec.md]
+- **Offset**: [hex address - assign based on register order and size]
+- **Size**: [bits - determine from requirements and research.md examples]
+- **Access**: [RO/WO/RW - determine from spec.md "Software Operations" column]
+- **Reset Value**: [hex value - determine from requirements or use 0x0000]
+- **Purpose**: [copy from spec.md "Purpose" column]
+- **Side Effects**: [copy from spec.md "Operational Behavior" and bit field side effects]
+  * On Read: [what happens when software reads this register]
+  * On Write: [what happens when software writes this register]
+  * State Changes: [what device state changes occur]
+  * Other Registers Affected: [which other registers are affected]
+- **Fields**: [bit fields - design based on Required Capabilities from spec.md]
+
+*Example: If spec.md lists "CONTROL | Device enable and mode selection | Writing 1 to DEVICE_ENABLE triggers initialization"*
+*Then create: Register CONTROL at offset 0x00, with side effect: "On Write to DEVICE_ENABLE: Triggers device initialization sequence, resets COUNTER to 0"*
 
 ## Device State (Simics Projects)
 
