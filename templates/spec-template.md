@@ -127,31 +127,81 @@ When creating this spec from a user prompt:
 
 ### Hardware Specification *(Simics projects only)*
 
-**Important**: This section describes WHAT the hardware device does, not HOW to implement it in DML.
-- Focus on hardware behavior and functionality
-- Avoid DML syntax, templates, or implementation patterns
-- DML learning will occur in /plan and /tasks phases using dedicated grammar and best practices documents
+**Device Purpose**:
+- **Device Type**: [e.g., Watchdog timer, Network controller, Storage device, Memory controller]
+- **Primary Function**: [What the device does from software/user perspective]
+- **Use Cases**: [When and why software would use this device]
 
-**Content Guidelines**:
-- **Device Type**: [e.g., Network controller, Storage device, Memory controller, Timer device, Interrupt controller]
-- **Register Map**: [High-level register categories and their purposes - describe register functions, not DML declarations]
-  * Example: "Control register enables/disables timer and sets mode"
-  * Not: "register control size 4 @ 0x00 { ... }" (this is DML syntax)
-- **External Interfaces**: [Ports, connections, and protocols the device supports - describe connections, not DML interface declarations]
-  * Example: "Device connects to system bus via memory-mapped I/O"
-  * Not: "port bank { implement io_memory; ... }" (this is DML syntax)
-- **Software Visibility**: [What aspects of the device software can observe/control]
-  * Example: "Software can read timer value, configure timeout, and enable interrupts"
-- **Device Behavior**: [State machines, timing, events, and operational modes]
-  * Example: "When enabled, timer counts down from configured value and triggers interrupt on zero"
-- **Reset Behavior**: [What happens when device is reset]
-- **Interrupt Generation**: [Conditions that trigger interrupts]
+**Register Map** *(parsed from hardware specification document)*:
 
-**Remember**: Detailed DML implementation guidance, grammar rules, and best practices are available in:
-- `.specify/memory/DML_grammar.md` (syntax, language constructs)
-- `.specify/memory/DML_Device_Development_Best_Practices.md` (patterns, pitfalls)
+| Offset | Name | Size | Access | Reset | Purpose |
+|--------|------|------|--------|-------|---------|
+| 0x00 | CONTROL | 32-bit | R/W | 0x0000 | Device control and enable flags |
+| 0x04 | STATUS | 32-bit | R/O | 0x0001 | Device status indicators |
+| 0x08 | TIMEOUT | 32-bit | R/W | 0x0000 | Timeout period configuration |
+| 0x0C | COUNTER | 32-bit | R/O | 0x0000 | Current countdown value |
+| ... | ... | ... | ... | ... | ... |
 
-These will be studied thoroughly in /plan and /tasks phases before any DML code is written.
+*For each register with bit fields, detail the fields:*
+
+**CONTROL Register (0x00)** bit fields:
+- Bits [31:8]: Reserved (must be 0)
+- Bit 7: INTERRUPT_ENABLE (R/W) - Enable interrupt generation
+  * Side effect: When set to 1, enables interrupt generation; when cleared, disables interrupts
+- Bit 6: DMA_ENABLE (R/W) - Enable DMA transfers
+  * Side effect: When set to 1, enables DMA engine; when cleared, stops DMA transfers
+- Bits [5:1]: Reserved
+- Bit 0: DEVICE_ENABLE (R/W) - Master enable for device operation
+  * Side effect: Writing 1 triggers device initialization sequence, resets COUNTER to 0, clears STATUS.ERROR
+
+**STATUS Register (0x04)** bit fields:
+- Bits [31:4]: Reserved
+- Bit 3: ERROR (R/O) - Error condition detected
+- Bit 2: BUSY (R/O) - Device busy processing
+- Bit 1: INTERRUPT_PENDING (R/O) - Interrupt waiting to be serviced
+- Bit 0: READY (R/O) - Device ready for operations
+
+**TIMEOUT Register (0x08)** bit fields:
+- Bits [31:0]: TIMEOUT_VALUE (R/W) - Timeout period in milliseconds
+
+**COUNTER Register (0x0C)** bit fields:
+- Bits [31:0]: COUNTER_VALUE (R/O) - Current countdown value in milliseconds
+
+*Continue for all registers...*
+
+**Operational Behavior** *(parsed from hardware specification)*:
+- **Initialization**: [Sequence of register writes needed to initialize device, e.g., "Write 0x1 to CONTROL.DEVICE_ENABLE"]
+- **Normal Operation**: [Key register interactions during typical use, e.g., "Write timeout to TIMEOUT register, write 1 to CONTROL.DEVICE_ENABLE, periodically write 1 to CONTROL to reset timer"]
+- **Error Handling**: [How errors are signaled and cleared, e.g., "STATUS.ERROR set on failure, write 1 to CONTROL.CLEAR_ERROR to reset"]
+- **Interrupts**: [When interrupts fire and how to acknowledge, e.g., "Interrupt fires when COUNTER reaches 0, clear by reading STATUS register"]
+
+**External Interfaces**:
+- **Bus Connection**: [e.g., "Memory-mapped I/O at base address 0x1000", or NEEDS CLARIFICATION]
+- **Interrupt Lines**: [e.g., "IRQ 5 for timeout events", or NEEDS CLARIFICATION]
+- **DMA Channels**: [e.g., "No DMA required", or NEEDS CLARIFICATION]
+- **Other Connections**: [e.g., "Reset output line to system reset controller", or NEEDS CLARIFICATION]
+
+**Software Visibility** *(what software can observe/control)*:
+- [What aspects of device behavior are observable from software]
+- [What internal state is NOT visible to software]
+- [Ordering requirements for register access]
+
+**Examples of marking unclear specifications**:
+- **Base Address**: [NEEDS CLARIFICATION: Is this PCI BAR-based or fixed memory-mapped?]
+- **CONTROL.RESERVED bits**: [NEEDS CLARIFICATION: Should writes to reserved bits be ignored or cause errors?]
+- **Interrupt line**: [NEEDS CLARIFICATION: Which interrupt line number or dynamically assigned?]
+- **Reset behavior**: [NEEDS CLARIFICATION: What happens to all registers on hardware reset?]
+
+**RAG Query Guidance** *(for incomplete information)*:
+If information is missing or unclear during /specify phase, use RAG to query the original hardware specification:
+- **Missing register details**: `perform_rag_query("CONTROL register bit field definitions", source_type="docs", filter="hardware_spec.pdf")`
+- **Unclear behavior**: `perform_rag_query("device initialization sequence and register write order", source_type="docs")`
+- **Side effects**: `perform_rag_query("register side effects and state changes on write", source_type="docs")`
+- **Timing constraints**: `perform_rag_query("register access timing requirements and constraints", source_type="docs")`
+
+Mark areas that need RAG queries with: [RAG QUERY NEEDED: specific question about hardware spec]
+
+**Note**: This section contains the complete parsed hardware specification. The /plan phase will transform this into DML-specific data-model.md format.
 
 ---
 
