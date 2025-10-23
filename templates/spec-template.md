@@ -46,6 +46,19 @@
   * "device model" with hardware context
 - When a section doesn't apply, remove it entirely (don't leave as "N/A")
 
+### Simics DML Device Modeling Guidance
+**Note**: For Simics device modeling projects, comprehensive DML learning resources are available:
+- **.specify/memory/DML_grammar.md**: Complete DML 1.4 grammar reference with syntax rules and language constructs
+- **.specify/memory/DML_Device_Development_Best_Practices.md**: Best practices, patterns, and common pitfalls for DML development
+
+**During /specify phase**: Focus on WHAT the device does (hardware behavior specification)
+- Describe device functionality from hardware perspective
+- Specify register behaviors without DML implementation details
+- Define interfaces and protocols the device supports
+- Document timing and state machine behaviors
+
+**In later phases**: The /plan and /tasks phases will require reading and studying the DML documents before implementation. This specification should remain focused on hardware behavior, not DML syntax or coding patterns.
+
 ### For AI Generation
 When creating this spec from a user prompt:
 1. **Mark all ambiguities**: Use [NEEDS CLARIFICATION: specific question] for any assumption you'd need to make
@@ -77,6 +90,8 @@ When creating this spec from a user prompt:
 
 ### Example 3: Simics Hardware Feature
 "Implement a DML 1.4 watchdog timer device model for Simics with configurable timeout, hardware reset capability, and memory-mapped control registers. The device should support interrupt generation and integration with QSP-x86 platform."
+
+**Note**: When writing the specification for this, describe the watchdog timer's hardware behavior (countdown mechanism, reset conditions, interrupt generation) without DML implementation details. DML syntax and best practices will be learned in subsequent /plan and /tasks phases using dedicated study documents.
 
 ---
 
@@ -111,10 +126,32 @@ When creating this spec from a user prompt:
 - **[Entity 2]**: [What it represents, relationships to other entities]
 
 ### Hardware Specification *(Simics projects only)*
-- **Device Type**: [e.g., Network controller, Storage device, Memory controller]
-- **Register Map**: [High-level register categories and their purposes]
-- **External Interfaces**: [Ports, connections, and protocols the device supports]
+
+**Important**: This section describes WHAT the hardware device does, not HOW to implement it in DML.
+- Focus on hardware behavior and functionality
+- Avoid DML syntax, templates, or implementation patterns
+- DML learning will occur in /plan and /tasks phases using dedicated grammar and best practices documents
+
+**Content Guidelines**:
+- **Device Type**: [e.g., Network controller, Storage device, Memory controller, Timer device, Interrupt controller]
+- **Register Map**: [High-level register categories and their purposes - describe register functions, not DML declarations]
+  * Example: "Control register enables/disables timer and sets mode"
+  * Not: "register control size 4 @ 0x00 { ... }" (this is DML syntax)
+- **External Interfaces**: [Ports, connections, and protocols the device supports - describe connections, not DML interface declarations]
+  * Example: "Device connects to system bus via memory-mapped I/O"
+  * Not: "port bank { implement io_memory; ... }" (this is DML syntax)
 - **Software Visibility**: [What aspects of the device software can observe/control]
+  * Example: "Software can read timer value, configure timeout, and enable interrupts"
+- **Device Behavior**: [State machines, timing, events, and operational modes]
+  * Example: "When enabled, timer counts down from configured value and triggers interrupt on zero"
+- **Reset Behavior**: [What happens when device is reset]
+- **Interrupt Generation**: [Conditions that trigger interrupts]
+
+**Remember**: Detailed DML implementation guidance, grammar rules, and best practices are available in:
+- `.specify/memory/DML_grammar.md` (syntax, language constructs)
+- `.specify/memory/DML_Device_Development_Best_Practices.md` (patterns, pitfalls)
+
+These will be studied thoroughly in /plan and /tasks phases before any DML code is written.
 
 ---
 

@@ -241,6 +241,20 @@ Extract key information from MCP tool JSON and RAG query responses:
 ```markdown
 # Research: [FEATURE_NAME]
 
+## DML Learning Prerequisites (Simics Projects Only)
+
+**⚠️ CRITICAL FOR SIMICS PROJECTS**: Two comprehensive DML learning documents must be studied in the tasks phase before writing any DML code:
+
+1. `.specify/memory/DML_Device_Development_Best_Practices.md` - Patterns and pitfalls
+2. `.specify/memory/DML_grammar.md` - Complete DML 1.4 language specification
+
+**During /plan Phase**:
+- ✅ Execute RAG queries for device patterns and examples
+- ✅ Document RAG results in research.md
+- ❌ DO NOT read the DML learning documents yet (they will be studied in tasks phase)
+
+**In Tasks Phase**: Mandatory tasks T013-T014 will require complete study of these documents with comprehensive note-taking in research.md before any implementation
+
 ## Environment Discovery
 
 ### Simics Version
@@ -271,6 +285,7 @@ Extract key information from MCP tool JSON and RAG query responses:
   * [Additional findings as discovered from RAG results]
 - **References**: [List any specific manual sections or topics found]
 - **Application**: Structure the [DEVICE_NAME] with appropriate register definitions and field breakdowns
+- **Note**: This provides initial context; detailed grammar rules from DML_grammar.md will be studied in tasks phase
 
 ### Model Builder User Guide
 [Document findings from RAG query: "Simics Model Builder device creation and structure patterns"]
@@ -283,6 +298,7 @@ Extract key information from MCP tool JSON and RAG query responses:
   * [Finding 4 with relevant excerpt: Example device structures (e.g., DS12887, AM79C960, etc.)]
 - **References**: [List relevant guide sections and chapters]
 - **Application**: Follow established patterns for device structure and implementation approach
+- **Note**: This provides architectural context; detailed best practices from DML_Device_Development_Best_Practices.md will be studied in tasks phase
 
 ### DML Device Template
 [Document findings from RAG query: "DML device template base structure and skeleton"]
