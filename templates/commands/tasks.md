@@ -59,6 +59,27 @@ $ARGUMENTS
    - Clear file paths for each task
    - Dependency notes
    - Parallel execution guidance
+   - **⚠️ CRITICAL**: After creating or updating tasks.md, immediately create a git commit (see step 8)
+
+8. **MANDATORY: Git Version Control - Commit After Task Generation/Updates**:
+   - **WHEN**: After generating tasks.md or making significant updates to the task list
+   - **WHAT**: Stage and commit tasks.md and any related changes
+   - **HOW**: Use these exact commands:
+     ```bash
+     git add -A
+     git commit -m "tasks: <feature-name> - <action-description>"
+     ```
+   - **EXAMPLES**:
+     - Initial tasks: `git commit -m "tasks: device-name - generated complete task breakdown with 34 tasks"`
+     - Updated tasks: `git commit -m "tasks: device-name - updated task dependencies for DML implementation"`
+     - Added tasks: `git commit -m "tasks: device-name - added integration test tasks"`
+     - Refined tasks: `git commit -m "tasks: device-name - refined parallel execution markers"`
+   - **WHY**: This creates a clear audit trail of task planning, making it easy to:
+     - Track how task breakdown evolved
+     - Understand task dependency changes
+     - Review task planning decisions
+     - Revert to previous task breakdowns if needed
+   - **CRITICAL**: Always commit task changes to maintain clear project planning history
 
 Context for task generation: {ARGS}
 

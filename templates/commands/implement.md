@@ -33,6 +33,7 @@ $ARGUMENTS
    - **Follow TDD approach**: Execute test tasks before their corresponding implementation tasks
    - **File-based coordination**: Tasks affecting the same files must run sequentially
    - **Validation checkpoints**: Verify each phase completion before proceeding
+   - **⚠️ CRITICAL**: After EVERY build or test command, immediately create a git commit (see step 7)
 
 5. Implementation execution rules:
    - **Setup first**: Initialize project structure, dependencies, configuration
@@ -40,6 +41,7 @@ $ARGUMENTS
    - **Core development**: Implement models, services, CLI commands, endpoints
    - **Integration work**: Database connections, middleware, logging, external services
    - **Polish and validation**: Unit tests, performance optimization, documentation
+   - **⚠️ After each build/test**: Run `git add -A && git commit -m "implement: <task> - <result>"`
 
 6. Progress tracking and error handling:
    - Report progress after each completed task
@@ -49,7 +51,27 @@ $ARGUMENTS
    - Suggest next steps if implementation cannot proceed
    - **IMPORTANT** For completed tasks, make sure to mark the task off as [X] in the tasks file.
 
-7. Completion validation:
+7. **MANDATORY: Git Version Control - Execute After EVERY Build or Test**:
+   - **WHEN**: Immediately after EVERY build attempt (successful or failed) and EVERY test run (pass or fail)
+   - **WHAT**: Stage and commit ALL modified files (source code, tests, configs, DML files, etc.)
+   - **HOW**: Use these exact commands:
+     ```bash
+     git add -A
+     git commit -m "implement: <task-id> - <step-description> - <result>"
+     ```
+   - **EXAMPLES**:
+     - After failed build: `git commit -m "implement: T024 - build validation - FAILED: syntax error in registers.dml"`
+     - After successful build: `git commit -m "implement: T024 - build validation - SUCCESS"`
+     - After failed test: `git commit -m "implement: T031 - comprehensive tests - FAILED: register access error"`
+     - After passed test: `git commit -m "implement: T031 - comprehensive tests - PASSED"`
+   - **WHY**: This creates a detailed history of the development process, making it easy to:
+     - Track what changes caused failures
+     - Revert to working states
+     - Review the implementation journey
+     - Debug issues by comparing commits
+   - **CRITICAL**: Do NOT skip commits even if the build/test failed - failed attempts are valuable history
+
+8. Completion validation:
    - Verify all required tasks are completed
    - Check that implemented features match the original specification
    - Validate that tests pass and coverage meets requirements
