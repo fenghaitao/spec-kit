@@ -176,21 +176,17 @@ When creating this spec from a user prompt:
 - **Interrupts**: [When interrupts fire and how to acknowledge, e.g., "Interrupt fires when COUNTER reaches 0, clear by reading STATUS register"]
 
 **External Interfaces**:
-- **Bus Connection**: [e.g., "Memory-mapped I/O at base address 0x1000", or NEEDS CLARIFICATION]
-- **Interrupt Lines**: [e.g., "IRQ 5 for timeout events", or NEEDS CLARIFICATION]
-- **DMA Channels**: [e.g., "No DMA required", or NEEDS CLARIFICATION]
-- **Other Connections**: [e.g., "Reset output line to system reset controller", or NEEDS CLARIFICATION]
+- **Bus Connection**: [direction: bidirectional] [e.g., "Memory-mapped I/O at base address 0x1000", or NEEDS CLARIFICATION]
+- **Interrupt Lines**: [direction: output] [e.g., "IRQ 5 for timeout events", or NEEDS CLARIFICATION]
+- **DMA Channels**: [direction: input/output/bidirectional] [e.g., "Channel 2 for data transfer (bidirectional)", or "No DMA required", or NEEDS CLARIFICATION]
+- **Signal Inputs**: [direction: input] [e.g., "Clock input, Reset input", or "None", or NEEDS CLARIFICATION]
+- **Signal Outputs**: [direction: output] [e.g., "Hardware reset line to system controller", or "None", or NEEDS CLARIFICATION]
+- **Other Connections**: [direction: specify] [e.g., "GPIO pins for external control (input/output)", or NEEDS CLARIFICATION]
 
 **Software Visibility** *(what software can observe/control)*:
 - [What aspects of device behavior are observable from software]
 - [What internal state is NOT visible to software]
 - [Ordering requirements for register access]
-
-**Examples of marking unclear specifications**:
-- **Base Address**: [NEEDS CLARIFICATION: Is this PCI BAR-based or fixed memory-mapped?]
-- **CONTROL.RESERVED bits**: [NEEDS CLARIFICATION: Should writes to reserved bits be ignored or cause errors?]
-- **Interrupt line**: [NEEDS CLARIFICATION: Which interrupt line number or dynamically assigned?]
-- **Reset behavior**: [NEEDS CLARIFICATION: What happens to all registers on hardware reset?]
 
 **RAG Query Guidance** *(for incomplete information)*:
 If information is missing or unclear during /specify phase, use RAG to query the original hardware specification:

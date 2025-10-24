@@ -90,6 +90,10 @@ Include exact file paths in descriptions
 - [ ] T016 [P] Validate test environment: `run_simics_test(project_path="/absolute/path/to/workspace/simics-project", suite="modules/DEVICE_NAME/test")` ⚠️ ABSOLUTE PATH
 
 ## Phase 3.3: Core Implementation (ONLY after tests are failing)
+
+**⚠️ CRITICAL BUILD REQUIREMENT (Simics Projects)**:
+After implementing EACH task in this phase, MUST run `build_simics_project(project_path="/absolute/path/to/workspace/simics-project", module="DEVICE_NAME")` to verify compilation before marking task done. Do NOT proceed to next task if build fails.
+
 - [ ] T008 [P] User model in src/models/user.py
 - [ ] T009 [P] UserService CRUD in src/services/user_service.py
 - [ ] T010 [P] CLI --create-user in src/cli/user_commands.py
