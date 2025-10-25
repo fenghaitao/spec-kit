@@ -1,0 +1,363 @@
+/*
+  © 2025 Intel Corporation
+*/
+
+// wdt.dml - Watchdog Timer Device Implementation
+dml 1.4;
+
+device wdt;
+
+// Device description
+param desc = "Watchdog Timer Device";
+param documentation = "ARM PrimeCell compatible 32-bit watchdog timer with interrupt and reset capabilities";
+
+import "utility.dml";
+import "simics/devs/signal.dml";
+
+// Session variables for device state
+session uint64 timer_counter = 0xFFFFFFFF;           // Current timer value
+session uint64 timer_reload_value = 0xFFFFFFFF;      // Reload value
+session bool interrupt_pending = false;              // Interrupt pending flag
+session bool registers_locked = false;               // Lock status for registers
+session bool integration_test_mode = false;          // Integration test mode flag
+session bool test_interrupt_value = false;           // Test interrupt output value
+session bool test_reset_value = false;               // Test reset output value
+
+// Connect definitions for interrupt and reset signals
+connect interrupt_signal is signal_connect {
+    param documentation = "Interrupt signal output";
+}
+
+connect reset_signal is signal_connect {
+    param documentation = "Reset signal output";
+}
+
+// Timer event for handling countdown
+// Using simple_cycle_event template for cycle-based timing
+event timer_event is (simple_cycle_event) {
+    param priority = 100;  // Lower priority than other events
+    
+    method event() {
+        // Handle timer countdown when not in integration test mode
+        if (!integration_test_mode) {
+            // Decrement timer counter based on clock divider
+            local uint64 divider = 1;
+            switch (regs.wdogcontrol.clkdiv.val) {
+                case 0b000: divider = 1; break;   // ÷1
+                case 0b001: divider = 2; break;   // ÷2
+                case 0b010: divider = 4; break;   // ÷4
+                case 0b011: divider = 8; break;   // ÷8
+                case 0b100: divider = 16; break;  // ÷16
+                default: divider = 1; break;      // Default to ÷1
+            }
+            
+            // For simplicity in this implementation, we'll decrement by divider
+            // In a real implementation, this would be handled by the Simics clock
+            if (timer_counter >= divider) {
+                timer_counter -= divider;
+            } else {
+                timer_counter = 0;
+            }
+            
+            // Check if timer has reached zero
+            if (timer_counter == 0) {
+                handle_timeout();
+                
+                // Reload timer
+                timer_counter = timer_reload_value;
+            }
+        }
+        
+        // Don't automatically re-post the event
+        // Let the tests or the system control when the timer should run
+        // In a real implementation, this would be handled by the Simics clock
+    }
+}
+
+// Register bank declaration
+bank regs {
+    param register_size = 4;
+    param byte_order = "little-endian";
+    
+    // Watchdog Timer Registers
+    register wdogload @ 0x00 "Watchdog Load Register";
+    register wdogvalue @ 0x04 "Watchdog Value Register";
+    register wdogcontrol @ 0x08 "Watchdog Control Register";
+    register wdogintclr @ 0x0C "Watchdog Interrupt Clear Register";
+    register wdogris @ 0x10 "Watchdog Raw Interrupt Status Register";
+    register wdogmis @ 0x14 "Watchdog Masked Interrupt Status Register";
+    register wdoglock @ 0xC00 "Watchdog Lock Register";
+    register wdogitcr @ 0xF00 "Watchdog Integration Test Control Register";
+    register wdogitop @ 0xF04 "Watchdog Integration Test Output Set Register";
+    
+    // Peripheral Identification Registers
+    register wdogperiphid0 @ 0xFE0 "Peripheral Identification Register 0";
+    register wdogperiphid1 @ 0xFE4 "Peripheral Identification Register 1";
+    register wdogperiphid2 @ 0xFE8 "Peripheral Identification Register 2";
+    register wdogperiphid3 @ 0xFEC "Peripheral Identification Register 3";
+    register wdogperiphid4 @ 0xFD0 "Peripheral Identification Register 4";
+    register wdogperiphid5 @ 0xFD4 "Peripheral Identification Register 5";
+    register wdogperiphid6 @ 0xFD8 "Peripheral Identification Register 6";
+    register wdogperiphid7 @ 0xFDC "Peripheral Identification Register 7";
+    
+    // PrimeCell Identification Registers
+    register wdogpcellid0 @ 0xFF0 "PrimeCell Identification Register 0";
+    register wdogpcellid1 @ 0xFF4 "PrimeCell Identification Register 1";
+    register wdogpcellid2 @ 0xFF8 "PrimeCell Identification Register 2";
+    register wdogpcellid3 @ 0xFFC "PrimeCell Identification Register 3";
+}
+
+// Register implementations with custom behavior
+bank regs {
+    // WDOGLOAD - Watchdog Load Register
+    register wdogload is (read, write) {
+        param init_val = 0xFFFFFFFF;
+        
+        method read() -> (uint64) {
+            return this.val;
+        }
+        
+        method write(uint64 value) {
+            // Check if registers are locked
+            if (registers_locked) {
+                log info: "Write to WDOGLOAD ignored - registers locked";
+                return;
+            }
+            
+            this.val = value;
+            timer_reload_value = value;
+            log info: "WDOGLOAD set to 0x%08x", value;
+        }
+    }
+    
+    // WDOGVALUE - Watchdog Value Register
+    register wdogvalue is (read) {
+        param init_val = 0xFFFFFFFF;
+        
+        method read() -> (uint64) {
+            if (integration_test_mode) {
+                // In test mode, return the actual timer counter
+                return timer_counter;
+            } else {
+                // In normal mode, return the timer counter
+                return timer_counter;
+            }
+        }
+    }
+    
+    // WDOGCONTROL - Watchdog Control Register
+    register wdogcontrol is (read, write) {
+        param init_val = 0x00000000;
+        
+        // Field definitions
+        field inten @ [0];     // Interrupt enable
+        field resen @ [1];     // Reset enable
+        field clkdiv @ [4:2];  // Clock divider
+        
+        method read() -> (uint64) {
+            return this.val;
+        }
+        
+        method write(uint64 value) {
+            // Check if registers are locked
+            if (registers_locked) {
+                log info: "Write to WDOGCONTROL ignored - registers locked";
+                return;
+            }
+            
+            this.val = value;
+            log info: "WDOGCONTROL set to 0x%08x", value;
+        }
+    }
+    
+    // WDOGINTCLR - Watchdog Interrupt Clear Register
+    register wdogintclr is (write) {
+        method write(uint64 value) {
+            // Check if registers are locked
+            if (registers_locked) {
+                log info: "Write to WDOGINTCLR ignored - registers locked";
+                return;
+            }
+            
+            // Clear interrupt pending flag
+            interrupt_pending = false;
+            
+            // Reload timer
+            timer_counter = timer_reload_value;
+            
+            log info: "Interrupt cleared and timer reloaded";
+        }
+    }
+    
+    // WDOGRIS - Watchdog Raw Interrupt Status Register
+    register wdogris is (read) {
+        method read() -> (uint64) {
+            if (integration_test_mode) {
+                // In test mode, return test interrupt value
+                return test_interrupt_value ? 1 : 0;
+            } else {
+                // In normal mode, return interrupt pending flag
+                return interrupt_pending ? 1 : 0;
+            }
+        }
+    }
+    
+    // WDOGMIS - Watchdog Masked Interrupt Status Register
+    register wdogmis is (read) {
+        method read() -> (uint64) {
+            if (integration_test_mode) {
+                // In test mode, return test interrupt value AND interrupt enable
+                return (test_interrupt_value && wdogcontrol.inten.val) ? 1 : 0;
+            } else {
+                // In normal mode, return (interrupt pending AND interrupt enable)
+                return (interrupt_pending && wdogcontrol.inten.val) ? 1 : 0;
+            }
+        }
+    }
+    
+    // WDOGLOCK - Watchdog Lock Register
+    register wdoglock is (read, write) {
+        param init_val = 0x00000000;
+        
+        method read() -> (uint64) {
+            // Return lock status (0 = unlocked, 1 = locked)
+            return registers_locked ? 1 : 0;
+        }
+        
+        method write(uint64 value) {
+            // WDOGLOCK register is never locked itself
+            this.val = value;
+            
+            // Check for magic unlock value
+            if (value == 0x1ACCE551) {
+                registers_locked = false;
+                log info: "Registers unlocked";
+            } else {
+                registers_locked = true;
+                log info: "Registers locked";
+            }
+        }
+    }
+    
+    // WDOGITCR - Watchdog Integration Test Control Register
+    register wdogitcr is (read, write) {
+        param init_val = 0x00000000;
+        
+        field itmode @ [0];  // Integration test mode enable
+        
+        method read() -> (uint64) {
+            return this.val;
+        }
+        
+        method write(uint64 value) {
+            // Check if registers are locked
+            if (registers_locked) {
+                log info: "Write to WDOGITCR ignored - registers locked";
+                return;
+            }
+            
+            this.val = value;
+            integration_test_mode = ((value & 1) != 0) ? true : false;
+            log info: "Integration test mode %s", integration_test_mode ? "enabled" : "disabled";
+        }
+    }
+    
+    // WDOGITOP - Watchdog Integration Test Output Set Register
+    register wdogitop is (write) {
+        field itop0 @ [0];  // Integration test WDOGRES value
+        field itop1 @ [1];  // Integration test WDOGINT value
+        
+        method write(uint64 value) {
+            // Check if registers are locked
+            if (registers_locked) {
+                log info: "Write to WDOGITOP ignored - registers locked";
+                return;
+            }
+            
+            // Only effective when integration test mode is enabled
+            if (integration_test_mode) {
+                test_reset_value = ((value & 1) != 0) ? true : false;
+                test_interrupt_value = ((value & 2) != 0) ? true : false;
+                
+                log info: "Test outputs set - reset: %d, interrupt: %d", 
+                         test_reset_value ? 1 : 0, test_interrupt_value ? 1 : 0;
+            }
+        }
+    }
+    
+    // Peripheral Identification Registers (read-only)
+    register wdogperiphid0 is (read) { param init_val = 0x00000024; method read() -> (uint64) { return this.val; } }
+    register wdogperiphid1 is (read) { param init_val = 0x000000B8; method read() -> (uint64) { return this.val; } }
+    register wdogperiphid2 is (read) { param init_val = 0x0000001B; method read() -> (uint64) { return this.val; } }
+    register wdogperiphid3 is (read) { param init_val = 0x00000000; method read() -> (uint64) { return this.val; } }
+    register wdogperiphid4 is (read) { param init_val = 0x00000004; method read() -> (uint64) { return this.val; } }
+    register wdogperiphid5 is (read) { param init_val = 0x00000000; method read() -> (uint64) { return this.val; } }
+    register wdogperiphid6 is (read) { param init_val = 0x00000000; method read() -> (uint64) { return this.val; } }
+    register wdogperiphid7 is (read) { param init_val = 0x00000000; method read() -> (uint64) { return this.val; } }
+    
+    // PrimeCell Identification Registers (read-only)
+    register wdogpcellid0 is (read) { param init_val = 0x0000000D; method read() -> (uint64) { return this.val; } }
+    register wdogpcellid1 is (read) { param init_val = 0x000000F0; method read() -> (uint64) { return this.val; } }
+    register wdogpcellid2 is (read) { param init_val = 0x00000005; method read() -> (uint64) { return this.val; } }
+    register wdogpcellid3 is (read) { param init_val = 0x000000B1; method read() -> (uint64) { return this.val; } }
+}
+
+// Device initialization
+method init() {
+    // Initialize all registers to their reset values
+    regs.wdogload.val = 0xFFFFFFFF;
+    regs.wdogvalue.val = 0xFFFFFFFF;
+    regs.wdogcontrol.val = 0x00000000;
+    regs.wdogris.val = 0x00000000;
+    regs.wdogmis.val = 0x00000000;
+    regs.wdoglock.val = 0x00000000;
+    regs.wdogitcr.val = 0x00000000;
+    regs.wdogitop.val = 0x00000000;
+    
+    // Initialize session variables
+    timer_counter = 0xFFFFFFFF;
+    timer_reload_value = 0xFFFFFFFF;
+    interrupt_pending = false;
+    registers_locked = false;
+    integration_test_mode = false;
+    test_interrupt_value = false;
+    test_reset_value = false;
+    
+    log info: "Watchdog timer initialized";
+}
+
+// Handle timeout event
+method handle_timeout() {
+    // Check if interrupt is enabled
+    if (regs.wdogcontrol.inten.val) {
+        // First timeout - generate interrupt if no interrupt pending
+        if (!interrupt_pending) {
+            log info: "Watchdog timeout - generating interrupt";
+            interrupt_pending = true;
+            
+            // Assert interrupt signal
+            if (interrupt_signal.obj) {
+                interrupt_signal.set_level(1);
+                interrupt_signal.set_level(0);  // Pulse
+            }
+        } else {
+            // Second timeout - generate reset if reset is enabled
+            if (regs.wdogcontrol.resen.val) {
+                log info: "Watchdog second timeout - generating reset";
+                
+                // Assert reset signal
+                if (reset_signal.obj) {
+                    reset_signal.set_level(1);
+                    reset_signal.set_level(1);  // Reset signal stays asserted until system reset
+                }
+            }
+        }
+    }
+}
+
+method post_init() {
+    log info: "Watchdog timer post-initialization complete";
+    
+    // Don't automatically start the timer event
+    // Let the tests or the system control when the timer starts
+}
