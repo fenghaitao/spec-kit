@@ -63,13 +63,13 @@
   * Verify required RAG results present (DML reference, Model Builder patterns, device templates, device-specific best practices, register patterns, test patterns)
   * Identify any gaps requiring additional queries
   * Document gap-filling queries as additional tasks if needed
-- [ ] T006 [P] **RAG SEARCH**: Use `perform_rag_query("DML 1.4 language syntax basics", source_type="docs", match_count=5)` for DML language fundamentals (MANDATORY)
-- [ ] T007 [P] **RAG SEARCH**: Use `perform_rag_query("Python test register access SIM_create_object dev_util expect_equal stest", source_type="python", match_count=5)` for test implementation guidance (OPTIONAL - if research.md insufficient)
-- [ ] T008 [P] **RAG SEARCH**: Use `perform_rag_query("Simics device testing validation strategy test suite organization", source_type="source", match_count=5)` for test strategy patterns (OPTIONAL - if research.md insufficient)
-- [ ] T009 [P] **RAG SEARCH**: Use `perform_rag_query("DML 1.4 register bank read write get set method implementation", source_type="dml", match_count=5)` for detailed implementation guidance (OPTIONAL - if research.md insufficient)
-- [ ] T010 [P] **RAG SEARCH**: Use `perform_rag_query("DML device attribute state saved session checkpointing", source_type="dml", match_count=5)` for state handling patterns (OPTIONAL - if research.md insufficient)
-- [ ] T011 [P] **RAG SEARCH**: Use `perform_rag_query("DML 1.4 implement connect interface port io_memory signal", source_type="dml", match_count=5)` for interface implementation guidance (OPTIONAL - if research.md insufficient)
-- [ ] T012 [P] **RAG SEARCH**: Use `perform_rag_query("DML event after cycle callback post cancel time management", source_type="dml", match_count=5)` for event handling patterns (OPTIONAL - if research.md insufficient)
+- [ ] T006 [P] **RAG SEARCH**: Use `perform_rag_query("DML 1.4 language syntax basics", source_type="docs", match_count=5)` OR `ask_dmlbot("DML 1.4 language syntax basics")` for DML language fundamentals (MANDATORY)
+- [ ] T007 [P] **RAG SEARCH**: Use `perform_rag_query("Python test register access SIM_create_object dev_util expect_equal stest", source_type="python", match_count=5)` OR `ask_dmlbot("Python test register access patterns")` for test implementation guidance (OPTIONAL - if research.md insufficient)
+- [ ] T008 [P] **RAG SEARCH**: Use `perform_rag_query("Simics device testing validation strategy test suite organization", source_type="source", match_count=5)` OR `ask_dmlbot("Simics device testing best practices")` for test strategy patterns (OPTIONAL - if research.md insufficient)
+- [ ] T009 [P] **RAG SEARCH**: Use `perform_rag_query("DML 1.4 register bank read write get set method implementation", source_type="dml", match_count=5)` OR `ask_dmlbot("DML 1.4 register bank implementation")` for detailed implementation guidance (OPTIONAL - if research.md insufficient)
+- [ ] T010 [P] **RAG SEARCH**: Use `perform_rag_query("DML device attribute state saved session checkpointing", source_type="dml", match_count=5)` OR `ask_dmlbot("DML device state and checkpointing")` for state handling patterns (OPTIONAL - if research.md insufficient)
+- [ ] T011 [P] **RAG SEARCH**: Use `perform_rag_query("DML 1.4 implement connect interface port io_memory signal", source_type="dml", match_count=5)` OR `ask_dmlbot("DML interface and port implementation")` for interface implementation guidance (OPTIONAL - if research.md insufficient)
+- [ ] T012 [P] **RAG SEARCH**: Use `perform_rag_query("DML event after cycle callback post cancel time management", source_type="dml", match_count=5)` OR `ask_dmlbot("DML event handling and timing")` for event handling patterns (OPTIONAL - if research.md insufficient)
 
 ## Phase 3.2: Tests First (TDD) ⚠️ MUST COMPLETE BEFORE 3.3
 **CRITICAL: These tests MUST be written and MUST FAIL before ANY implementation**
@@ -110,7 +110,7 @@
 - [ ] T018 CORS and security headers
 
 **Simics Integration Example:**
-- [ ] T034 **RAG SEARCH**: Use `perform_rag_query("DML device memory map transact interrupt signal integration patterns", source_type="dml", match_count=5)` for integration patterns
+- [ ] T034 **RAG SEARCH**: Use `perform_rag_query("DML device memory map transact interrupt signal integration patterns", source_type="dml", match_count=5)` OR `ask_dmlbot("DML memory map and interrupt integration")` for integration patterns
 - [ ] T035 Connect device to memory interface using transact() methods
 - [ ] T036 Implement interrupt line connections and events
 - [ ] T037 Add external port communications and protocols
@@ -255,13 +255,13 @@ Task: "Integration test auth in tests/integration/test_auth.py"
 1. **If `build_simics_project` fails with syntax error**:
    - First, check research.md for relevant DML patterns and examples
    - If research.md lacks specific error-related examples, extract the syntax error keyword
-   - Call `perform_rag_query(query="Examples of [syntax_error_keyword] in Simics DML 1.4", source_type="dml")`
+   - Call `perform_rag_query(query="Examples of [syntax_error_keyword] in Simics DML 1.4", source_type="dml")` OR `ask_dmlbot("How to fix [syntax_error_keyword] in DML 1.4")`
    - Document the new RAG results before attempting to fix the DML files
    - Example: For "unknown attribute" error → check research.md first → query only if needed
 
 2. **If `run_simics_test` fails**:
    - First, check research.md for relevant test patterns
    - If research.md lacks specific error-related examples, extract the failure keyword
-   - Call `perform_rag_query(query="Example of [test_failure_keyword] in Simics Python tests", source_type="python")`
+   - Call `perform_rag_query(query="Example of [test_failure_keyword] in Simics Python tests", source_type="python")` OR `ask_dmlbot("How to fix [test_failure_keyword] in Simics tests")`
    - Document the new RAG results before attempting to fix the tests
    - Example: For "AttributeError" → check research.md first → query only if needed
