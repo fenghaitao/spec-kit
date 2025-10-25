@@ -1,0 +1,10 @@
+# CMake generated Testfile for 
+# Source directory: /home/hfeng1/simics-dml-vscode/watchdog-timer/modules/watchdog-timer/test
+# Build directory: /home/hfeng1/simics-dml-vscode/watchdog-timer/bt/modules/watchdog-timer/test
+# 
+# This file includes the relevant testing commands required for 
+# testing this directory and lists subdirectories to be tested as well.
+add_test([=[watchdog-timer::watchdog-timer]=] "/home/hfeng1/simics-dml-vscode/watchdog-timer/simics" "--batch-mode" "s-watchdog-timer.py")
+set_tests_properties([=[watchdog-timer::watchdog-timer]=] PROPERTIES  DEF_SOURCE_LINE "/home/hfeng1/simics-dml-vscode/watchdog-timer/modules/watchdog-timer/test/s-watchdog-timer.py:1" ENVIRONMENT_MODIFICATION "SANDBOX=set:/home/hfeng1/simics-dml-vscode/watchdog-timer/bt/modules/watchdog-timer/test/sandbox" WORKING_DIRECTORY "/home/hfeng1/simics-dml-vscode/watchdog-timer/modules/watchdog-timer/test" _BACKTRACE_TRIPLES "/home/hfeng1/.simics-mcp-server/simics-install/simics-7.57.0/cmake/simics/Simics.cmake;1441;add_test;/home/hfeng1/simics-dml-vscode/watchdog-timer/modules/watchdog-timer/test/CMakeLists.txt;4;simics_add_test;/home/hfeng1/simics-dml-vscode/watchdog-timer/modules/watchdog-timer/test/CMakeLists.txt;0;")
+add_test([=[watchdog-timer::info-status]=] "/home/hfeng1/simics-dml-vscode/watchdog-timer/simics" "--batch-mode" "s-info-status.py")
+set_tests_properties([=[watchdog-timer::info-status]=] PROPERTIES  DEF_SOURCE_LINE "/home/hfeng1/simics-dml-vscode/watchdog-timer/modules/watchdog-timer/test/s-info-status.py:1" ENVIRONMENT_MODIFICATION "SANDBOX=set:/home/hfeng1/simics-dml-vscode/watchdog-timer/bt/modules/watchdog-timer/test/sandbox" WORKING_DIRECTORY "/home/hfeng1/simics-dml-vscode/watchdog-timer/modules/watchdog-timer/test" _BACKTRACE_TRIPLES "/home/hfeng1/.simics-mcp-server/simics-install/simics-7.57.0/cmake/simics/Simics.cmake;1441;add_test;/home/hfeng1/simics-dml-vscode/watchdog-timer/modules/watchdog-timer/test/CMakeLists.txt;5;simics_add_test;/home/hfeng1/simics-dml-vscode/watchdog-timer/modules/watchdog-timer/test/CMakeLists.txt;0;")

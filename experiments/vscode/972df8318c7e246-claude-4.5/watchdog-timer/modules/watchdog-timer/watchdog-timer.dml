@@ -1,0 +1,361 @@
+/*
+  © 2010 Intel Corporation
+*/
+
+// watchdog-timer.dml - ARM PrimeCell SP805 Watchdog Timer Device Model
+// DML 1.4 implementation for Simics
+
+dml 1.4;
+
+device watchdog_timer;
+
+param desc = "ARM PrimeCell SP805 Watchdog Timer";
+
+param documentation = "Simics device model for ARM PrimeCell SP805 watchdog timer with dual-stage timeout, interrupt/reset outputs, and integration test mode";
+
+import "simics/devs/memory-space.dml";
+import "simics/devs/signal.dml";
+
+// Device state variables (checkpointable)
+saved cycles_t counter_start_time = 0;
+saved uint32 counter_start_value = 0xFFFFFFFF;
+saved bool interrupt_posted = false;
+saved bool reset_posted = false;
+saved bool locked = true;  // Device starts locked
+saved bool integration_test_mode = false;
+
+// Signal connections for interrupt and reset outputs
+connect irq_dev {
+    param documentation = "Interrupt output signal";
+    param configuration = "optional";
+    interface signal;
+}
+
+connect rst_dev {
+    param documentation = "Reset output signal";
+    param configuration = "optional";
+    interface signal;
+}
+
+// Event declarations for dual-stage timeout
+event first_timeout is simple_cycle_event {
+    method event() {
+        local bool inten = (wdogcontrol_val & 0x2) != 0;
+        
+        if (inten) {
+            // Interrupt enabled: post interrupt and schedule second timeout
+            post_interrupt();
+            log info: "First timeout: Interrupt posted";
+            schedule_second_timeout();
+        } else {
+            // Interrupt disabled: directly post reset
+            post_reset();
+            log info: "First timeout: Reset posted (interrupt disabled)";
+        }
+    }
+}
+
+event second_timeout is simple_cycle_event {
+    method event() {
+        local bool resen = (wdogcontrol_val & 0x1) != 0;
+        
+        if (resen) {
+            post_reset();
+            log info: "Second timeout: Reset posted";
+        } else {
+            log info: "Second timeout: Reset disabled, no action";
+        }
+    }
+}
+
+// Helper methods
+method get_divider_value() -> (uint32) {
+    // Simplified: No divider configuration in SP805, always 1:1 clock ratio
+    return 1;
+}
+
+method calculate_wdogvalue() -> (uint32) {
+    if (counter_start_value == 0) return 0;
+    
+    local cycles_t current_time = SIM_cycle_count(dev.obj);
+    local cycles_t elapsed_cycles = current_time - counter_start_time;
+    local uint32 divider = get_divider_value();
+    local uint32 elapsed_counts = cast(elapsed_cycles / divider, uint32);
+    
+    if (elapsed_counts >= counter_start_value) {
+        return 0;
+    }
+    return counter_start_value - elapsed_counts;
+}
+
+method schedule_first_timeout() {
+    local uint32 divider = get_divider_value();
+    local cycles_t cycles_until_timeout = cast(counter_start_value * divider, cycles_t);
+    first_timeout.post(cycles_until_timeout);
+}
+
+method schedule_second_timeout() {
+    local uint32 divider = get_divider_value();
+    local cycles_t cycles_until_timeout = cast(counter_start_value * divider, cycles_t);
+    second_timeout.post(cycles_until_timeout);
+}
+
+method cancel_timeouts() {
+    first_timeout.remove();
+    second_timeout.remove();
+}
+
+method post_interrupt() {
+    if (!interrupt_posted) {
+        interrupt_posted = true;
+        if (irq_dev.obj) {
+            irq_dev.signal.signal_raise();
+        }
+    }
+}
+
+method clear_interrupt() {
+    if (interrupt_posted) {
+        interrupt_posted = false;
+        if (irq_dev.obj) {
+            irq_dev.signal.signal_lower();
+        }
+    }
+}
+
+method post_reset() {
+    if (!reset_posted) {
+        reset_posted = true;
+        if (rst_dev.obj) {
+            rst_dev.signal.signal_raise();
+        }
+    }
+}
+
+method clear_reset() {
+    if (reset_posted) {
+        reset_posted = false;
+        if (rst_dev.obj) {
+            rst_dev.signal.signal_lower();
+        }
+    }
+}
+
+// Storage for register values (need to declare before use)
+saved uint32 wdogload_val = 0xFFFFFFFF;
+saved uint32 wdogcontrol_val = 0;
+
+// Register bank with all 21 SP805 registers
+bank regs {
+    param register_size = 4;
+    param byte_order = "little-endian";
+    
+    // WDOGLOAD @ 0x000 - Counter load register
+    register WDOGLOAD @ 0x000 is (read, write) {
+        param init_val = 0xFFFFFFFF;
+        
+        method write(uint64 value) {
+            if (locked && !integration_test_mode) {
+                log info, 2: "WDOGLOAD write ignored (locked)";
+                return;
+            }
+            
+            local uint32 new_value = cast(value, uint32);
+            wdogload_val = new_value;
+            counter_start_value = new_value;
+            counter_start_time = SIM_cycle_count(dev.obj);
+            
+            // Cancel existing timeouts and reschedule
+            cancel_timeouts();
+            if (new_value > 0) {
+                schedule_first_timeout();
+                log info, 2: "WDOGLOAD: Set counter to 0x%08x", new_value;
+            }
+        }
+        
+        method read() -> (uint64) {
+            return wdogload_val;
+        }
+    }
+    
+    // WDOGVALUE @ 0x004 - Current counter value (read-only)
+    register WDOGVALUE @ 0x004 is (read, write) {
+        method write(uint64 value) {
+            log info, 2: "WDOGVALUE write ignored (read-only)";
+        }
+        
+        method read() -> (uint64) {
+            return calculate_wdogvalue();
+        }
+    }
+    
+    // WDOGCONTROL @ 0x008 - Control register
+    register WDOGCONTROL @ 0x008 is (read, write) {
+        param init_val = 0;
+        
+        method write(uint64 value) {
+            if (locked && !integration_test_mode) {
+                log info, 2: "WDOGCONTROL write ignored (locked)";
+                return;
+            }
+            
+            local uint32 new_value = cast(value & 0x3, uint32);  // Only bits [1:0] valid (INTEN, RESEN)
+            wdogcontrol_val = new_value;
+            
+            log info, 2: "WDOGCONTROL: Set to 0x%02x", new_value;
+            
+            // Update timeout behavior based on new settings
+            cancel_timeouts();
+            if (counter_start_value > 0) {
+                schedule_first_timeout();
+            }
+        }
+        
+        method read() -> (uint64) {
+            return wdogcontrol_val;
+        }
+    }
+    
+    // WDOGINTCLR @ 0x00C - Interrupt clear register (write-only)
+    register WDOGINTCLR @ 0x00C is (read, write) {
+        method write(uint64 value) {
+            clear_interrupt();
+            log info, 2: "WDOGINTCLR: Interrupt cleared";
+        }
+        
+        method read() -> (uint64) {
+            return 0;  // Write-only, reads as 0
+        }
+    }
+    
+    // WDOGRIS @ 0x010 - Raw interrupt status (read-only)
+    register WDOGRIS @ 0x010 is (read, write) {
+        method write(uint64 value) {
+            log info, 2: "WDOGRIS write ignored (read-only)";
+        }
+        
+        method read() -> (uint64) {
+            return interrupt_posted ? 1 : 0;
+        }
+    }
+    
+    // WDOGMIS @ 0x014 - Masked interrupt status (read-only)
+    register WDOGMIS @ 0x014 is (read, write) {
+        method write(uint64 value) {
+            log info, 2: "WDOGMIS write ignored (read-only)";
+        }
+        
+        method read() -> (uint64) {
+            local bool inten = (wdogcontrol_val & 0x2) != 0;
+            return (interrupt_posted && inten) ? 1 : 0;
+        }
+    }
+    
+    // WDOGLOCK @ 0xC00 - Lock register
+    register WDOGLOCK @ 0xC00 is (read, write) {
+        param init_val = 0;
+        
+        method write(uint64 value) {
+            if (value == 0x1ACCE551) {
+                locked = false;
+                log info, 2: "WDOGLOCK: Device unlocked";
+            } else {
+                locked = true;
+                log info, 2: "WDOGLOCK: Device locked";
+            }
+        }
+        
+        method read() -> (uint64) {
+            return locked ? 1 : 0;
+        }
+    }
+    
+    // WDOGITCR @ 0xF00 - Integration test control
+    register WDOGITCR @ 0xF00 is (read, write) {
+        param init_val = 0;
+        
+        method write(uint64 value) {
+            integration_test_mode = (value & 0x1) != 0;
+            log info, 2: "WDOGITCR: Test mode %s", integration_test_mode ? "enabled" : "disabled";
+        }
+        
+        method read() -> (uint64) {
+            return integration_test_mode ? 1 : 0;
+        }
+    }
+    
+    // WDOGITOP @ 0xF04 - Integration test output set
+    register WDOGITOP @ 0xF04 is (read, write) {
+        method write(uint64 value) {
+            if (!integration_test_mode) {
+                log info, 2: "WDOGITOP write ignored (test mode disabled)";
+                return;
+            }
+            
+            // Bit 1: WDOGRES output, Bit 0: WDOGINT output
+            if ((value & 0x1) != 0) {
+                post_interrupt();
+            } else {
+                clear_interrupt();
+            }
+            
+            if ((value & 0x2) != 0) {
+                post_reset();
+            } else {
+                clear_reset();
+            }
+            
+            log info, 2: "WDOGITOP: Set outputs to 0x%02x", value;
+        }
+        
+        method read() -> (uint64) {
+            local uint32 result = 0;
+            if (interrupt_posted) result |= 0x1;
+            if (reset_posted) result |= 0x2;
+            return result;
+        }
+    }
+    
+    // Peripheral ID registers (read-only constants)
+    register WDOGPeriphID0 @ 0xFE0 is (read, write) {
+        method write(uint64 value) {}
+        method read() -> (uint64) { return 0x05; }
+    }
+    
+    register WDOGPeriphID1 @ 0xFE4 is (read, write) {
+        method write(uint64 value) {}
+        method read() -> (uint64) { return 0x18; }
+    }
+    
+    register WDOGPeriphID2 @ 0xFE8 is (read, write) {
+        method write(uint64 value) {}
+        method read() -> (uint64) { return 0x04; }
+    }
+    
+    register WDOGPeriphID3 @ 0xFEC is (read, write) {
+        method write(uint64 value) {}
+        method read() -> (uint64) { return 0x00; }
+    }
+    
+    // PrimeCell ID registers (read-only constants)
+    register WDOGPCellID0 @ 0xFF0 is (read, write) {
+        method write(uint64 value) {}
+        method read() -> (uint64) { return 0x0D; }
+    }
+    
+    register WDOGPCellID1 @ 0xFF4 is (read, write) {
+        method write(uint64 value) {}
+        method read() -> (uint64) { return 0xF0; }
+    }
+    
+    register WDOGPCellID2 @ 0xFF8 is (read, write) {
+        method write(uint64 value) {}
+        method read() -> (uint64) { return 0x05; }
+    }
+    
+    register WDOGPCellID3 @ 0xFFC is (read, write) {
+        method write(uint64 value) {}
+        method read() -> (uint64) { return 0xB1; }
+    }
+}
+

@@ -1,0 +1,9 @@
+{
+	"servers": {
+		"simics-mcp-server": {
+			"url": "http://localhost:8051/sse",
+			"transport": "sse"
+		}
+	},
+	"inputs": []
+}
