@@ -679,11 +679,7 @@ Use this structure:
 
 ### Step 1.6: Update agent context file
 
-**MANDATORY**: Run the agent context update script:
-
-```bash
-.specify/scripts/bash/update-agent-context.sh adk
-```
+**MANDATORY**: Run `{SCRIPT}`
 
 **IMPORTANT**: Execute it exactly as specified above. Do not add or remove any arguments.
 

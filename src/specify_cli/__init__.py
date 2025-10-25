@@ -435,44 +435,99 @@ def init_git_repo(project_path: Path, quiet: bool = False) -> bool:
         os.chdir(original_cwd)
 
 
-def setup_adk_project_from_local(project_dir: Path, script_type: str = "sh") -> dict:
-    """Set up ADK project using local repository files and the release packaging script."""
+def setup_project_from_local(project_dir: Path, ai_assistant: str, script_type: str = "sh") -> dict:
+    """Set up project using local repository files and the release packaging script logic."""
     # Find the repository root (where this script is located)
     script_path = Path(__file__).resolve()
     repo_root = script_path.parent.parent.parent  # Go up from src/specify_cli/__init__.py
     
+    # Agent folder mapping (matches the release packaging script)
+    agent_folders = {
+        "claude": ".claude/commands",
+        "gemini": ".gemini/commands", 
+        "copilot": ".github/prompts",
+        "cursor": ".cursor/commands",
+        "qwen": ".qwen/commands",
+        "opencode": ".opencode/command",
+        "codex": ".codex/prompts",
+        "windsurf": ".windsurf/workflows",
+        "kilocode": ".kilocode/workflows",
+        "auggie": ".augment/commands",
+        "roo": ".roo/commands",
+        "adk": ".adk/commands"
+    }
+    
+    # Agent argument formats (matches the release packaging script)
+    agent_arg_formats = {
+        "claude": "$ARGUMENTS",
+        "gemini": "{{args}}",
+        "copilot": "$ARGUMENTS", 
+        "cursor": "$ARGUMENTS",
+        "qwen": "{{args}}",
+        "opencode": "$ARGUMENTS",
+        "codex": "$ARGUMENTS",
+        "windsurf": "$ARGUMENTS",
+        "kilocode": "$ARGUMENTS",
+        "auggie": "$ARGUMENTS",
+        "roo": "$ARGUMENTS",
+        "adk": "$ARGUMENTS"
+    }
+    
+    # Agent file extensions (matches the release packaging script)
+    agent_extensions = {
+        "claude": "md",
+        "gemini": "toml",
+        "copilot": "prompt.md",
+        "cursor": "md", 
+        "qwen": "toml",
+        "opencode": "md",
+        "codex": "md",
+        "windsurf": "md",
+        "kilocode": "md",
+        "auggie": "md",
+        "roo": "md",
+        "adk": "md"
+    }
+    
+    if ai_assistant not in agent_folders:
+        raise ValueError(f"Unsupported agent: {ai_assistant}")
+    
     # Create the required directory structure
-    adk_commands_dir = project_dir / ".adk" / "commands"
+    agent_commands_dir = project_dir / agent_folders[ai_assistant]
     specify_dir = project_dir / ".specify"
     
-    adk_commands_dir.mkdir(parents=True, exist_ok=True)
+    agent_commands_dir.mkdir(parents=True, exist_ok=True)
     specify_dir.mkdir(parents=True, exist_ok=True)
     
     # Process command templates using the same logic as the release packaging script
     try:
         # Copy base structure first (like the fallback method)
-        _copy_base_structure(project_dir, script_type, repo_root)
+        _copy_base_structure(project_dir, script_type, repo_root, ai_assistant)
         
         # Now process command templates with placeholder replacement
-        _process_adk_command_templates(project_dir, script_type, repo_root)
+        _process_command_templates(project_dir, ai_assistant, script_type, repo_root, 
+                                 agent_commands_dir, agent_arg_formats[ai_assistant], 
+                                 agent_extensions[ai_assistant])
         
     except Exception as e:
         # Fallback to direct copy if anything fails
         console.print(f"[yellow]Warning:[/yellow] Template processing failed, falling back to direct copy")
         console.print(f"[dim]Error: {e}[/dim]")
-        return _setup_adk_project_fallback(project_dir, script_type, repo_root)
+        return _setup_project_fallback(project_dir, ai_assistant, script_type, repo_root, agent_commands_dir)
     
     # Count the commands that were actually created
-    commands_created = len(list(adk_commands_dir.glob("*.md"))) if adk_commands_dir.exists() else 0
+    ext_pattern = f"*.{agent_extensions[ai_assistant]}"
+    commands_created = len(list(agent_commands_dir.glob(ext_pattern))) if agent_commands_dir.exists() else 0
     
     return {
         "source": "local_script",
         "commands_created": commands_created,
-        "script_type": script_type
+        "script_type": script_type,
+        "agent": ai_assistant
     }
 
 
-def _copy_base_structure(project_dir: Path, script_type: str, repo_root: Path) -> None:
+def _copy_base_structure(project_dir: Path, script_type: str, repo_root: Path, ai_assistant: str) -> None:
     """Copy the base .specify structure (memory, scripts, templates except commands)."""
     specify_dir = project_dir / ".specify"
     
@@ -491,7 +546,7 @@ def _copy_base_structure(project_dir: Path, script_type: str, repo_root: Path) -
                 else:
                     # Special processing for plan-template.md to replace __AGENT__ placeholder
                     if item.name == "plan-template.md":
-                        _process_plan_template(item, dest_path, script_type)
+                        _process_plan_template(item, dest_path, script_type, ai_assistant)
                     else:
                         shutil.copy2(item, dest_path)
     
@@ -518,8 +573,8 @@ def _copy_base_structure(project_dir: Path, script_type: str, repo_root: Path) -
                 shutil.copy2(item, scripts_dest / item.name)
 
 
-def _process_plan_template(src_file: Path, dest_file: Path, script_type: str) -> None:
-    """Process plan-template.md to replace __AGENT__ placeholder with 'adk'."""
+def _process_plan_template(src_file: Path, dest_file: Path, script_type: str, ai_assistant: str) -> None:
+    """Process plan-template.md to replace __AGENT__ placeholder with the agent name."""
     try:
         # Read the template file
         content = src_file.read_text(encoding='utf-8')
@@ -530,9 +585,9 @@ def _process_plan_template(src_file: Path, dest_file: Path, script_type: str) ->
         if script_command:
             # Always prefix with .specify/ for plan usage
             script_command = f".specify/{script_command}"
-            # Replace {SCRIPT} placeholder with the script command and __AGENT__ with 'adk'
+            # Replace {SCRIPT} placeholder with the script command and __AGENT__ with agent name
             content = content.replace("{SCRIPT}", script_command)
-            content = content.replace("__AGENT__", "adk")
+            content = content.replace("__AGENT__", ai_assistant)
             
             # Remove the scripts: section from frontmatter while preserving YAML structure
             content = _remove_scripts_section(content)
@@ -541,28 +596,24 @@ def _process_plan_template(src_file: Path, dest_file: Path, script_type: str) ->
             dest_file.write_text(content, encoding='utf-8')
         else:
             # If no script command found, copy as-is but still replace __AGENT__
-            content = content.replace("__AGENT__", "adk")
+            content = content.replace("__AGENT__", ai_assistant)
             dest_file.write_text(content, encoding='utf-8')
             
     except Exception as e:
         # If processing fails, copy as-is but still replace __AGENT__
         content = src_file.read_text(encoding='utf-8')
-        content = content.replace("__AGENT__", "adk")
+        content = content.replace("__AGENT__", ai_assistant)
         dest_file.write_text(content, encoding='utf-8')
 
 
-def _process_adk_command_templates(project_dir: Path, script_type: str, repo_root: Path) -> None:
+def _process_command_templates(project_dir: Path, ai_assistant: str, script_type: str, repo_root: Path, commands_dir: Path, arg_format: str, file_extension: str) -> None:
     """Process command templates with placeholder replacement like the release script does."""
     import re
     
-    adk_commands_dir = project_dir / ".adk" / "commands"
     commands_src = repo_root / "templates" / "commands"
     
     if not commands_src.exists():
         return
-    
-    # Arguments format for ADK
-    arg_format = '$ARGUMENTS'
     
     for cmd_file in commands_src.glob("*.md"):
         try:
@@ -581,23 +632,63 @@ def _process_adk_command_templates(project_dir: Path, script_type: str, repo_roo
                 
                 # Apply other substitutions
                 content = content.replace("{ARGS}", arg_format)
-                content = content.replace("__AGENT__", "adk")
+                content = content.replace("__AGENT__", ai_assistant)
                 
                 # Rewrite paths to use .specify/ prefix (this will add the prefix to script paths)
                 content = _rewrite_paths(content)
                 
-                # Write the processed file
-                output_file = adk_commands_dir / cmd_file.name
-                output_file.write_text(content, encoding='utf-8')
+                # Generate output file based on format
+                output_file = _generate_command_file(commands_dir, cmd_file, content, file_extension, arg_format)
             else:
                 # If no script command found, copy as-is (fallback)
-                output_file = adk_commands_dir / cmd_file.name
+                output_file = commands_dir / f"{cmd_file.stem}.{file_extension}"
                 shutil.copy2(cmd_file, output_file)
                 
         except Exception as e:
             # If processing fails for any file, copy as-is
-            output_file = adk_commands_dir / cmd_file.name
+            output_file = commands_dir / f"{cmd_file.stem}.{file_extension}"
             shutil.copy2(cmd_file, output_file)
+
+
+def _generate_command_file(commands_dir: Path, cmd_file: Path, content: str, file_extension: str, arg_format: str) -> Path:
+    """Generate command file in the appropriate format (TOML or Markdown)."""
+    output_file = commands_dir / f"{cmd_file.stem}.{file_extension}"
+    
+    if file_extension == "toml":
+        # Extract description from YAML frontmatter for TOML format
+        description = ""
+        for line in content.split('\n'):
+            if line.startswith('description:'):
+                description = line.split(':', 1)[1].strip().strip('"\'')
+                break
+        
+        # Remove YAML frontmatter and get the body
+        lines = content.split('\n')
+        in_frontmatter = False
+        body_lines = []
+        dash_count = 0
+        
+        for line in lines:
+            if line.strip() == '---':
+                dash_count += 1
+                if dash_count == 1:
+                    in_frontmatter = True
+                elif dash_count == 2:
+                    in_frontmatter = False
+                continue
+            if not in_frontmatter:
+                body_lines.append(line)
+        
+        body = '\n'.join(body_lines).strip()
+        
+        # Generate TOML content
+        toml_content = f'description = "{description}"\n\nprompt = """\n{body}\n"""'
+        output_file.write_text(toml_content, encoding='utf-8')
+    else:
+        # For Markdown and other formats, write as-is
+        output_file.write_text(content, encoding='utf-8')
+    
+    return output_file
 
 
 def _extract_script_command(content: str, script_variant: str) -> str:
@@ -660,13 +751,12 @@ def _rewrite_paths(content: str) -> str:
     return content
 
 
-def _setup_adk_project_fallback(project_dir: Path, script_type: str, repo_root: Path) -> dict:
-    """Fallback method to set up ADK project by direct copying (original behavior)."""
+def _setup_project_fallback(project_dir: Path, ai_assistant: str, script_type: str, repo_root: Path, agent_commands_dir: Path) -> dict:
+    """Fallback method to set up project by direct copying (original behavior)."""
     # Create the required directory structure
-    adk_commands_dir = project_dir / ".adk" / "commands"
     specify_dir = project_dir / ".specify"
     
-    adk_commands_dir.mkdir(parents=True, exist_ok=True)
+    agent_commands_dir.mkdir(parents=True, exist_ok=True)
     specify_dir.mkdir(parents=True, exist_ok=True)
     
     # Copy templates to .specify (excluding commands which go to .adk/commands)
@@ -711,16 +801,17 @@ def _setup_adk_project_fallback(project_dir: Path, script_type: str, repo_root: 
     if commands_src.exists():
         # Simply copy all command template files
         for cmd_file in commands_src.glob("*.md"):
-            output_file = adk_commands_dir / cmd_file.name
+            output_file = agent_commands_dir / cmd_file.name
             shutil.copy2(cmd_file, output_file)
     
     # Count the commands that were actually created
-    commands_created = len(list(adk_commands_dir.glob("*.md"))) if adk_commands_dir.exists() else 0
+    commands_created = len(list(agent_commands_dir.glob("*.md"))) if agent_commands_dir.exists() else 0
     
     return {
         "source": "local_fallback",
         "commands_created": commands_created,
-        "script_type": script_type
+        "script_type": script_type,
+        "agent": ai_assistant
     }
 
 def download_template_from_github(ai_assistant: str, download_dir: Path, *, script_type: str = "sh", verbose: bool = True, show_progress: bool = True, client: httpx.Client = None, debug: bool = False, github_token: str = None) -> Tuple[Path, dict]:
@@ -836,180 +927,28 @@ def download_template_from_github(ai_assistant: str, download_dir: Path, *, scri
 
 
 def download_and_extract_template(project_path: Path, ai_assistant: str, script_type: str, is_current_dir: bool = False, *, verbose: bool = True, tracker: StepTracker | None = None, client: httpx.Client = None, debug: bool = False, github_token: str = None) -> Path:
-    """Download the latest release and extract it to create a new project.
+    """Set up a new project using local repository files.
     Returns project_path. Uses tracker if provided (with keys: fetch, download, extract, cleanup)
-    For ADK, use local repository files instead of downloading.
+    All agents (including Windsurf) use local repository templates instead of downloading from GitHub.
     """
     current_dir = Path.cwd()
     
-    if ai_assistant == "adk":
-        # For ADK, use local files instead of downloading
-        if tracker:
-            tracker.start("fetch", "using local repository files")
-        try:
-            meta = setup_adk_project_from_local(project_path, script_type=script_type)
-            if tracker:
-                tracker.complete("fetch", f"local setup ({meta['commands_created']} commands)")
-                tracker.complete("download", "local files")
-                tracker.complete("extract", "files copied")
-                tracker.complete("zip-list", "local directory structure")
-                tracker.complete("extracted-summary", f"ADK project structure created")
-            return project_path  # Return early for ADK
-        except Exception as e:
-            if tracker:
-                tracker.error("fetch", str(e))
-            raise
-    
-    # For other platforms, download from GitHub as before
+    # Use local files for all agents instead of downloading
     if tracker:
-        tracker.start("fetch", "contacting GitHub API")
+        tracker.start("fetch", "using local repository files")
     try:
-        zip_path, meta = download_template_from_github(
-            ai_assistant,
-            current_dir,
-            script_type=script_type,
-            verbose=verbose and tracker is None,
-            show_progress=(tracker is None),
-            client=client,
-            debug=debug,
-            github_token=github_token
-        )
+        meta = setup_project_from_local(project_path, ai_assistant, script_type=script_type)
         if tracker:
-            tracker.complete("fetch", f"release {meta['release']} ({meta['size']:,} bytes)")
-            tracker.add("download", "Download template")
-            tracker.complete("download", meta['filename'])
+            tracker.complete("fetch", f"local setup ({meta['commands_created']} commands)")
+            tracker.complete("download", "local files")
+            tracker.complete("extract", "files copied")
+            tracker.complete("zip-list", "local directory structure")
+            tracker.complete("extracted-summary", f"{ai_assistant.upper()} project structure created")
+        return project_path
     except Exception as e:
         if tracker:
             tracker.error("fetch", str(e))
-        else:
-            if verbose:
-                console.print(f"[red]Error downloading template:[/red] {e}")
         raise
-    
-    if tracker:
-        tracker.add("extract", "Extract template")
-        tracker.start("extract")
-    elif verbose:
-        console.print("Extracting template...")
-    
-    try:
-        # Create project directory only if not using current directory
-        if not is_current_dir:
-            project_path.mkdir(parents=True)
-        
-        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-            # List all files in the ZIP for debugging
-            zip_contents = zip_ref.namelist()
-            if tracker:
-                tracker.start("zip-list")
-                tracker.complete("zip-list", f"{len(zip_contents)} entries")
-            elif verbose:
-                console.print(f"[cyan]ZIP contains {len(zip_contents)} items[/cyan]")
-            
-            # For current directory, extract to a temp location first
-            if is_current_dir:
-                with tempfile.TemporaryDirectory() as temp_dir:
-                    temp_path = Path(temp_dir)
-                    zip_ref.extractall(temp_path)
-                    
-                    # Check what was extracted
-                    extracted_items = list(temp_path.iterdir())
-                    if tracker:
-                        tracker.start("extracted-summary")
-                        tracker.complete("extracted-summary", f"temp {len(extracted_items)} items")
-                    elif verbose:
-                        console.print(f"[cyan]Extracted {len(extracted_items)} items to temp location[/cyan]")
-                    
-                    # Handle GitHub-style ZIP with a single root directory
-                    source_dir = temp_path
-                    if len(extracted_items) == 1 and extracted_items[0].is_dir():
-                        source_dir = extracted_items[0]
-                        if tracker:
-                            tracker.add("flatten", "Flatten nested directory")
-                            tracker.complete("flatten")
-                        elif verbose:
-                            console.print(f"[cyan]Found nested directory structure[/cyan]")
-                    
-                    # Copy contents to current directory
-                    for item in source_dir.iterdir():
-                        dest_path = project_path / item.name
-                        if item.is_dir():
-                            if dest_path.exists():
-                                if verbose and not tracker:
-                                    console.print(f"[yellow]Merging directory:[/yellow] {item.name}")
-                                # Recursively copy directory contents
-                                for sub_item in item.rglob('*'):
-                                    if sub_item.is_file():
-                                        rel_path = sub_item.relative_to(item)
-                                        dest_file = dest_path / rel_path
-                                        dest_file.parent.mkdir(parents=True, exist_ok=True)
-                                        shutil.copy2(sub_item, dest_file)
-                            else:
-                                shutil.copytree(item, dest_path)
-                        else:
-                            if dest_path.exists() and verbose and not tracker:
-                                console.print(f"[yellow]Overwriting file:[/yellow] {item.name}")
-                            shutil.copy2(item, dest_path)
-                    if verbose and not tracker:
-                        console.print(f"[cyan]Template files merged into current directory[/cyan]")
-            else:
-                # Extract directly to project directory (original behavior)
-                zip_ref.extractall(project_path)
-                
-                # Check what was extracted
-                extracted_items = list(project_path.iterdir())
-                if tracker:
-                    tracker.start("extracted-summary")
-                    tracker.complete("extracted-summary", f"{len(extracted_items)} top-level items")
-                elif verbose:
-                    console.print(f"[cyan]Extracted {len(extracted_items)} items to {project_path}:[/cyan]")
-                    for item in extracted_items:
-                        console.print(f"  - {item.name} ({'dir' if item.is_dir() else 'file'})")
-                
-                # Handle GitHub-style ZIP with a single root directory
-                if len(extracted_items) == 1 and extracted_items[0].is_dir():
-                    # Move contents up one level
-                    nested_dir = extracted_items[0]
-                    temp_move_dir = project_path.parent / f"{project_path.name}_temp"
-                    # Move the nested directory contents to temp location
-                    shutil.move(str(nested_dir), str(temp_move_dir))
-                    # Remove the now-empty project directory
-                    project_path.rmdir()
-                    # Rename temp directory to project directory
-                    shutil.move(str(temp_move_dir), str(project_path))
-                    if tracker:
-                        tracker.add("flatten", "Flatten nested directory")
-                        tracker.complete("flatten")
-                    elif verbose:
-                        console.print(f"[cyan]Flattened nested directory structure[/cyan]")
-                    
-    except Exception as e:
-        if tracker:
-            tracker.error("extract", str(e))
-        else:
-            if verbose:
-                console.print(f"[red]Error extracting template:[/red] {e}")
-                if debug:
-                    console.print(Panel(str(e), title="Extraction Error", border_style="red"))
-        # Clean up project directory if created and not current directory
-        if not is_current_dir and project_path.exists():
-            shutil.rmtree(project_path)
-        raise typer.Exit(1)
-    else:
-        if tracker:
-            tracker.complete("extract")
-    finally:
-        if tracker:
-            tracker.add("cleanup", "Remove temporary archive")
-        # Clean up downloaded ZIP file
-        if zip_path.exists():
-            zip_path.unlink()
-            if tracker:
-                tracker.complete("cleanup")
-            elif verbose:
-                console.print(f"Cleaned up: {zip_path.name}")
-    
-    return project_path
 
 
 def ensure_executable_scripts(project_path: Path, tracker: StepTracker | None = None) -> None:
@@ -1070,13 +1009,13 @@ def init(
     github_token: str = typer.Option(None, "--github-token", help="GitHub token to use for API requests (or set GH_TOKEN or GITHUB_TOKEN environment variable)"),
 ):
     """
-    Initialize a new Specify project from the latest template.
+    Initialize a new Specify project from local repository templates.
     
     This command will:
     1. Check that required tools are installed (git is optional)
     2. Let you choose your AI assistant (Claude Code, Gemini CLI, GitHub Copilot, Cursor, Qwen Code, opencode, Codex CLI, Windsurf, Kilo Code, Auggie CLI, Roo Code, or ADK)
-    3. Download the appropriate template from GitHub (or use local files for ADK)
-    4. Extract the template to a new project directory or current directory
+    3. Set up the project using local repository template files
+    4. Copy template files to the new project directory or current directory
     5. Initialize a fresh git repository (if not --no-git and no existing repo)
     6. Optionally set up AI assistant commands
     
