@@ -1,0 +1,14 @@
+{
+  "format_version": "1.0",
+  "generator": "dmlc-ai-diagnostics",
+  "compilation_summary": {
+    "input_file": "/home/hfeng1/latest-windsurf/simics-project/modules/sp805-wdt/sp805-wdt.dml",
+    "dml_version": "1.4",
+    "total_diagnostics": 0,
+    "total_errors": 0,
+    "total_warnings": 0,
+    "error_categories": {},
+    "success": true
+  },
+  "diagnostics": []
+}
