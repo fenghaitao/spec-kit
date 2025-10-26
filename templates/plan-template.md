@@ -157,6 +157,9 @@ directories captured above]
 **For Simics projects**: The structure above shows the template that will be generated AT REPOSITORY ROOT (not in specs/ folder). The actual project structure will be created by the simics-mcp-server's MCP tools during task execution (Phase 3.1 Setup):
 - `create_simics_project(project_path="./simics-project")` creates the base project structure at repo root
 - `add_dml_device_skeleton(project_path="./simics-project", device_name=DEVICE_NAME)` adds device-specific modeling files
+- `checkout_and_build_dmlc(project_path="./simics-project")` checks out DML compiler source and builds dmlc (after add_dml_device_skeleton)
+- `check_with_dmlc(project_path="./simics-project", module=DEVICE_NAME)` validates DML code with AI diagnostics (before build_simics_project)
+- `build_simics_project(project_path="./simics-project", module=DEVICE_NAME)` compiles the device models
 
 **IMPORTANT**: Simics projects must be created at repository root to separate source code from documentation. The specs/ folder contains only documentation artifacts (plan.md, tasks.md, etc.), while the simics-project/ folder at repo root contains the actual implementation.
 
@@ -796,7 +799,8 @@ Explicitly state in your response:
 - Each user story → integration test task
 - Implementation tasks to make tests pass
 - **Simics projects**: Include implementation MCP tool tasks:
-  - **Setup tasks**: `create_simics_project()`, `add_dml_device_skeleton()`
+  - **Setup tasks**: `create_simics_project()`, `add_dml_device_skeleton()`, `checkout_and_build_dmlc()`
+  - **Validation tasks**: `check_with_dmlc()` (before build)
   - **Build tasks**: `build_simics_project()`
   - **Test tasks**: `run_simics_test()`
   - **Note**: Discovery MCP tools (`get_simics_version`, `list_installed_packages`) already executed in /plan phase

@@ -65,16 +65,17 @@ Include exact file paths in descriptions
 - [ ] T001 Verify connection: `get_simics_version()`
 - [ ] T002 Create project: `create_simics_project(project_path="/absolute/path/to/workspace/simics-project")` ⚠️ ABSOLUTE PATH
 - [ ] T003 Add skeleton: `add_dml_device_skeleton(project_path="/absolute/path/to/workspace/simics-project", device_name="DEVICE_NAME")` ⚠️ ABSOLUTE PATH
-- [ ] T004 [P] Verify build: `build_simics_project(project_path="/absolute/path/to/workspace/simics-project", module="DEVICE_NAME")` ⚠️ ABSOLUTE PATH
-- [ ] T005 **GATE**: Verify research.md exists with required RAG results from /plan phase
-- [ ] T006-T012 [P] **RAG queries** (OPTIONAL - only if research.md insufficient):
-  * T006: DML syntax basics (docs)
-  * T007: Python test patterns (python)
-  * T008: Device testing strategy (source)
-  * T009: Register implementation (dml)
-  * T010: State/checkpointing (dml)
-  * T011: Interface implementation (dml)
-  * T012: Event handling (dml)
+- [ ] T004 Checkout DMLC: `checkout_and_build_dmlc(project_path="/absolute/path/to/workspace/simics-project")` ⚠️ ABSOLUTE PATH
+- [ ] T005 [P] Verify build: `build_simics_project(project_path="/absolute/path/to/workspace/simics-project", module="DEVICE_NAME")` ⚠️ ABSOLUTE PATH
+- [ ] T006 **GATE**: Verify research.md exists with required RAG results from /plan phase
+- [ ] T007-T013 [P] **RAG queries** (OPTIONAL - only if research.md insufficient):
+  * T007: DML syntax basics (docs)
+  * T008: Python test patterns (python)
+  * T009: Device testing strategy (source)
+  * T010: Register implementation (dml)
+  * T011: State/checkpointing (dml)
+  * T012: Interface implementation (dml)
+  * T013: Event handling (dml)
 
 ## Phase 3.2: Tests First (TDD) ⚠️ MUST COMPLETE BEFORE 3.3
 **CRITICAL: These tests MUST be written and MUST FAIL before ANY implementation**
@@ -84,10 +85,10 @@ Include exact file paths in descriptions
 - [ ] T007 [P] Integration test auth flow in tests/integration/test_auth.py
 
 **Simics:**
-- [ ] T013 [P] Register access test (use research.md patterns)
-- [ ] T014 [P] Interface behavior test
-- [ ] T015 [P] Device workflow test
-- [ ] T016 [P] Validate test environment: `run_simics_test(project_path="/absolute/path/to/workspace/simics-project", suite="modules/DEVICE_NAME/test")` ⚠️ ABSOLUTE PATH
+- [ ] T014 [P] Register access test (use research.md patterns)
+- [ ] T015 [P] Interface behavior test
+- [ ] T016 [P] Device workflow test
+- [ ] T017 [P] Validate test environment: `run_simics_test(project_path="/absolute/path/to/workspace/simics-project", suite="modules/DEVICE_NAME/test")` ⚠️ ABSOLUTE PATH
 
 ## Phase 3.3: Core Implementation (ONLY after tests are failing)
 - [ ] T008 [P] User model in src/models/user.py
@@ -99,14 +100,15 @@ Include exact file paths in descriptions
 - [ ] T014 Error handling and logging
 
 **Simics Project:**
-- [ ] T017 **GATE**: Read .specify/memory/DML_Device_Development_Best_Practices.md → document in research.md
-- [ ] T018 **GATE**: Read .specify/memory/DML_grammar.md → document in research.md
-- [ ] T019 **GATE**: Review study notes
-- [ ] T020 **GATE**: Read device skeleton
-- [ ] T021 [P] Register definitions (apply grammar + best practices)
-- [ ] T022 [P] Interface declarations (apply grammar + best practices)
-- [ ] T023 [P] Build: `build_simics_project(project_path="/absolute/path/to/workspace/simics-project", module="DEVICE_NAME")` ⚠️ ABSOLUTE PATH
-- [ ] T024-T027 Register logic, state management, error handling, validation
+- [ ] T018 **GATE**: Read .specify/memory/DML_Device_Development_Best_Practices.md → document in research.md
+- [ ] T019 **GATE**: Read .specify/memory/DML_grammar.md → document in research.md
+- [ ] T020 **GATE**: Review study notes
+- [ ] T021 **GATE**: Read device skeleton
+- [ ] T022 [P] Register definitions (apply grammar + best practices)
+- [ ] T023 [P] Interface declarations (apply grammar + best practices)
+- [ ] T024 [P] Check DML: `check_with_dmlc(project_path="/absolute/path/to/workspace/simics-project", module="DEVICE_NAME")` ⚠️ ABSOLUTE PATH (validates with AI diagnostics)
+- [ ] T025 [P] Build: `build_simics_project(project_path="/absolute/path/to/workspace/simics-project", module="DEVICE_NAME")` ⚠️ ABSOLUTE PATH
+- [ ] T026-T029 Register logic, state management, error handling, validation
 
 ## Phase 3.4: Integration
 - [ ] T015 Connect UserService to DB
@@ -115,13 +117,13 @@ Include exact file paths in descriptions
 - [ ] T018 CORS and security headers
 
 **Simics Integration Example:**
-- [ ] T034 **RAG SEARCH**: Use `perform_rag_query("DML device memory map transact interrupt signal integration patterns", source_type="dml", match_count=5)` for integration patterns
-- [ ] T035 Connect device to memory interface using transact() methods
-- [ ] T036 Implement interrupt line connections and events
-- [ ] T037 Add external port communications and protocols
-- [ ] T038 Integrate with Simics checkpointing and state management
-- [ ] T039 [P] Validate integration: `build_simics_project(project_path="/absolute/path/to/workspace/simics-project")` ⚠️ ABSOLUTE PATH
-- [ ] T040 [P] Run comprehensive tests: `run_simics_test(project_path="/absolute/path/to/workspace/simics-project", suite="modules/DEVICE_NAME/test")` ⚠️ ABSOLUTE PATH
+- [ ] T030 **RAG SEARCH**: Use `perform_rag_query("DML device memory map transact interrupt signal integration patterns", source_type="dml", match_count=5)` for integration patterns
+- [ ] T031 Connect device to memory interface using transact() methods
+- [ ] T032 Implement interrupt line connections and events
+- [ ] T033 Add external port communications and protocols
+- [ ] T034 Integrate with Simics checkpointing and state management
+- [ ] T035 [P] Validate integration: `build_simics_project(project_path="/absolute/path/to/workspace/simics-project")` ⚠️ ABSOLUTE PATH
+- [ ] T036 [P] Run comprehensive tests: `run_simics_test(project_path="/absolute/path/to/workspace/simics-project", suite="modules/DEVICE_NAME/test")` ⚠️ ABSOLUTE PATH
 
 ## Phase 3.5: Polish
 - [ ] T019 [P] Unit tests for validation in tests/unit/test_validation.py
@@ -135,8 +137,8 @@ Include exact file paths in descriptions
 **General**: Tests → Implementation → Polish
 
 **Simics**:
-- T001 → T002 → T003 → T004 → T005 → T006-T012 → T013-T016 → T017-T018 → T019-T027 → T037-T043
-- **Key**: research.md (T005) → Tests (T013-T016) → DML learning (T017-T018) → Implementation (T019+)
+- T001 → T002 → T003 → T004 → T005 → T006 → T007-T013 → T014-T017 → T018-T019 → T020-T029 → T030-T036
+- **Key**: research.md (T006) → Tests (T014-T017) → DML learning (T018-T019) → Implementation (T020+) → Integration (T030+)
 
 
 ## Parallel Example
