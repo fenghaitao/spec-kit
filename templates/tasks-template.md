@@ -165,9 +165,11 @@ Task: "Integration test auth in tests/integration/test_auth.py"
 1. **From Contracts**: Each file → contract test [P], each endpoint → implementation
 2. **From Data Model**: Each entity → model [P], relationships → services
 3. **From User Stories**: Each story → integration test [P], quickstart → validation
-4. **Ordering**:
+4. **Git Commit Tasks**: **MANDATORY** - Insert git commit task before EVERY build and test task
+5. **Ordering**:
    - General: Setup → Tests → Implementation → Integration → Polish
    - **Simics**: Setup → Tests (use research.md) → DML Learning → Implementation → Integration → Polish
+   - **Git Commits**: Before every build task, before every test execution task
 
 ## Validation Checklist
 *GATE: Checked by main() before returning*
@@ -211,6 +213,35 @@ Task: "Integration test auth in tests/integration/test_auth.py"
   - Review task planning decisions
   - Revert to previous task breakdowns if needed
 - **CRITICAL**: Always commit task changes to maintain clear project planning history
+
+## Git Commit Task Generation
+
+**MANDATORY: Insert git commit tasks during task generation**
+
+When generating tasks, **automatically insert** git commit tasks before every build and test task:
+
+### Task Format for Git Commits:
+```
+- [ ] T### Git commit: `git add -A && git commit -m "implement: <next-task-id> - pre-<operation> - capturing state before <operation>"`
+```
+
+### Examples:
+- Before build task: `- [ ] T005 Git commit: git add -A && git commit -m "implement: T006 - pre-build - capturing state before build validation"`
+- Before test task: `- [ ] T017 Git commit: git add -A && git commit -m "implement: T018 - pre-test - capturing state before test execution"`
+
+### Critical Rules:
+1. **Insert before EVERY** build validation task (`build_simics_project`, `make build`, etc.)
+2. **Insert before EVERY** test execution task (`run_simics_test`, `pytest`, etc.)
+3. **Use descriptive message** about what operation is about to be attempted
+4. **Sequential numbering** - git commit tasks get their own task IDs
+5. **Not parallel** - git commits should be sequential (no [P] marker)
+
+### Rationale:
+- Captures clean state before each build/test attempt
+- Enables easier debugging by isolating what changes caused failures
+- Allows reverting to known working states before failed operations
+- Creates detailed audit trail of implementation progression
+- Makes it easy to compare "before" and "after" states when troubleshooting
 
 ## research.md Workflow
 **Source**: Created by /plan with comprehensive RAG results
