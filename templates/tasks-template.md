@@ -1,6 +1,11 @@
 # Tasks: [FEATURE NAME]
 
-**Status**: No## Format: `[ID] [P?] Description`
+**Status**: Not Started | In Progress | Completed | Blocked
+**Input**: Design documents from `/specs/[###-feature-name]/`
+**Prerequisites**: plan.md (required), research.md, data-model.md, contracts/
+
+
+## Format: `[ID] [P?] Description`
 **[P]** = Can run in parallel (different files, no dependencies)
 Include exact file paths in descriptions
 
@@ -9,9 +14,7 @@ Include exact file paths in descriptions
 - **NEVER use relative paths** like `"./simics-project"` or `"../project"`
 - **WHY**: SSE transport MCP servers run in different process/directory context
 - **HOW**: Use `os.getcwd()` or workspace root to construct: `"/full/path/to/workspace/simics-project"`
-- **Example**: `create_simics_project(project_path="/home/user/workspace/simics-project")`tarted | In Progress | Completed | Blocked
-**Input**: Design documents from `/specs/[###-feature-name]/`
-**Prerequisites**: plan.md (required), research.md, data-model.md, contracts/
+- **Example**: `create_simics_project(project_path="/home/user/workspace/simics-project")`
 
 ## Execution Flow (main)
 ```
@@ -185,6 +188,29 @@ Task: "Integration test auth in tests/integration/test_auth.py"
 - [ ] research.md from /plan phase is available and referenced
 - [ ] Optional RAG searches are only used when research.md is insufficient
 - [ ] All new RAG search results are documented
+
+## Git Version Control
+
+**MANDATORY: Commit After Task Generation/Updates**
+
+- **WHEN**: After generating tasks.md or making significant updates to the task list
+- **WHAT**: Stage and commit tasks.md and any related changes
+- **HOW**: Use these exact commands:
+  ```bash
+  git add -A
+  git commit -m "tasks: <feature-name> - <action-description>"
+  ```
+- **EXAMPLES**:
+  - Initial tasks: `git commit -m "tasks: device-name - generated complete task breakdown with 34 tasks"`
+  - Updated tasks: `git commit -m "tasks: device-name - updated task dependencies for DML implementation"`
+  - Added tasks: `git commit -m "tasks: device-name - added integration test tasks"`
+  - Refined tasks: `git commit -m "tasks: device-name - refined parallel execution markers"`
+- **WHY**: This creates a clear audit trail of task planning, making it easy to:
+  - Track how task breakdown evolved
+  - Understand task dependency changes
+  - Review task planning decisions
+  - Revert to previous task breakdowns if needed
+- **CRITICAL**: Always commit task changes to maintain clear project planning history
 
 ## research.md Workflow
 **Source**: Created by /plan with comprehensive RAG results

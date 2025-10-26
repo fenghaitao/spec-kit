@@ -10,6 +10,7 @@ scripts:
 **Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
 **Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
 
+
 ## Execution Flow (/plan command scope)
 ```
 1. Load feature spec from Input path
@@ -62,6 +63,29 @@ scripts:
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
 [Gates determined based on constitution file]
+
+## Git Version Control
+
+**MANDATORY: Commit After Each Planning Phase**
+
+- **WHEN**: After completing each planning phase (Phase 0, Phase 1, Phase 2) and creating artifacts
+- **WHAT**: Stage and commit all generated artifacts for that phase
+- **HOW**: Use these exact commands:
+  ```bash
+  git add -A
+  git commit -m "plan: <feature-name> - <phase-name> - <artifacts-created>"
+  ```
+- **EXAMPLES**:
+  - After Phase 0: `git commit -m "plan: device-name - Phase 0 Research - created research.md"`
+  - After Phase 1: `git commit -m "plan: device-name - Phase 1 Design - created data-model.md, contracts/, quickstart.md"`
+  - After Phase 2: `git commit -m "plan: device-name - Phase 2 Tasks - created tasks.md"`
+  - Updated plan: `git commit -m "plan: device-name - updated technical context with MCP tools info"`
+- **WHY**: This creates a clear audit trail of the planning process, making it easy to:
+  - Track which artifacts were created in each phase
+  - Understand the design evolution
+  - Review planning decisions
+  - Revert to previous planning states if needed
+- **CRITICAL**: Always commit after each phase completion to maintain clear project history
 
 ## Project Structure
 

@@ -5,6 +5,7 @@
 **Status**: Draft (changes to "Ready for Planning" when all [NEEDS CLARIFICATION] markers are resolved)
 **Input**: User description: "$ARGUMENTS" (text provided after /specify command)
 
+
 ## Execution Flow (main)
 ```
 1. Parse user description from Input
@@ -188,5 +189,27 @@ These will be studied thoroughly in /plan and /tasks phases before any DML code 
 - [ ] Requirements generated
 - [ ] Entities identified
 - [ ] Review checklist passed
+
+## Git Version Control
+
+**MANDATORY: Commit After Each Major Update**
+
+- **WHEN**: After completing the specification or making significant updates
+- **WHAT**: Stage and commit the spec file and any related changes
+- **HOW**: Use these exact commands:
+  ```bash
+  git add -A
+  git commit -m "specify: <feature-name> - <section/update-description>"
+  ```
+- **EXAMPLES**:
+  - Initial spec: `git commit -m "specify: device-name - initial specification created"`
+  - Updated requirements: `git commit -m "specify: device-name - updated functional requirements"`
+  - Added clarifications: `git commit -m "specify: device-name - added clarifications section"`
+- **WHY**: This creates a clear audit trail of specification evolution, making it easy to:
+  - Track how requirements evolved
+  - Understand decision rationale
+  - Review specification history
+  - Revert to previous specification versions if needed
+- **CRITICAL**: Always commit specification changes to maintain project history
 
 ---
