@@ -45,8 +45,15 @@
 - **Single project**: `src/`, `tests/` at repository root
 - **Web app**: `backend/src/`, `frontend/src/`
 - **Mobile**: `api/src/`, `ios/src/` or `android/src/`
-- **Simics**: `./simics-project/modules/device-name/`, `./simics-project/modules/device-name/test/` at repository root
+- **Simics**: `simics-project/modules/device-name/`, `simics-project/modules/device-name/test/` at repository root
 - Paths shown below assume single project - adjust based on plan.md structure
+
+## CRITICAL: Path Handling for MCP Tools
+When using MCP tools (like Simics build tools), **ALWAYS** use ABSOLUTE PATHS:
+- ❌ WRONG: `project_path="./simics-project"` (relative path - will resolve in MCP server's directory)
+- ✅ CORRECT: `project_path="<ABSOLUTE_PATH_TO_PROJECT>/simics-project"` (absolute path - works correctly)
+- The implement agent MUST replace `<ABSOLUTE_PATH_TO_PROJECT>` with the actual absolute path from the working directory
+- Example: If working dir is `/home/user/myproject`, use `project_path="/home/user/myproject/simics-project"`
 
 ## Phase 3.1: Setup
 - [ ] T001 Create project structure per implementation plan
@@ -55,9 +62,9 @@
 
 **Simics Setup Example:**
 - [ ] T001 Verify simics-mcp-server connection and Simics installation using `get_simics_version()`
-- [ ] T002 Create Simics project structure using `create_simics_project(project_path="./simics-project")`
-- [ ] T003 Add device skeleton using `add_dml_device_skeleton(project_path="./simics-project", device_name="DEVICE_NAME")`
-- [ ] T004 [P] Verify project structure and build system using `build_simics_project(project_path="./simics-project", module="DEVICE_NAME")`
+- [ ] T002 Create Simics project structure using `create_simics_project(project_path="<ABSOLUTE_PATH_TO_PROJECT>/simics-project")` where `<ABSOLUTE_PATH_TO_PROJECT>` is your working directory
+- [ ] T003 Add device skeleton using `add_dml_device_skeleton(project_path="<ABSOLUTE_PATH_TO_PROJECT>/simics-project", device_name="DEVICE_NAME")`
+- [ ] T004 [P] Verify project structure and build system using `build_simics_project(project_path="<ABSOLUTE_PATH_TO_PROJECT>/simics-project", module="DEVICE_NAME")`
 - [ ] T005 **GATE**: Verify research.md from /plan phase exists and contains required documentation
   * Check file existence: FEATURE_DIR/../research.md
   * Verify required RAG results present (DML reference, Model Builder patterns, device templates, device-specific best practices, register patterns, test patterns)
@@ -82,7 +89,7 @@
 - [ ] T013 [P] Register access test in simics-project/modules/device-name/test/s-registers.py (reference test patterns from research.md and RAG results)
 - [ ] T014 [P] Interface behavior test in simics-project/modules/device-name/test/s-interfaces.py (reference interface patterns from research.md and RAG results)
 - [ ] T015 [P] Device workflow test in simics-project/modules/device-name/test/s-device-name.py (main test file, reference device patterns from research.md and RAG results)
-- [ ] T016 [P] Set up and validate test environment using `run_simics_test(project_path="./simics-project", suite="modules/DEVICE_NAME/test")`
+- [ ] T016 [P] Set up and validate test environment using `run_simics_test(project_path="<ABSOLUTE_PATH_TO_PROJECT>/simics-project", suite="modules/DEVICE_NAME/test")`
 
 ## Phase 3.3: Core Implementation (ONLY after tests are failing)
 - [ ] T008 [P] User model in src/models/user.py
@@ -97,11 +104,11 @@
 - [ ] T017 **GATE**: Read simics-project/modules/device-name/device-name.dml to understand main device structure
 - [ ] T018 [P] Register definitions in simics-project/modules/device-name/registers.dml (reference register patterns from research.md and RAG results)
 - [ ] T019 [P] Input output interface declarations in simics-project/modules/device-name/interfaces.dml (reference interface patterns from research.md and RAG results)
-- [ ] T020 [P] Build device module using `build_simics_project(project_path="./simics-project", module="DEVICE_NAME")`
+- [ ] T020 [P] Build device module using `build_simics_project(project_path="<ABSOLUTE_PATH_TO_PROJECT>/simics-project", module="DEVICE_NAME")`
 - [ ] T021 Register read/write logic implementation
 - [ ] T022 Device state management and attributes
 - [ ] T023 Error handling and logging for device operations
-- [ ] T024 [P] Incremental build validation using `build_simics_project(project_path="./simics-project", module="DEVICE_NAME")`
+- [ ] T024 [P] Incremental build validation using `build_simics_project(project_path="<ABSOLUTE_PATH_TO_PROJECT>/simics-project", module="DEVICE_NAME")`
 
 ## Phase 3.4: Integration
 - [ ] T015 Connect UserService to DB
@@ -115,8 +122,8 @@
 - [ ] T036 Implement interrupt line connections and events
 - [ ] T037 Add external port communications and protocols
 - [ ] T038 Integrate with Simics checkpointing and state management
-- [ ] T039 [P] Validate integration with `build_simics_project(project_path="./simics-project")`
-- [ ] T040 [P] Run comprehensive tests using `run_simics_test(project_path="./simics-project", suite="modules/DEVICE_NAME/test")`
+- [ ] T039 [P] Validate integration with `build_simics_project(project_path="<ABSOLUTE_PATH_TO_PROJECT>/simics-project")`
+- [ ] T040 [P] Run comprehensive tests using `run_simics_test(project_path="<ABSOLUTE_PATH_TO_PROJECT>/simics-project", suite="modules/DEVICE_NAME/test")`
 
 ## Phase 3.5: Polish
 - [ ] T019 [P] Unit tests for validation in tests/unit/test_validation.py

@@ -12,6 +12,7 @@ User input:
 $ARGUMENTS
 
 1. Run `{SCRIPT}` from repo root and parse FEATURE_DIR and AVAILABLE_DOCS list. All paths must be absolute.
+   **CRITICAL**: Store your current working directory as `WORKING_DIR` for use with MCP tool calls.
 
 2. Load and analyze the implementation context:
    - **REQUIRED**: Read tasks.md for the complete task list and execution plan
@@ -42,6 +43,7 @@ $ARGUMENTS
    - **Integration work**: Database connections, middleware, logging, external services
    - **Polish and validation**: Unit tests, performance optimization, documentation
    - **⚠️ After each build/test**: Run `git add -A && git commit -m "implement: <task> - <result>"`
+   - **⚠️ MCP Tool Paths**: When calling MCP tools (like `build_simics_project`, `run_simics_test`), replace any `<ABSOLUTE_PATH_TO_PROJECT>` placeholder with your actual `WORKING_DIR` path. Example: if `WORKING_DIR=/home/user/myproject`, use `project_path="/home/user/myproject/simics-project"` NOT `project_path="./simics-project"`
 
 6. Progress tracking and error handling:
    - Report progress after each completed task
