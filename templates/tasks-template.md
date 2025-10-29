@@ -230,43 +230,145 @@ Task: "Integration test auth in tests/integration/test_auth.py"
 
 ## Error Recovery (Simics)
 
-**Priority**: Study Notes → Source Docs → RAG (last resort)
+**CRITICAL**: DO NOT guess fixes. Always lookup research.md first, then use RAG queries with error-specific query strings to get solutions and examples.
 
 ### Build Errors
-1. **Check Grammar Notes**: Search research.md "DML Grammar Study Notes"
-   - Syntax errors → declaration/method/expression syntax
-   - Semantic errors → scoping/types/visibility
-   - Template errors → template system/inheritance
-2. **Check Best Practices Notes**: Search "DML Best Practices Study Notes"
-   - Pattern errors → coding patterns/interfaces
-   - Common pitfalls → anti-patterns section
-3. **Check research.md RAG**: Device examples, register patterns from /plan
-4. **Read Source**: Open DML_grammar.md or DML_Device_Development_Best_Practices.md, search error keyword
-5. **RAG Query**: `perform_rag_query("DML 1.4 [error_keyword] syntax solution", source_type="dml", match_count=10)`
-6. **Document**: Add solution to research.md
 
-**Examples**:
+**Step 1: Extract Error Information**
+From build output, identify:
+- **Error type**: syntax | semantic | template | pattern
+- **Error keyword**: Core error term (e.g., "expected ';'", "unknown attribute")
+- **Error context**: Affected construct (e.g., "register declaration", "interface method")
+- **Error location**: File path + line number
+
+**Step 2: Search research.md (Sequential - Stop at First Match)**
+Use Ctrl+F or search function with error keyword. Check sections in order:
+1. **"Error Solutions"** → previously fixed errors (highest priority)
+2. **"DML Grammar Study Notes"** → syntax/declaration issues
+3. **"DML Best Practices Study Notes"** → patterns/interfaces  
+4. **"RAG Research"** → device examples from `/plan` phase
+
+**Match criteria:**
+- ✅ Exact error keyword match → Extract solution, skip to Step 4
+- ⚠️ Similar error (different context) → Note pattern, continue to Step 3
+- ❌ No match → Continue to Step 3
+
+**Step 3: Query for Solution (Max 2 Attempts)**
+
+**Attempt 1 - Specific Query:**
+```python
+perform_rag_query(
+    query=f"DML 1.4 {error_keyword} {error_context} fix solution example",
+    source_type="dml",  # or "docs" for grammar/syntax errors
+    match_count=10
+)
 ```
-"syntax error: expected ';'" → Grammar notes → register declaration syntax
-"unknown attribute" → Grammar notes → attribute declarations + scoping
-"template not found" → Grammar notes → template system (might be interface!)
-"checkpoint restore failed" → Best practices → state management patterns
+
+**If no relevant results, Attempt 2 - Broadened Query:**
+```python
+perform_rag_query(
+    query=f"DML 1.4 {error_type} common issues examples",
+    source_type="docs",
+    match_count=15
+)
 ```
+
+**Query Pattern Examples:**
+- `"syntax error: expected ';'"` → `"DML 1.4 register declaration semicolon syntax"`
+- `"unknown attribute"` → `"DML 1.4 attribute declarations scoping"`
+- `"template not found"` → `"DML 1.4 template inheritance interface"`
+
+**Step 4: Review Results**
+- Examine code examples showing correct usage
+- Identify pattern differences from your implementation
+- Note relevant documentation excerpts
+
+**Step 5: Apply Fix**
+- Use examples as reference (adapt, don't copy blindly)
+- Ensure fix aligns with Grammar/Best Practices study notes
+- Apply to your specific use case
+
+**Step 6: Document Solution (Selective)**
+Add to research.md "## Error Solutions" **ONLY if:**
+- ✅ Novel error requiring RAG query
+- ✅ Non-obvious fix needing code example
+- ❌ Skip: common syntax errors (typos, missing semicolons)
+
+```markdown
+### Error: [error message]
+**Context**: [what you were implementing]
+**Source**: [research.md section OR RAG query used]
+**Solution**: [fix description]
+**Code Example**: [relevant snippet]
+**Reference**: [source file/documentation]
+```
+
+**Step 7: Verify & Iterate**
+```bash
+build_simics_project(project_path="/absolute/path/to/workspace/simics-project", module="DEVICE_NAME")
+```
+- ✅ **Build succeeds** → Mark task complete
+- ❌ **Same error** → Try Attempt 2 query or escalate
+- ⚠️ **New error** → Return to Step 1 with new error
 
 ### Test Failures
-1. **Check Test Patterns**: research.md test sections from /plan
-2. **Check Best Practices**: For device behavior issues
-3. **Check Grammar**: For interface/method issues
-4. **Debugging**: Apply techniques from best practices notes
-5. **RAG Query**: `perform_rag_query("Simics Python test [scenario]", source_type="python")`
+
+**Step 1: Identify Test Failure Type**
+- Register access test → read/write/reset behavior
+- Interface behavior test → method calls/return values
+- Device workflow test → state transitions/events
+- Python test framework → assertions/setup/teardown
+
+**Step 2: Search research.md (Sequential)**
+Use Ctrl+F with test scenario keywords. Check sections:
+1. **"Error Solutions"** → test-related fixes
+2. **"Python Test Patterns"** → from `/plan` phase
+3. **"Device Examples"** → test implementations
+
+**Step 3: Query for Solution (if needed, Max 2 Attempts)**
+```python
+# Attempt 1 - Specific
+perform_rag_query(
+    query=f"Simics Python test {test_scenario} example working code",
+    source_type="python",
+    match_count=10
+)
+```
+
+**Query Pattern Examples:**
+- `"register read returns wrong value"` → `"Simics Python test register read write verification"`
+- `"interface method not found"` → `"Simics Python test interface method invocation"`
+- `"device state transition failed"` → `"Simics Python test device state workflow"`
+
+**Step 4-7:** Same as Build Errors (Review → Apply → Document → Verify with `run_simics_test()`)
 
 ### Runtime Errors
-1. **Check Best Practices** → error scenario
-2. **Check Grammar** → verify syntax correctness
-3. **Re-read Source** → for complex issues
-4. **RAG Query** → similar issues + solutions
 
-**Documentation**: After resolving via steps 4-6, add to research.md:
-```markdown
-**Error**: [message] → **Solution**: [fix] → **Reference**: [source]
+**Step 1: Identify Runtime Issue Type**
+- Device behavior → unexpected state/response
+- Interface errors → connection/communication failures
+- Memory errors → access violations/unmapped regions
+- Event/timing → callback/sequence issues
+
+**Step 2: Search research.md (Sequential)**
+Use Ctrl+F with error keywords. Check sections:
+1. **"Error Solutions"** → runtime error fixes
+2. **"DML Best Practices Study Notes"** → device behavior patterns
+3. **"Device Examples"** → similar implementations
+
+**Step 3: Query for Solution (if needed, Max 2 Attempts)**
+```python
+# Attempt 1 - Specific
+perform_rag_query(
+    query=f"DML 1.4 {error_scenario} {error_context} runtime fix example",
+    source_type="dml",
+    match_count=10
+)
 ```
+
+**Query Pattern Examples:**
+- `"device not responding to memory write"` → `"DML 1.4 memory mapped IO write handler"`
+- `"interrupt not firing"` → `"DML 1.4 interrupt signal raise event trigger"`
+- `"state not preserved"` → `"DML 1.4 checkpoint state serialization"`
+
+**Step 4-7:** Same as Build Errors (Review → Apply → Document → Verify with `build_simics_project()`)
