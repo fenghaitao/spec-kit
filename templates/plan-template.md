@@ -120,90 +120,19 @@ Extract unknowns from Technical Context above:
 
 **MANDATORY for Simics projects - Execute these tools immediately**:
 
-1. **Environment Discovery** (MANDATORY):
-   - Execute `get_simics_version()` → resolve Simics Version NEEDS CLARIFICATION
-   - Execute `list_installed_packages()` → resolve Required Packages NEEDS CLARIFICATION
-   - Execute `list_simics_platforms()` → resolve Available Platforms NEEDS CLARIFICATION
-
-2. **Requirement-Driven RAG Documentation Search** (MANDATORY - query based on spec.md):
-   
-   **Process**:
-   1. **Read spec.md thoroughly**: Load and analyze `specs/[###-feature-name]/spec.md`
-   2. **Extract key concepts**: Identify technical concepts, features, patterns, and technologies mentioned
-   3. **For EACH functional requirement**, generate targeted RAG queries to gather implementation knowledge
-   
-   **Query Generation Guidelines** (Simics/Hardware Projects):
-   
-   **A. Device Type & Architecture Queries** - For device modeling patterns:
-   - Example: If spec mentions "PCI device", query: `"PCI device modeling DML configuration space BAR registers"`
-   - Example: If spec mentions "UART controller", query: `"UART serial device DML transmit receive registers"`
-   - Example: If spec mentions "timer device", query: `"timer counter device DML interrupt generation periodic events"`
-   - Source type: `"source"` for device examples, `"dml"` for DML code patterns
-   
-   **B. Register Implementation Queries** - For register-specific features:
-   - Example: If spec requires "control registers", query: `"DML control register implementation read write callbacks"`
-   - Example: If spec requires "status registers", query: `"DML status register read-only fields state reflection"`
-   - Example: If spec requires "interrupt registers", query: `"DML interrupt status enable mask registers"`
-   - Source type: `"dml"` for register patterns, `"docs"` for register modeling guidance
-   
-   **C. Hardware Interface Queries** - For device interfaces and protocols:
-   - Example: If spec mentions "memory-mapped I/O", query: `"DML io_memory interface bank register mapping"`
-   - Example: If spec requires "DMA", query: `"DML DMA implementation memory transactions buffer management"`
-   - Example: If spec requires "interrupts", query: `"DML interrupt signal port interface assertion deassertion"`
-   - Source type: `"dml"` for interface code, `"docs"` for Simics interface documentation
-   
-   **D. Device Behavior Queries** - For operational behavior and state machines:
-   - Example: If spec describes "state machine", query: `"DML device state machine implementation transitions"`
-   - Example: If spec requires "event handling", query: `"DML event posting callback scheduling timing"`
-   - Example: If spec requires "checkpointing", query: `"DML checkpointing saved variables state persistence"`
-   - Source type: `"dml"` for behavior patterns, `"source"` for complex examples
-   
-   **E. Testing Strategy Queries** - For device testing:
-   - Example: For register tests, query: `"Simics Python device testing register read write verification"`
-   - Example: For functional tests, query: `"Simics Python test patterns device workflow integration"`
-   - Example: For error cases, query: `"Simics device testing error conditions invalid access"`
-   - Source type: `"python"` for test code, `"source"` for test frameworks
-   
-   **Query Construction Best Practices**:
-   - ✅ Include multiple related terms: `"DML register bank io_memory interface callbacks"`
-   - ✅ Specify DML version/platform: `"DML 1.4 Simics device checkpointing state"`
-   - ✅ Add device context from spec: `"timer device counter register overflow interrupt"`
-   - ✅ Use 5-10 words per query for precision
-   - ❌ Avoid vague queries: `"how to implement device"`
-   - ❌ Don't duplicate: Check if knowledge is already covered
-   
-   **Execution**:
-   ```python
-   # For each requirement in spec.md, execute 1-3 targeted queries
-   perform_rag_query(
-       query="[specific technical terms from requirement]",
-       source_type="[docs|source|dml|python|all]",
-       match_count=5  # Use 10 for complex/critical requirements
-   )
-   ```
-   
-   **Documentation**: In research.md, for each query document:
-   - Which requirement(s) it addresses
-   - Why this specific query was needed
-   - What knowledge gap it fills
-   - Key findings and code examples extracted
+**Environment Discovery**:
+- Execute `get_simics_version()` → resolve Simics Version NEEDS CLARIFICATION
+- Execute `list_installed_packages()` → resolve Required Packages NEEDS CLARIFICATION
+- Execute `list_simics_platforms()` → resolve Available Platforms NEEDS CLARIFICATION
 
 **CRITICAL**: DO NOT execute implementation tools (`create_simics_project()`, `add_dml_device_skeleton()`, `build_simics_project()`) - those belong in Phase 3 (Implementation).
 
-### Step 0.3: Parse MCP Tool and RAG Query Outputs
+### Step 0.3: Parse MCP Tool Outputs
 
-Extract key information from MCP tool JSON and RAG query responses:
+Extract key information from MCP tool JSON responses:
 - **get_simics_version()** → Extract Simics version for Technical Context
 - **list_installed_packages()** → Extract package list for Technical Context
 - **list_simics_platforms()** → Extract platform list for Technical Context
-- **RAG queries** → Extract patterns, best practices, code examples, and implementation guidance
-  * **CRITICAL**: Extract and include actual code examples from RAG results:
-    - Parse the JSON response `results[].content` field to locate code snippets
-    - Look for relevant code patterns based on your query (e.g., class definitions, function signatures, configuration examples)
-    - Extract complete, self-contained code examples (not just descriptions). Focus on minimal but functional snippets that demonstrate the pattern - avoid truncating mid-function or removing essential context.
-    - Format as markdown code blocks with appropriate language fencing (```python, ```javascript, ```dml, etc.)
-    - Example: If RAG returns code with class definitions and methods, extract and format the actual code
-    - DO NOT write descriptions like "Example implementation pattern" - show the actual code
 
 ### Step 0.4: Create research.md File
 
@@ -220,11 +149,11 @@ Extract key information from MCP tool JSON and RAG query responses:
 2. `.specify/memory/DML_grammar.md` - Complete DML 1.4 language specification
 
 **During /plan Phase**:
-- ✅ Execute RAG queries for device patterns and examples
-- ✅ Document RAG results in research.md
+- ✅ Identify unknowns from Technical Context
+- ✅ Document environment discovery (Simics version, packages, platforms)
 - ❌ DO NOT read the DML learning documents yet (they will be studied in tasks phase)
 
-**In Tasks Phase**: Mandatory tasks T013-T014 will require complete study of these documents with comprehensive note-taking in research.md before any implementation
+**In Tasks Phase**: Mandatory tasks will require complete study of these documents with comprehensive note-taking in research.md before any implementation
 
 ## Environment Discovery
 
@@ -243,78 +172,28 @@ Extract key information from MCP tool JSON and RAG query responses:
 ### Available Platforms
 [Document output from list_simics_platforms() - list available simulation platforms]
 
-## Requirement-Driven RAG Research
-
-[Document RAG queries executed to address functional requirements from spec.md]
-
-### Query #1: [Query Focus - tied to specific requirement]
-[Document findings from RAG query addressing a knowledge gap]
-- **Query**: "[exact query string used]"
-- **Source Type**: [dml/python/source/docs/all]
-- **Match Count**: [number]
-- **Requirement Addressed**: [Reference specific functional requirement from spec.md that necessitated this query]
-- **Knowledge Gap**: [What technical knowledge was needed to implement this requirement]
-- **Key Findings**:
-  * [Finding 1: Specific pattern, feature, or approach discovered]
-  * [Finding 2: Implementation detail or best practice]
-  * [Finding 3: Integration or interface pattern]
-  * [Additional findings as relevant]
-- **Code Examples**:
-  ```[language]
-  [code example 1 - 10-20 lines of actual code extracted from RAG results]
-  ```
-  ```[language]
-  [code example 2 - showing specific pattern or feature]
-  ```
-- **Application**: [How these findings will be applied to [FEATURE_NAME] implementation]
-
-### Query #2: [Query Focus - tied to specific requirement]
-[Repeat structure above for each query]
-- **Query**: "[exact query string]"
-- **Source Type**: [type]
-- **Match Count**: [number]
-- **Requirement Addressed**: [Reference specific functional requirement]
-- **Knowledge Gap**: [What knowledge was needed]
-- **Key Findings**: [...]
-- **Code Examples**: [...]
-- **Application**: [...]
-
-[Continue with Query #3, #4, etc. as needed based on functional requirements]
-
 ## Architecture Decisions
 
 [For each NEEDS CLARIFICATION in Technical Context, create an entry:]
 
 ### Decision: [What was decided - e.g., "Use [technology/pattern]"]
-- **Rationale**: [Why this choice - based on MCP tool and RAG findings]
+- **Rationale**: [Why this choice - based on spec.md and MCP tool findings]
 - **Alternatives Considered**: [What else was evaluated]
-- **Source**: [Which MCP tool or RAG query informed this decision]
+- **Source**: [Which MCP tool or spec section informed this decision]
 - **Impact**: [How this affects implementation]
-
-## RAG Search Results Summary
-
-[Quick reference table for all RAG queries executed]
-
-| # | Query Focus | Source Type | Match Count | Status | Requirement Addressed |
-|---|-------------|-------------|-------------|--------|-----------------------|
-| 1 | [Query focus summary] | [type] | [N] | ✅ | [Requirement reference] |
-| 2 | [Query focus summary] | [type] | [N] | ✅ | [Requirement reference] |
-| 3+ | [Additional queries] | [type] | [N] | ✅ | [Requirement reference] |
-
-**Note**: Each query should address a specific functional requirement or knowledge gap identified from spec.md. Document the requirement-to-query mapping clearly.
 
 ## Implementation Strategy
 
-[Document overall approach based on research findings]
+[Document overall approach based on spec.md requirements]
 
 ### Architecture Overview
-[High-level architecture based on examples and patterns discovered]
+[High-level architecture based on functional requirements]
 
 ### Key Design Patterns
-[Patterns to apply based on RAG research]
+[Patterns to apply based on spec.md and research]
 
 ### Testing Approach
-[Testing strategy based on discovered test patterns]
+[Testing strategy based on spec.md user scenarios]
 
 ### Next Steps
 [What Phase 1 should focus on based on research]
@@ -342,17 +221,6 @@ Extract key information from MCP tool JSON and RAG query responses:
 - [x] `list_installed_packages()` executed and documented (MANDATORY)
 - [x] `list_simics_platforms()` executed and documented (MANDATORY)
 - [x] MCP tool outputs incorporated into research.md
-
-**RAG Documentation Search Status** (if Project Type = simics):
-- [x] `perform_rag_query()` used for requirement-driven research
-- [x] RAG search results documented in research.md
-
-**RAG Quality Verification**:
-- [x] RAG queries executed based on spec.md functional requirements
-- [x] Code examples extracted and included in relevant sections
-- [x] Key findings documented with excerpts and references
-- [x] Application guidance provided for implementation
-- [x] RAG Search Results Summary table completed with status checkmarks
 ```
 
 ### Step 0.7: Validation Checkpoint
@@ -376,13 +244,12 @@ Explicitly state in your response:
 
 **Phase 0 Summary**:
 - MCP tools executed: [count]
-- RAG searches performed: [count]
 - NEEDS CLARIFICATION resolved: [count]
 - research.md created: ✅
 - Technical Context updated: ✅
 ```
 
-**Output**: research.md with all NEEDS CLARIFICATION resolved, MCP tool outputs, and RAG documentation search results documented
+**Output**: research.md with all NEEDS CLARIFICATION resolved and MCP tool outputs documented
 
 ## Phase 1: Design & Contracts
 *Prerequisites: research.md complete, Phase 0 validated*
@@ -399,7 +266,7 @@ Explicitly state in your response:
 **For Simics Projects**:
 - Extract registers from spec.md Register Map (names, purposes, operations) and External Interfaces
 - Add implementation details: offsets, sizes, access types, bit fields, reset values, side effects
-- Reference research.md for DML patterns
+- Reference spec.md for behavioral requirements
 
 Use this structure:
 ```markdown
@@ -455,10 +322,7 @@ Create files like:
 
 **Note**: Don't create test files yet - just plan them in contracts/
 
-**For Simics Projects**: Document expected register read/write behavior tests:
-- Reference device test patterns from research.md Device Example Analysis section
-- Use test patterns discovered via `perform_rag_query()` for [DEVICE_NAME] and similar devices
-- Extract test structure patterns from RAG search results (simple and complex device references)
+**For Simics Projects**: Document expected register read/write behavior tests based on spec.md requirements and data-model.md register definitions
 
 ### Step 1.4: Extract test scenarios from "User Scenarios & Testing" in spec.md
 
@@ -742,7 +606,7 @@ After completing ALL verification checks, the agent MUST provide this exact repo
 
 **Files Created**:
 - ✅ plan.md (updated with resolved Technical Context and Progress Tracking)
-- ✅ research.md (MCP tool outputs, device examples, architecture decisions)
+- ✅ research.md (MCP tool outputs, architecture decisions)
 - ✅ data-model.md (register definitions, device state, interfaces)
 - ✅ quickstart.md (user validation guide - no MCP syntax)
 - ✅ contracts/ (register access contracts, interface specifications)
@@ -757,7 +621,6 @@ After completing ALL verification checks, the agent MUST provide this exact repo
 **Progress Summary**:
 - Constitutional checks: [PASS/ISSUES]
 - MCP tools executed: [count] tools
-- RAG searches performed: [count] searches
 - NEEDS CLARIFICATION resolved: [count] items
 - Files generated: [count] files
 - Total phases completed: 2 of 2
@@ -817,12 +680,6 @@ After completing ALL verification checks, the agent MUST provide this exact repo
 - [ ] MCP tool outputs incorporated into research.md
 - [ ] Environmental constraints documented for /implement phase
 - [ ] **Implementation MCP tools NOT executed** (reserved for /implement phase)
-
-**RAG Documentation Search Status** (if Project Type = simics):
-- [ ] `perform_rag_query()` used for requirement-driven research
-- [ ] RAG search results documented in research.md
-- [ ] Code examples and patterns extracted from RAG results
-- [ ] Best practices identified and incorporated into design decisions
 
 ---
 *Based on Constitution v2.1.1 - See `/memory/constitution.md`*
