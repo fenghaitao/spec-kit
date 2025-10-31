@@ -21,12 +21,12 @@ This guide provides a comprehensive introduction to writing Device Modeling Lang
 The key to successful DML compilation is using the correct compiler flags:
 
 ```bash
-dmlc --simics-api=6 -I ../linux64/bin/dml/api/6/1.4 -I ../linux64/bin/dml/1.4 input.dml output
+dmlc --simics-api=7 -I ../linux64/bin/dml/api/7/1.4 -I ../linux64/bin/dml/1.4 input.dml output
 ```
 
 **Critical Points:**
-- `--simics-api=6`: Specifies Simics API version
-- `-I ../linux64/bin/dml/api/6/1.4`: Include path for Simics API
+- `--simics-api=7`: Specifies Simics API version
+- `-I ../linux64/bin/dml/api/7/1.4`: Include path for Simics API
 - `-I ../linux64/bin/dml/1.4`: Include path for DML builtins
 
 ### Environment Setup
@@ -65,9 +65,9 @@ param desc = "A simple device for learning";
 ```dml
 dml 1.4;
 
-import "simics/device-api.dml";  // Always needed for devices
-
 device my_device;
+
+import "simics/device-api.dml";  // Always needed for devices
 ```
 
 ## Device Structure
@@ -95,9 +95,9 @@ param desc = "Device description";
 ```dml
 dml 1.4;
 
-import "simics/device-api.dml";
-
 device uart_device;
+
+import "simics/device-api.dml";
 
 param classname = "uart_device";
 param desc = "Simple UART device";
@@ -114,7 +114,7 @@ bank regs {
             log info: "UART data write: 0x%02x", value;
         }
         
-        method read() -> (uint64) {
+        method read() -> (uint64 value) {
             log info: "UART data read";
             return 0x00;
         }
@@ -135,9 +135,9 @@ bank regs {
 ```dml
 dml 1.4;
 
-import "simics/device-api.dml";
-
 device basic_mmio;
+
+import "simics/device-api.dml";
 
 param classname = "basic_mmio";
 param desc = "Basic memory-mapped I/O device";
@@ -164,9 +164,9 @@ bank control_regs {
 ```dml
 dml 1.4;
 
-import "simics/device-api.dml";
-
 device interrupt_device;
+
+import "simics/device-api.dml";
 
 param classname = "interrupt_device";
 param desc = "Device that can generate interrupts";
@@ -174,6 +174,7 @@ param desc = "Device that can generate interrupts";
 connect irq {
     param configuration = "optional";
     param c_type = "simple_interrupt";
+    interface signal;
 }
 
 bank regs {
@@ -211,9 +212,9 @@ method update_interrupt() {
 ```dml
 dml 1.4;
 
-import "simics/device-api.dml";
-
 device timer_device;
+
+import "simics/device-api.dml";
 
 param classname = "timer_device";
 param desc = "Simple timer device";
@@ -243,7 +244,7 @@ bank timer_regs {
 }
 
 method start_timer() {
-    after (1.0) call timer_expired();
+    after 1.0 s: timer_expired();
 }
 
 method timer_expired() {
@@ -274,7 +275,7 @@ device my_device;
 
 **Solution**: Add both include paths:
 ```bash
-dmlc --simics-api=6 -I ../linux64/bin/dml/api/6/1.4 -I ../linux64/bin/dml/1.4 file.dml output
+dmlc --simics-api=7 -I ../linux64/bin/dml/api/7/1.4 -I ../linux64/bin/dml/1.4 file.dml output
 ```
 
 ### Issue 3: "assert sys.flags.utf8_mode"
@@ -383,7 +384,7 @@ bank uart_regs {
             this.val = value;
         }
         
-        method read() -> (uint64) {
+        method read() -> (uint64 value) {
             if (lcr.val & 0x80) {
                 return this.val;  // Divisor latch
             } else {
@@ -482,10 +483,10 @@ bank device_regs {
 
 ```bash
 # Test basic compilation
-dmlc --simics-api=6 -I ../linux64/bin/dml/api/6/1.4 -I ../linux64/bin/dml/1.4 my_device.dml my_device
+dmlc --simics-api=7 -I ../linux64/bin/dml/api/7/1.4 -I ../linux64/bin/dml/1.4 my_device.dml my_device
 
 # Check for warnings
-dmlc -T --simics-api=6 -I ../linux64/bin/dml/api/6/1.4 -I ../linux64/bin/dml/1.4 my_device.dml my_device
+dmlc -T --simics-api=7 -I ../linux64/bin/dml/api/7/1.4 -I ../linux64/bin/dml/1.4 my_device.dml my_device
 ```
 
 ### 2. Integration with AI Tools
@@ -531,11 +532,11 @@ param desc = "Device description";
 ### Compilation Command
 
 ```bash
-dmlc --simics-api=6 -I ../linux64/bin/dml/api/6/1.4 -I ../linux64/bin/dml/1.4 input.dml output
+dmlc --simics-api=7 -I ../linux64/bin/dml/api/7/1.4 -I ../linux64/bin/dml/1.4 input.dml output
 ```
 
 ---
 
 **Document Status**: ✅ Complete  
 **Last Updated**: Generated after solving DML compilation issues  
-**Tested With**: Simics 7.57.0, DML 1.4, API version 6
+**Tested With**: Simics 7.57.0, DML 1.4, API version 7
