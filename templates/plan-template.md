@@ -14,10 +14,9 @@ scripts:
 ```
 1. Load feature spec from Input path
    → If not found: ERROR "No feature spec at {path}"
-   → Extract: Functional Requirements, Key Entities, Hardware Specification (if Simics project)
+   → Extract: Functional Requirements, Register Map, Hardware Specification
 2. Fill Technical Context (scan for NEEDS CLARIFICATION)
-   → Detect Project Type from context (web=frontend+backend, mobile=app+api, simics=hardware device)
-   → Set Structure Decision based on project type
+   → Extract DML version, Simics API, device type, hardware interfaces
 3. Fill the Constitution Check section based on the content of the constitution document.
 4. Evaluate Constitution Check section below
    → If violations exist: Document in Complexity Tracking
@@ -41,23 +40,16 @@ scripts:
 [Extract from feature spec: primary requirement + technical approach from research]
 
 ## Technical Context
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75, DML 1.4 or NEEDS CLARIFICATION]
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM, Simics API or NEEDS CLARIFICATION]
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
-**Testing**: [e.g., pytest, XCTest, cargo test, Simics test scripts or NEEDS CLARIFICATION]
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM, Simics 6.x or NEEDS CLARIFICATION]
-**Project Type**: [single/web/mobile/simics - determines source structure]
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps, functional accuracy or NEEDS CLARIFICATION]
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable, software-visible behavior or NEEDS CLARIFICATION]
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens, register count/complexity or NEEDS CLARIFICATION]
-
-**Simics-Specific Context** (if Project Type = simics):
+**Language/Version**: [DML 1.4 or NEEDS CLARIFICATION]
 **Simics Version**: [e.g., Simics Base 7.57.0 or use MCP `get_simics_version()` or NEEDS CLARIFICATION]
 **Required Packages**: [e.g., simics-base, simics-qsp-x86 or use MCP `list_installed_packages()` or NEEDS CLARIFICATION]
 **Available Platforms**: [use MCP `list_simics_platforms()` to discover available simulation targets or NEEDS CLARIFICATION]
 **MCP Server**: [simics-mcp-server integration available with 22+ tools for project automation, device modeling and documentation access]
-**Device Type**: [e.g., PCI device, memory controller, peripheral or NEEDS CLARIFICATION]
-**Hardware Interfaces**: [e.g., memory-mapped registers, DMA, interrupts or NEEDS CLARIFICATION]
+**Device Type**: [e.g., PCI device, memory controller, peripheral, timer, UART or NEEDS CLARIFICATION]
+**Hardware Interfaces**: [e.g., memory-mapped registers, DMA, interrupts, signal ports or NEEDS CLARIFICATION]
+**Performance Goals**: [e.g., <1% simulation overhead, cycle-accurate timing, functional accuracy or NEEDS CLARIFICATION]
+**Constraints**: [e.g., software-visible behavior, register access patterns, state persistence or NEEDS CLARIFICATION]
+**Scale/Scope**: [e.g., register count, interface complexity, state variables or NEEDS CLARIFICATION]
 
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
@@ -79,22 +71,8 @@ specs/[###-feature]/
 
 ### Source Code (repository root)
 
-**Select ONE structure based on Project Type. Delete unused options and customize with real paths.**
-
+**Project Structure** (created by MCP tools in Phase 3):
 ```
-# Single project (DEFAULT)
-src/[models|services|cli|lib]/
-tests/[contract|integration|unit]/
-
-# Web application (frontend + backend)
-backend/src/[models|services|api]/
-frontend/src/[components|pages|services]/
-
-# Mobile + API (iOS/Android)
-api/src/[models|services|api]/
-[ios|android]/[feature modules]/
-
-# Simics device (created by MCP tools in Phase 3)
 simics-project/modules/[device-name]/
   ├── [device-name].dml
   ├── registers.dml (optional)
@@ -104,21 +82,19 @@ simics-project/modules/[device-name]/
       └── test_[name]_common.py
 ```
 
-**Structure Decision**: [Selected structure, real directories, and rationale]
-
-**Simics Note**: MCP tools auto-generate structure at repo root during Phase 3 Setup. Specs/ contains only documentation.
+**Note**: MCP tools auto-generate structure at repo root during Phase 3 Setup. Specs/ contains only documentation.
 
 ## Phase 0: Outline & Research
 
 ### Step 0.1: Identify Research Needs
 Extract unknowns from Technical Context above:
 - For each NEEDS CLARIFICATION → research task
-- For each dependency → best practices task
-- For each integration → patterns task
+- For each hardware interface → patterns task
+- For each register → implementation details task
 
-### Step 0.2: Execute Discovery MCP Tools (Simics Projects)
+### Step 0.2: Execute Discovery MCP Tools
 
-**MANDATORY for Simics projects - Execute these tools immediately**:
+**MANDATORY - Execute these tools immediately**:
 
 1. **Environment Discovery**:
    - Execute `get_simics_version()` → resolve Simics Version NEEDS CLARIFICATION
@@ -176,9 +152,9 @@ Extract key information from MCP tool JSON and RAG query responses:
 ```markdown
 # Research: [FEATURE_NAME]
 
-## DML Learning Prerequisites (Simics Projects Only)
+## DML Learning Prerequisites
 
-**⚠️ CRITICAL FOR SIMICS PROJECTS**: Two comprehensive DML learning documents must be studied in the tasks phase before writing any DML code:
+**⚠️ CRITICAL**: Two comprehensive DML learning documents must be studied in the tasks phase before writing any DML code:
 
 1. `.specify/memory/DML_Device_Development_Best_Practices.md` - Patterns and pitfalls
 2. `.specify/memory/DML_grammar.md` - Complete DML 1.4 language specification
@@ -207,7 +183,7 @@ Extract key information from MCP tool JSON and RAG query responses:
 ### Available Platforms
 [Document output from list_simics_platforms() - list available simulation platforms]
 
-## Device Architecture Context (Simics Only)
+## Device Architecture Context
 
 [If architectural RAG queries were executed, document findings here]
 
@@ -275,13 +251,13 @@ Extract key information from MCP tool JSON and RAG query responses:
 **Phase Status**:
 - [x] Phase 0: Research complete (/plan command)
 
-**Simics Discovery MCP Tool Status** (if Project Type = simics):
+**Discovery MCP Tool Status**:
 - [x] `get_simics_version()` executed and documented (MANDATORY)
 - [x] `list_installed_packages()` executed and documented (MANDATORY)
 - [x] `list_simics_platforms()` executed and documented (MANDATORY)
 - [x] MCP tool outputs incorporated into research.md
 
-**Architectural Context** (if Project Type = simics):
+**Architectural Context**:
 - [x] Device category identified from spec.md
 - [x] Architectural RAG query executed (1-2 queries MAX for high-level overview)
 - [x] Device architecture patterns documented in research.md
@@ -321,14 +297,8 @@ Explicitly state in your response:
 
 ### Step 1.1: Create data-model.md
 
-**MANDATORY**: Create `[SPECS_DIR]/data-model.md` documenting the data structures:
+**MANDATORY**: Create `[SPECS_DIR]/data-model.md` documenting the device data structures:
 
-**For Software Projects**:
-- Entity name, fields, relationships
-- Validation rules from requirements
-- State transitions if applicable
-
-**For Simics Projects**:
 - Extract registers from spec.md Register Map (names, purposes, operations) and External Interfaces
 - Add implementation details: offsets, sizes, access types, bit fields, reset values, side effects
 - Reference spec.md for behavioral requirements
@@ -337,7 +307,7 @@ Use this structure:
 ```markdown
 # Data Model: [FEATURE_NAME]
 
-## Registers (Simics Projects)
+## Registers
 
 *For each register in spec.md Register Map, extract Purpose and Operations; add offsets, side effects, fields:*
 
@@ -350,14 +320,14 @@ Use this structure:
 
 *Example: spec.md "CONTROL | Device enable | Writing DEVICE_ENABLE=1 triggers init" → Register CONTROL offset 0x00, Side Effects Write: "Triggers initialization, resets COUNTER to 0"*
 
-## Device State (Simics Projects)
+## Device State
 
 ### State Variable: [NAME]
 - **Type**: [type]
 - **Purpose**: [description]
 - **Persistence**: [checkpointed/transient]
 
-## Interfaces (Simics Projects)
+## Interfaces
 
 ### Interface: [INTERFACE_NAME]
 - **Type**: [Simics interface type]
@@ -369,12 +339,6 @@ Use this structure:
 
 **MANDATORY**: Create `[SPECS_DIR]/contracts/` directory with contract specifications:
 
-**For Software Projects**:
-- API contracts (REST/GraphQL endpoints)
-- Request/response schemas
-- Error codes and messages
-
-**For Simics Projects**:
 - Register access contracts (read/write behavior)
 - Interface behavior specifications
 - Memory transaction patterns
@@ -387,7 +351,7 @@ Create files like:
 
 **Note**: Don't create test files yet - just plan them in contracts/
 
-**For Simics Projects**: Document expected register read/write behavior tests based on spec.md requirements and data-model.md register definitions
+Document expected register read/write behavior tests based on spec.md requirements and data-model.md register definitions
 
 ### Step 1.4: Extract test scenarios from "User Scenarios & Testing" in spec.md
 
@@ -402,8 +366,6 @@ Create files like:
 - Each Acceptance Scenario → integration test case
 - Each Edge Case → boundary/error test case
 - Quickstart validation steps based on Primary User Story
-
-**For Simics Projects**: 
 - Device operational workflow tests from Primary User Story
 - Register behavior tests from Acceptance Scenarios
 - Error condition tests from Edge Cases
@@ -587,19 +549,18 @@ Explicitly state in your response:
 - Load `.specify/templates/tasks-template.md` as base
 - Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
 - Each contract → contract test task [P]
-- Each entity → model creation task [P]
+- Each register → DML implementation task
 - Each user story → integration test task
 - Implementation tasks to make tests pass
-- **Simics projects**: Include implementation MCP tool tasks:
-  - **Setup tasks**: `create_simics_project()`, `add_dml_device_skeleton()`, `checkout_and_build_dmlc()`
-  - **Validation tasks**: `check_with_dmlc()` (before build)
-  - **Build tasks**: `build_simics_project()`
-  - **Test tasks**: `run_simics_test()`
-  - **Note**: Discovery MCP tools (`get_simics_version`, `list_installed_packages`) already executed in /plan phase
+- **Setup tasks**: `create_simics_project()`, `add_dml_device_skeleton()`, `checkout_and_build_dmlc()`
+- **Validation tasks**: `check_with_dmlc()` (AI-enhanced diagnostics before build)
+- **Build tasks**: `build_simics_project()`
+- **Test tasks**: `run_simics_test()`
+- **Note**: Discovery MCP tools (`get_simics_version`, `list_installed_packages`) already executed in /plan phase
 
 **Ordering Strategy**:
 - TDD order: Tests before implementation
-- Dependency order: Models before services before UI
+- Dependency order: Register definitions → Device logic → Integration
 - Mark [P] for parallel execution (independent files)
 
 **Estimated Output**: 25-30 numbered, ordered tasks in tasks.md
@@ -631,7 +592,7 @@ grep "NEEDS CLARIFICATION" [SPECS_DIR]/plan.md
 - [ ] research.md file exists and contains MCP tool outputs
 - [ ] Technical Context in plan.md has NO "NEEDS CLARIFICATION" text
 - [ ] Progress Tracking shows "Phase 0: Research complete" checked
-- [ ] All Simics Discovery MCP Tool Status checkboxes marked (if Simics project)
+- [ ] All Discovery MCP Tool Status checkboxes marked
 - [ ] MCP tool outputs are documented in research.md with proper structure
 
 ### Phase 1 Verification Checklist
@@ -686,7 +647,7 @@ After completing ALL verification checks, the agent MUST provide this exact repo
 **Progress Summary**:
 - Constitutional checks: [PASS/ISSUES]
 - MCP tools executed: [count] tools
-- Architectural RAG queries: [0-2] queries (Simics only)
+- Architectural RAG queries: [0-2] queries
 - NEEDS CLARIFICATION resolved: [count] items
 - Files generated: [count] files
 - Total phases completed: 2 of 2
@@ -739,7 +700,7 @@ After completing ALL verification checks, the agent MUST provide this exact repo
 - [ ] All NEEDS CLARIFICATION resolved
 - [ ] Complexity deviations documented
 
-**Simics Discovery MCP Tool Status** (if Project Type = simics):
+**Discovery MCP Tool Status**:
 - [ ] `get_simics_version()` executed and documented (MANDATORY)
 - [ ] `list_installed_packages()` executed and documented (MANDATORY)
 - [ ] `list_simics_platforms()` executed and documented (MANDATORY)
