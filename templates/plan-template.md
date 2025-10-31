@@ -302,6 +302,34 @@ Explicitly state in your response:
 - Extract registers from spec.md Register Map (names, purposes, operations) and External Interfaces
 - Add implementation details: offsets, sizes, access types, bit fields, reset values, side effects
 - Reference spec.md for behavioral requirements
+- **Execute 1-2 pattern-focused RAG queries** to gather DML implementation patterns
+- Document patterns (not full code) in "Implementation Patterns" section
+
+**RAG Query Strategy** (1-2 queries MAX):
+Execute targeted queries for implementation patterns based on device capabilities:
+```python
+perform_rag_query(
+    query="DML [device capability] implementation pattern example",
+    source_type="code",  # Search code examples
+    match_count=3
+)
+```
+
+**Examples**:
+- "DML register bank interrupt generation pattern"
+- "DML memory-mapped I/O device register access pattern"
+- "DML timer device event scheduling pattern"
+
+**What to extract from RAG results**:
+- High-level structural patterns (connect objects, method structure)
+- Key DML constructs to use (interfaces, events, hooks)
+- Common pitfalls and best practices
+- Similar device references
+
+**What NOT to extract**:
+- ❌ Full method implementations (save for tasks phase)
+- ❌ Detailed error handling (save for tasks phase)
+- ❌ Test code (save for tasks phase)
 
 Use this structure:
 ```markdown
@@ -333,6 +361,33 @@ Use this structure:
 - **Type**: [Simics interface type]
 - **Methods**: [list methods]
 - **Purpose**: [description]
+
+## Implementation Patterns
+*Patterns gathered via RAG queries to inform implementation approach*
+
+### Pattern: [PATTERN_NAME from RAG results]
+**Applicable To**: [Which registers/interfaces/capabilities]
+**Source**: RAG query - "[query used]"
+**Key Approach**:
+- [High-level pattern point 1]
+- [High-level pattern point 2]
+- [Key DML constructs to use]
+
+**Example Structure** (conceptual, not full implementation):
+```dml
+// Conceptual pattern showing structure only
+[key DML construct examples - no full method bodies]
+```
+
+**Common Pitfalls**:
+- [Pitfall 1 from RAG/Best Practices]
+- [Pitfall 2 from RAG/Best Practices]
+
+**References**:
+- `.specify/memory/DML_Device_Development_Best_Practices.md`: [relevant section]
+- Similar devices from RAG: [device names if found]
+
+**Note**: Detailed implementations will be developed in tasks phase with additional RAG queries.
 ```
 
 ### Step 1.2: Create contracts/ directory
