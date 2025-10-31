@@ -9,22 +9,24 @@
 ```
 1. Parse user description from Input
    → If empty: ERROR "No feature description provided"
-2. Extract key concepts from description
-   → Identify: actors, actions, data, constraints
-3. For each unclear aspect:
+2. Extract key hardware concepts from description
+   → Identify: device type, registers, interfaces, operational behavior
+3. For each unclear hardware aspect:
    → Mark with [NEEDS CLARIFICATION: specific question]
+   → Consider RAG query if hardware spec document available
 4. Fill User Scenarios & Testing section
-   → If no clear user flow: ERROR "Cannot determine user scenarios"
+   → If no clear device operation flow: ERROR "Cannot determine device operation"
 5. Generate Functional Requirements
    → Each requirement must be testable
-   → Mark ambiguous requirements with [NEEDS CLARIFICATION: ...]
-6. Identify Key Entities (if data involved)
+   → Mark ambiguous hardware behavior with [NEEDS CLARIFICATION: ...]
+6. Parse Hardware Specification section
+   → Register map, interfaces, operational behavior
 7. Run Review Checklist and Update Status
    → Search entire spec for [NEEDS CLARIFICATION] markers
    → If found: WARN "Spec has uncertainties - this is EXPECTED for Draft status", keep "No [NEEDS CLARIFICATION] markers remain" box UNCHECKED
    → If NOT found: Mark [x] "No [NEEDS CLARIFICATION] markers remain"
-   → For objective items (no implementation details, mandatory sections completed): Mark [x] if passing
-   → For subjective items (testable requirements, measurable criteria): Leave unchecked for human review
+   → For objective items (hardware sections completed): Mark [x] if passing
+   → For subjective items (testable requirements): Leave unchecked for human review
 8. Return: SUCCESS (spec ready for planning) with all applicable checklist items marked
 ```
 
@@ -36,15 +38,10 @@
 - 👥 Written for business stakeholders, not developers
 
 ### Section Requirements
-- **Mandatory sections**: Must be completed for every feature
-- **Optional sections**: Include only when relevant to the feature
-- **Simics sections**: Include "Hardware Specification" section only for hardware device modeling projects
-- **Simics project detection**: Look for keywords in feature description:
-  * "device modeling", "DML device", or "DML 1.4"
-  * "hardware simulation" or "Simics platform"
-  * "register map" or "memory-mapped registers"
-  * "device model" with hardware context
+- **Mandatory sections**: Must be completed for every hardware device feature
+- **Optional sections**: Include only when relevant to the specific device
 - When a section doesn't apply, remove it entirely (don't leave as "N/A")
+- Focus on hardware behavior specification, not DML implementation
 
 ### Simics DML Device Modeling Guidance
 **Note**: For Simics device modeling projects, comprehensive DML learning resources are available:
@@ -80,15 +77,9 @@ When creating this spec from a user prompt:
 
 ---
 
-## 📝 Example Feature Descriptions
+## 📝 Example Feature Description
 
-### Example 1: Simple Feature
-"Add a dark mode toggle to the application settings that persists user preference across sessions."
-
-### Example 2: Data-Heavy Feature
-"Create a product inventory system where users can add products with name, SKU, price, and quantity. Support bulk import from CSV and export to Excel. Send email alerts when stock falls below reorder threshold."
-
-### Example 3: Simics Hardware Feature
+### Simics Hardware Device Example
 "Implement a DML 1.4 watchdog timer device model for Simics with configurable timeout, hardware reset capability, and memory-mapped control registers. The device should support interrupt generation and integration with QSP-x86 platform."
 
 **Note**: When writing the specification for this, describe the watchdog timer's hardware behavior (countdown mechanism, reset conditions, interrupt generation) without DML implementation details. DML syntax and best practices will be learned in subsequent /plan and /tasks phases using dedicated study documents.
@@ -98,34 +89,30 @@ When creating this spec from a user prompt:
 ## User Scenarios & Testing *(mandatory)*
 
 ### Primary User Story
-[Describe the main user journey in plain language]
+[Describe the main hardware device operation flow in plain language - how software interacts with the device]
 
 ### Acceptance Scenarios
-1. **Given** [initial state], **When** [action], **Then** [expected outcome]
-2. **Given** [initial state], **When** [action], **Then** [expected outcome]
+1. **Given** [device state], **When** [register operation], **Then** [expected device behavior]
+2. **Given** [device state], **When** [hardware event], **Then** [expected register state/interrupt]
 
 ### Edge Cases
-- What happens when [boundary condition]?
-- How does system handle [error scenario]?
+- What happens when [boundary condition or error state]?
+- How does device handle [invalid register access or timing violation]?
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
-- **FR-001**: System MUST [specific capability, e.g., "allow users to create accounts"]
-- **FR-002**: System MUST [specific capability, e.g., "validate email addresses"]
-- **FR-003**: Users MUST be able to [key interaction, e.g., "reset their password"]
-- **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
-- **FR-005**: System MUST [behavior, e.g., "log all security events"]
+- **FR-001**: Device MUST [specific capability, e.g., "support configurable timeout period"]
+- **FR-002**: Device MUST [specific capability, e.g., "generate interrupt on timeout"]
+- **FR-003**: Software MUST be able to [key interaction, e.g., "clear timeout condition via register write"]
+- **FR-004**: Device MUST [behavior, e.g., "maintain countdown state across read operations"]
+- **FR-005**: Device MUST [hardware interaction, e.g., "assert reset signal to system on timeout expiry"]
 
 *Example of marking unclear requirements:*
-- **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]
-- **FR-007**: System MUST retain user data for [NEEDS CLARIFICATION: retention period not specified]
+- **FR-006**: Device MUST [NEEDS CLARIFICATION: interrupt behavior not specified - level-triggered or edge-triggered?]
+- **FR-007**: Device MUST [NEEDS CLARIFICATION: register access ordering constraints not specified]
 
-### Key Entities *(include if feature involves data)*
-- **[Entity 1]**: [What it represents, key attributes without implementation]
-- **[Entity 2]**: [What it represents, relationships to other entities]
-
-### Hardware Specification *(Simics projects only)*
+### Hardware Specification
 
 **Device Purpose**:
 - **Device Type**: [e.g., Watchdog timer, Network controller, Storage device, Memory controller]
@@ -205,22 +192,23 @@ Mark areas that need RAG queries with: [RAG QUERY NEEDED: specific question abou
 *GATE: Automated checks run during main() execution*
 
 ### Content Quality
-- [ ] No implementation details (languages, frameworks, APIs)
-- [ ] Focused on user value and business needs
-- [ ] Written for non-technical stakeholders
-- [ ] All mandatory sections completed
+- [ ] No implementation details (DML syntax, code structure, algorithms)
+- [ ] Focused on hardware behavior and device operation
+- [ ] Written for hardware engineers and system designers
+- [ ] All mandatory sections completed (User Scenarios, Requirements, Hardware Specification)
 
 ### Requirement Completeness
 - [ ] No [NEEDS CLARIFICATION] markers remain
 - [ ] Requirements are testable and unambiguous
-- [ ] Success criteria are measurable
-- [ ] Scope is clearly bounded
+- [ ] Device operation is clearly specified
+- [ ] Scope is clearly bounded (register map, interfaces, behaviors)
 - [ ] Dependencies and assumptions identified
 
-### Simics Hardware Completeness *(if applicable)*
+### Hardware Specification Completeness
 - [ ] Device type identified and specified
-- [ ] Register map described at high level (no implementation details)
+- [ ] Register map described at high level (no DML implementation)
 - [ ] External interfaces and software visibility documented
+- [ ] Operational behavior flows specified
 
 ---
 
@@ -228,11 +216,11 @@ Mark areas that need RAG queries with: [RAG QUERY NEEDED: specific question abou
 *Conceptual checklist - agents should mark items as they complete each workflow step*
 
 - [ ] User description parsed
-- [ ] Key concepts extracted
+- [ ] Key hardware concepts extracted
 - [ ] Ambiguities marked
-- [ ] User scenarios defined
-- [ ] Requirements generated
-- [ ] Entities identified
+- [ ] Device operation scenarios defined
+- [ ] Functional requirements generated
+- [ ] Hardware specification parsed
 - [ ] Review checklist passed
 
 ---
