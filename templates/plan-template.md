@@ -120,19 +120,54 @@ Extract unknowns from Technical Context above:
 
 **MANDATORY for Simics projects - Execute these tools immediately**:
 
-**Environment Discovery**:
-- Execute `get_simics_version()` → resolve Simics Version NEEDS CLARIFICATION
-- Execute `list_installed_packages()` → resolve Required Packages NEEDS CLARIFICATION
-- Execute `list_simics_platforms()` → resolve Available Platforms NEEDS CLARIFICATION
+1. **Environment Discovery**:
+   - Execute `get_simics_version()` → resolve Simics Version NEEDS CLARIFICATION
+   - Execute `list_installed_packages()` → resolve Required Packages NEEDS CLARIFICATION
+   - Execute `list_simics_platforms()` → resolve Available Platforms NEEDS CLARIFICATION
+
+2. **Architectural Context (1-2 queries MAX)**:
+   
+   **Purpose**: Gather high-level device category understanding to inform data-model.md design
+   
+   **Query Strategy**:
+   - Read spec.md to identify device category (e.g., "timer", "UART", "PCI device", "DMA controller")
+   - Execute 1-2 architectural overview queries (NOT detailed implementation)
+   
+   **Examples**:
+   - Timer device: `"DML timer device architecture counter overflow interrupt concepts"`
+   - UART device: `"DML UART serial device architecture transmit receive buffer concepts"`
+   - PCI device: `"DML PCI device architecture configuration space BAR concepts"`
+   - DMA device: `"DML DMA controller architecture memory transfer concepts"`
+   
+   **Execution**:
+   ```python
+   perform_rag_query(
+       query="[device category] device architecture [key concepts] overview",
+       source_type="docs",  # Use "docs" for architectural overviews
+       match_count=5
+   )
+   ```
+   
+   **What to extract**:
+   - High-level device architecture (components, registers, interfaces)
+   - Common design patterns for this device category
+   - Key concepts that should inform register/interface design
+   
+   **What NOT to query**:
+   - ❌ Detailed register implementation patterns (save for Phase 3)
+   - ❌ Specific callback implementations (save for Phase 3)
+   - ❌ Test code examples (save for Phase 3)
+   - ❌ Error handling details (save for Phase 3)
 
 **CRITICAL**: DO NOT execute implementation tools (`create_simics_project()`, `add_dml_device_skeleton()`, `build_simics_project()`) - those belong in Phase 3 (Implementation).
 
-### Step 0.3: Parse MCP Tool Outputs
+### Step 0.3: Parse MCP Tool and RAG Query Outputs
 
-Extract key information from MCP tool JSON responses:
+Extract key information from MCP tool JSON and RAG query responses:
 - **get_simics_version()** → Extract Simics version for Technical Context
 - **list_installed_packages()** → Extract package list for Technical Context
 - **list_simics_platforms()** → Extract platform list for Technical Context
+- **Architectural RAG queries** → Extract high-level architecture patterns, device components, design concepts
 
 ### Step 0.4: Create research.md File
 
@@ -171,6 +206,30 @@ Extract key information from MCP tool JSON responses:
 
 ### Available Platforms
 [Document output from list_simics_platforms() - list available simulation platforms]
+
+## Device Architecture Context (Simics Only)
+
+[If architectural RAG queries were executed, document findings here]
+
+### Device Category: [Timer/UART/PCI/DMA/etc.]
+
+**Architectural Overview**:
+[High-level description of device architecture from RAG results - components, typical registers, interfaces]
+
+**Key Design Concepts**:
+- [Concept 1: e.g., "Counter register with overflow interrupt"]
+- [Concept 2: e.g., "Control register for enable/disable"]
+- [Concept 3: e.g., "Status register for device state"]
+
+**Common Patterns for This Device Type**:
+- [Pattern 1: e.g., "Use io_memory interface for register bank"]
+- [Pattern 2: e.g., "Implement signal interface for interrupt output"]
+- [Pattern 3: e.g., "Use events for periodic/timed operations"]
+
+**Implications for data-model.md**:
+[How these architectural insights should inform register/interface design]
+
+**Note**: Detailed implementation patterns (callbacks, error handling, test code) will be gathered via RAG queries during Phase 3 (tasks/implementation).
 
 ## Architecture Decisions
 
@@ -221,6 +280,12 @@ Extract key information from MCP tool JSON responses:
 - [x] `list_installed_packages()` executed and documented (MANDATORY)
 - [x] `list_simics_platforms()` executed and documented (MANDATORY)
 - [x] MCP tool outputs incorporated into research.md
+
+**Architectural Context** (if Project Type = simics):
+- [x] Device category identified from spec.md
+- [x] Architectural RAG query executed (1-2 queries MAX for high-level overview)
+- [x] Device architecture patterns documented in research.md
+- [x] Design implications for data-model.md noted
 ```
 
 ### Step 0.7: Validation Checkpoint
@@ -621,6 +686,7 @@ After completing ALL verification checks, the agent MUST provide this exact repo
 **Progress Summary**:
 - Constitutional checks: [PASS/ISSUES]
 - MCP tools executed: [count] tools
+- Architectural RAG queries: [0-2] queries (Simics only)
 - NEEDS CLARIFICATION resolved: [count] items
 - Files generated: [count] files
 - Total phases completed: 2 of 2

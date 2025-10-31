@@ -191,11 +191,24 @@ Task: "Integration test auth in tests/integration/test_auth.py"
 - [ ] Read research.md completely
 - [ ] Extract and document in implementation notes:
   - **Architecture Decisions**: Key design choices, rationale
+  - **Device Architecture Context**: High-level device patterns (Simics only)
   - **Patterns & Best Practices**: Coding patterns, conventions
   - **Constraints**: Technical limitations, requirements
   - **Dependencies**: Libraries, versions, compatibility notes
   - **MCP Tool Outputs**: Simics version, packages, platform info (if applicable)
 - [ ] Verify comprehensive notes before writing tests
+
+**What's in research.md**:
+- Environment discovery results (MCP tool outputs)
+- High-level device architecture overview (1-2 RAG queries for context)
+- Architecture decisions from spec.md analysis
+- Design implications for implementation
+
+**What's NOT in research.md** (gathered during implementation):
+- Detailed register implementation patterns → Use RAG during implementation
+- Specific callback/method code → Use RAG during error recovery
+- Test code examples → Use RAG before writing tests
+- Error handling details → Use RAG during debugging
 
 ### DML Learning Gate (Simics Projects):
 - [ ] Read DML_grammar.md completely
