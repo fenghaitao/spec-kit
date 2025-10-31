@@ -90,6 +90,44 @@ param classname = "my_device";
 param desc = "Device description";
 ```
 
+### Memory-Mapped Device with Registers
+
+```dml
+dml 1.4;
+
+device uart_device;
+
+import "simics/device-api.dml";
+
+param classname = "uart_device";
+param desc = "Simple UART device";
+
+bank regs {
+    param function = 0x3f8;        // Base address
+    param register_size = 1;       // 1 byte registers
+
+    register data @ 0x00 {
+        param size = 1;
+        param desc = "Data register";
+
+        method write(uint64 value) {
+            log info: "UART data write: 0x%02x", value;
+        }
+
+        method read() -> (uint64 value) {
+            log info: "UART data read";
+            return 0x00;
+        }
+    }
+
+    register status @ 0x05 {
+        param size = 1;
+        param desc = "Line status register";
+        param init_val = 0x60;  // TX empty and ready
+    }
+}
+```
+
 ## Common Patterns
 
 ### 1. Basic Memory-Mapped Device
@@ -107,12 +145,12 @@ param desc = "Basic memory-mapped I/O device";
 bank control_regs {
     param function = 0x1000;
     param register_size = 4;
-    
+
     register CONTROL @ 0x00 {
         param size = 4;
         param desc = "Control register";
     }
-    
+
     register STATUS @ 0x04 {
         param size = 4;
         param desc = "Status register";
@@ -128,8 +166,6 @@ dml 1.4;
 
 device interrupt_device;
 
-import "utility.dml";
-import "simics/devs/signal.dml";
 import "simics/device-api.dml";
 
 param classname = "interrupt_device";
@@ -138,37 +174,23 @@ param desc = "Device that can generate interrupts";
 // connect attribute is used for wire/bus signal/transaction to output
 connect irq {
     param configuration = "optional";
-    param desc = "simple_interrupt";
-
+    param c_type = "simple_interrupt";
     interface signal;
-}
-
-// port attribute is used for wire/bus signal/transaction to input
-port reset_n {
-    param configuration = "optional";
-    param desc = "reset signal input";
-
-    implement signal {
-        // empty implementation as a simple example
-        method signal_raise() {}
-        // empty implementation as a simple example
-        method signal_lower() {}
-    }
 }
 
 bank regs {
     param function = 0x2000;
     param register_size = 4;
-    
+
     register INTERRUPT_ENABLE @ 0x00 {
         param size = 4;
         param desc = "Interrupt enable register";
     }
-    
+
     register INTERRUPT_STATUS @ 0x04 {
         param size = 4;
         param desc = "Interrupt status register";
-        
+
         method write(uint64 value) {
             // Clear interrupt on write
             this.val = this.val & ~value;
@@ -203,16 +225,16 @@ event timer_tick;
 bank timer_regs {
     param function = 0x4000;
     param register_size = 4;
-    
+
     register TIMER_VALUE @ 0x00 {
         param size = 4;
         param desc = "Current timer value";
     }
-    
+
     register TIMER_CONTROL @ 0x04 {
         param size = 4;
         param desc = "Timer control register";
-        
+
         method write(uint64 value) {
             this.val = value;
             if (value & 0x1) {  // Enable bit
@@ -223,7 +245,7 @@ bank timer_regs {
 }
 
 method start_timer() {
-    after (1.0) s: timer_expired();
+    after 1.0 s: timer_expired();
 }
 
 method timer_expired() {
@@ -232,6 +254,45 @@ method timer_expired() {
     // Could trigger interrupt here
 }
 ```
+
+## Compilation Issues and Solutions
+
+### Issue 1: "syntax error at 'device'"
+
+**Cause**: Using old DML syntax with braces after device declaration.
+
+**Solution**: Remove braces from device declaration:
+```dml
+// Wrong
+device my_device { ... }
+
+// Correct
+device my_device;
+```
+
+### Issue 2: "cannot find file to import: dml-builtins.dml"
+
+**Cause**: Missing include path for DML builtins.
+
+**Solution**: Add both include paths:
+```bash
+dmlc --simics-api=7 -I ../linux64/bin/dml/api/7/1.4 -I ../linux64/bin/dml/1.4 file.dml output
+```
+
+### Issue 3: "assert sys.flags.utf8_mode"
+
+**Cause**: Python not running in UTF-8 mode.
+
+**Solution**: Set environment variable or modify dmlc script:
+```bash
+export PYTHONUTF8=1
+```
+
+### Issue 4: "unknown template: 'device'"
+
+**Cause**: DML builtins not found in include path.
+
+**Solution**: Ensure `-I ../linux64/bin/dml/1.4` is included.
 
 ## Best Practices
 
@@ -311,26 +372,26 @@ param desc = "16550-compatible UART device";
 bank uart_regs {
     param function = 0x3f8;
     param register_size = 1;
-    
+
     // Data register / Divisor latch low
     register RBR_THR_DLL @ 0x00 {
         param size = 1;
         param desc = "Receiver buffer/Transmitter holding/Divisor latch low";
-        
+
         method write(uint64 value) {
             if (LCR.val & 0x80) {
                 // Divisor latch access
                 log info: "Divisor latch low set to 0x%02x", value;
             } else {
                 // Transmit data
-                log info: "UART transmit: 0x%02x ('%c')", value, 
+                log info: "UART transmit: 0x%02x ('%c')", value,
                          (value >= 32 && value < 127) ? value : '?';
             }
             this.val = value;
         }
-        
-        method read() -> (uint64) {
-            if (LCR.val & 0x80) {
+
+        method read() -> (uint64 value) {
+            if (lcr.val & 0x80) {
                 return this.val;  // Divisor latch
             } else {
                 log info: "UART receive read";
@@ -338,20 +399,20 @@ bank uart_regs {
             }
         }
     }
-    
+
     // Interrupt enable register / Divisor latch high
     register IER_DLH @ 0x01 {
         param size = 1;
         param desc = "Interrupt enable/Divisor latch high";
     }
-    
+
     // Line control register
     register LCR @ 0x03 {
         param size = 1;
         param desc = "Line control register";
         param init_val = 0x03;  // 8N1
     }
-    
+
     // Line status register
     register LSR @ 0x05 {
         param size = 1;
@@ -377,26 +438,26 @@ param desc = "Simple PCI device template";
 bank pci_config {
     param function = 0;  // Will be mapped by PCI bus
     param register_size = 4;
-    
+
     register VENDOR_ID @ 0x00 {
         param size = 2;
         param desc = "PCI Vendor ID";
         param init_val = 0x8086;  // Intel
         param read_only = true;
     }
-    
+
     register DEVICE_ID @ 0x02 {
         param size = 2;
         param desc = "PCI Device ID";
         param init_val = 0x1234;  // Custom device
         param read_only = true;
     }
-    
+
     register COMMAND @ 0x04 {
         param size = 2;
         param desc = "PCI Command register";
     }
-    
+
     register STATUS @ 0x06 {
         param size = 2;
         param desc = "PCI Status register";
@@ -408,12 +469,12 @@ bank pci_config {
 bank device_regs {
     param function = 0x1000;  // BAR0 mapping
     param register_size = 4;
-    
+
     register CONTROL @ 0x00 {
         param size = 4;
         param desc = "Device control register";
     }
-    
+
     register STATUS @ 0x04 {
         param size = 4;
         param desc = "Device status register";
@@ -512,6 +573,6 @@ dmlc --simics-api=7 -I ../linux64/bin/dml/api/7/1.4 -I ../linux64/bin/dml/1.4 in
 
 ---
 
-**Document Status**: ✅ Complete  
-**Last Updated**: Generated after solving DML compilation issues  
+**Document Status**: ✅ Complete
+**Last Updated**: Generated after solving DML compilation issues
 **Tested With**: Simics 7.57.0, DML 1.4, API version 7
