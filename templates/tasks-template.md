@@ -245,28 +245,13 @@ From the diagnostic output, identify:
 - **Error location**: File path + line number
 - **AI suggestions**: Review any automatic fix suggestions provided by the tool
 
-**Step 2: Document Diagnostic Information**
-Create or append to `.specify/dml_diagnostics.md`:
-```markdown
-## Error: [Error Keyword] - [Date]
-**Location**: [file:line]
-**Type**: [syntax|semantic|template|pattern]
-**Context**: [Affected construct]
-
-### Diagnostic Output
-[Paste check_with_dmlc output including AI suggestions]
-
-### Solution Applied
-[To be filled after Step 6]
-```
-
-**Step 3: Check Study Notes (If Available)**
+**Step 2: Check Study Notes (If Available)**
 If DML study notes exist from learning gate:
 1. Search "DML Grammar Study Notes" → syntax/declaration issues
 2. On match → Apply pattern, skip to Step 6
-3. On no match → Continue to Step 4
+3. On no match → Continue to Step 3
 
-**Step 4: Query for Solution (Max 2 Attempts)**
+**Step 3: Query for Solution (Max 2 Attempts)**
 
 **Attempt 1 - Specific Query:**
 ```python
@@ -291,27 +276,35 @@ perform_rag_query(
 - `"unknown attribute"` → `"DML 1.4 attribute declarations scoping"`
 - `"template not found"` → `"DML 1.4 template inheritance interface"`
 
-**Step 5: Review RAG Results**
+**Step 4: Review RAG Results**
 - Examine code examples showing correct usage
 - Identify pattern differences from your implementation
 - Note relevant documentation excerpts
 
-**Step 6: Apply Fix**
+**Step 5: Apply Fix**
 - Use examples as reference (adapt, don't copy blindly)
 - Ensure fix aligns with Grammar study notes (if available)
 - Apply to your specific use case
 
-**Step 7: Verify & Iterate**
+**Step 6: Verify & Iterate**
 ```bash
 build_simics_project(project_path="/absolute/path/to/workspace/simics-project", module="DEVICE_NAME")
 ```
-- ✅ **Build succeeds** → Continue to Step 8
+- ✅ **Build succeeds** → Continue to Step 7
 - ❌ **Same error** → Try Attempt 2 query or escalate
 - ⚠️ **New error** → Return to Step 1 with new error
 
-**Step 8: Document Solution (Only If Build Succeeded)**
-Update the diagnostic entry in `.specify/dml_diagnostics.md`:
+**Step 7: Document Solution (Only If Build Succeeded)**
+Create or append to `.specify/dml_diagnostics.md`:
 ```markdown
+## Error: [Error Keyword] - [Date]
+**Location**: [file:line]
+**Type**: [syntax|semantic|template|pattern]
+**Context**: [Affected construct]
+
+### Diagnostic Output
+[Paste check_with_dmlc output including AI suggestions from Step 1]
+
 ### Solution Applied
 **Fix Type**: [AI suggestion | RAG pattern | Study notes]
 **Changes Made**:
