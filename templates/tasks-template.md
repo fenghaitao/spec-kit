@@ -295,25 +295,62 @@ build_simics_project(project_path="/absolute/path/to/workspace/simics-project", 
 - ⚠️ **New error** → Return to Step 1 with new error
 
 **Step 7: Document Solution (Only If Build Succeeded)**
-Create or append to `.specify/dml_diagnostics.md`:
+Append to `.specify/dml_diagnostics.md`:
 ```markdown
-## Error: [Error Keyword] - [Date]
-**Location**: [file:line]
-**Type**: [syntax|semantic|template|pattern]
-**Context**: [Affected construct]
+## [Error Type]: [Error Keyword] - [Date]
 
-### Diagnostic Output
-[Paste check_with_dmlc output including AI suggestions from Step 1]
+**Location**: `[file:line]`  
+**Fix**: [One-line summary of what was changed]
 
-### Solution Applied
-**Fix Type**: [AI suggestion | RAG pattern | Study notes]
-**Changes Made**:
-- [Describe the fix applied]
-- [Reference specific RAG results or study notes if used]
+### Problem
+[2-3 sentences: What was wrong, why it failed]
 
-**Verification**: Build succeeded on [date/time]
+### Solution
+**Source**: [AI suggestion | RAG pattern | Study notes reference]  
+**Changes**:
+```dml
+// Before (incorrect)
+[Brief code snippet showing the error]
+
+// After (corrected)
+[Brief code snippet showing the fix]
+```
+
+**Key Lesson**: [One sentence about the pattern/rule to remember]
+
+---
 ```
 Then mark task complete.
+
+**Example Entry**:
+```markdown
+## Syntax Error: Expected semicolon - 2025-10-31
+
+**Location**: `registers.dml:45`  
+**Fix**: Added semicolon after register declaration
+
+### Problem
+Register declaration was missing terminating semicolon. DML grammar requires semicolon after param declarations inside register body.
+
+### Solution
+**Source**: DML Grammar Study Notes (register declaration syntax)  
+**Changes**:
+```dml
+// Before (incorrect)
+register control @ 0x00 {
+    param size = 4
+}
+
+// After (corrected)
+register control @ 0x00 {
+    param size = 4;
+}
+```
+
+**Key Lesson**: All param declarations must end with semicolon in DML 1.4
+
+---
+```
 
 ### Test Failures
 
