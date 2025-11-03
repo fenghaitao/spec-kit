@@ -1,14 +1,12 @@
----
-description: "Implementation plan template for feature development"
-scripts:
-  sh: scripts/bash/update-agent-context.sh __AGENT__
-  ps: scripts/powershell/update-agent-context.ps1 -AgentType __AGENT__
+# Implementation Plan Template for Simics Device Models
+
+**INSTRUCTIONS FOR AI AGENT**: This template has two parts:
+1. **PART A: GUIDANCE SECTIONS** - Read these but DO NOT include them in the generated plan
+2. **PART B: PLAN CONTENT TEMPLATE** - Fill these out and include in the generated plan
+
 ---
 
-# Implementation Plan: [FEATURE]
-
-**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
-**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+# PART A: GUIDANCE SECTIONS (DO NOT COPY TO GENERATED PLAN)
 
 ## Execution Flow (/plan command scope)
 ```
@@ -24,7 +22,7 @@ scripts:
    → Update Progress Tracking: Initial Constitution Check
 5. Execute Phase 0 → research.md
    → If NEEDS CLARIFICATION remain: ERROR "Resolve unknowns"
-6. Execute Phase 1 → contracts, data-model.md, quickstart.md, agent-specific template file (e.g., `CLAUDE.md` for Claude Code, `.github/copilot-instructions.md` for GitHub Copilot, `GEMINI.md` for Gemini CLI, `QWEN.md` for Qwen Code, `ADK.md` for adk, or `AGENTS.md` for opencode).
+6. Execute Phase 1 → contracts, data-model.md, test-scenarios.md
 7. Re-evaluate Constitution Check section
    → If new violations: Refactor design, return to Phase 1
    → Update Progress Tracking: Post-Design Constitution Check
@@ -35,6 +33,34 @@ scripts:
 **IMPORTANT**: The /plan command STOPS at step 7. Phases 2-4 are executed by other commands:
 - Phase 2: /tasks command creates tasks.md
 - Phase 3-4: Implementation execution (manual or via tools)
+
+## Core Principles
+
+1. **Complete Phase 0 before Phase 1** - Execute all Discovery MCP tools and resolve all NEEDS CLARIFICATION
+2. **Minimal RAG queries** - Phase 0: 1-2 architectural queries; Phase 1: 1-2 pattern queries
+3. **Validate each phase** - Run bash commands to verify files exist before proceeding
+4. **No implementation** - Create design docs only; no MCP implementation tools (create_simics_project, etc.)
+
+## Common Pitfalls
+
+- Skipping Discovery MCP tools (get_simics_version, list_installed_packages, list_simics_platforms)
+- Too many RAG queries (limit to 1-2 per phase)
+- Leaving NEEDS CLARIFICATION unresolved
+- Using MCP tool syntax in test-scenarios.md (use generic descriptions)
+- Executing implementation MCP tools (create_simics_project, add_dml_device_skeleton - these belong in Phase 3)
+- Not validating files exist before reporting completion
+
+---
+---
+
+# PART B: PLAN CONTENT TEMPLATE (COPY AND FILL OUT IN GENERATED PLAN)
+
+---
+
+# Implementation Plan: [FEATURE]
+
+**Branch**: `[###-feature-name]` | **Date**: [Current date in YYYY-MM-DD format] | **Spec**: [link to spec.md]
+**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
 
 ## Summary
 [Extract from feature spec: primary requirement + technical approach from research]
@@ -64,7 +90,7 @@ specs/[###-feature]/
 ├── plan.md              # This file (/plan command output)
 ├── research.md          # Phase 0 output (/plan command)
 ├── data-model.md        # Phase 1 output (/plan command)
-├── quickstart.md        # Phase 1 output (/plan command)
+├── test-scenarios.md    # Phase 1 output (/plan command)
 ├── contracts/           # Phase 1 output (/plan command)
 └── tasks.md             # Phase 2 output (/tasks command - NOT created by /plan)
 ```
@@ -82,7 +108,7 @@ simics-project/modules/[device-name]/
       └── test_[name]_common.py
 ```
 
-**Note**: MCP tools auto-generate structure at repo root during Phase 3 Setup. Specs/ contains only documentation.
+**Note**: MCP tools auto-generate structure at repo root during Phase 3 Setup. specs/ contains only documentation.
 
 ## Phase 0: Outline & Research
 
@@ -420,21 +446,21 @@ Document expected register read/write behavior tests based on spec.md requiremen
 **Identify integration test scenarios**:
 - Each Acceptance Scenario → integration test case
 - Each Edge Case → boundary/error test case
-- Quickstart validation steps based on Primary User Story
+- Test scenarios based on Primary User Story and Acceptance Scenarios
 - Device operational workflow tests from Primary User Story
 - Register behavior tests from Acceptance Scenarios
 - Error condition tests from Edge Cases
 
-### Step 1.5: Create quickstart.md from "User Scenarios & Testing" in spec.md
+### Step 1.5: Create test-scenarios.md from "User Scenarios & Testing" in spec.md
 
-**MANDATORY**: Create `[SPECS_DIR]/quickstart.md` with user validation guide based on spec.md:
+**MANDATORY**: Create `[SPECS_DIR]/test-scenarios.md` with test scenarios based on spec.md:
 
 **Extract from spec.md "User Scenarios & Testing"**:
 - **Primary User Story** → Goal section (what users accomplish)
 - **Acceptance Scenarios** → Validation Steps (Given/When/Then → What to do/Expected Result/Success Criteria)
 - **Edge Cases** → Troubleshooting section (boundary conditions and error scenarios)
 
-**CRITICAL RULES for quickstart.md**:
+**CRITICAL RULES for test-scenarios.md**:
 - ❌ DO NOT use MCP tool syntax (no `create_simics_project()` calls)
 - ❌ DO NOT assume implementation details (no specific register names until implemented)
 - ✅ DO use generic descriptions ("Create Simics project", "Build device module")
@@ -445,7 +471,7 @@ Document expected register read/write behavior tests based on spec.md requiremen
 
 Use this structure:
 ```markdown
-# Quick Start: [FEATURE_NAME]
+# Test Scenarios: [FEATURE_NAME]
 
 ## Goal
 [One sentence: What will users accomplish by following this guide?]
@@ -489,20 +515,6 @@ Use this structure:
 [References to contracts/, data-model.md, and tasks.md]
 ```
 
-### Step 1.6: Update agent context file
-
-**MANDATORY**: Run `{SCRIPT}`
-
-**IMPORTANT**: Execute it exactly as specified above. Do not add or remove any arguments.
-
-This updates the agent-specific file (e.g., `ADK.md` for ADK agent) with:
-- New technologies from current plan
-- Preserved manual additions between markers
-- Updated recent changes (keep last 3)
-- Kept under 150 lines for token efficiency
-
-### Step 1.7: Update Progress Tracking in plan.md
-
 **MANDATORY**: Update the Progress Tracking section in plan.md. Mark these checkboxes:
 
 ```markdown
@@ -515,7 +527,7 @@ This updates the agent-specific file (e.g., `ADK.md` for ADK agent) with:
 - [x] All NEEDS CLARIFICATION resolved
 ```
 
-### Step 1.8: Re-evaluate Constitution Check
+### Step 1.7: Re-evaluate Constitution Check
 
 After completing design artifacts, re-check constitutional compliance:
 - Review data-model.md against constitution principles
@@ -523,42 +535,40 @@ After completing design artifacts, re-check constitutional compliance:
 - If new violations: Document in Complexity Tracking section
 - If violations cannot be justified: Refactor design and return to Step 1.1
 
-### Step 1.9: Validation Checkpoint
+### Step 1.8: Validation Checkpoint
 
-**MANDATORY**: Before proceeding, verify all Phase 1 deliverables exist:
+**MANDATORY**: Before proceeding, verify ALL Phase 1 deliverables exist:
 
 ```bash
 ls -la [SPECS_DIR]/data-model.md
-ls -la [SPECS_DIR]/quickstart.md
+ls -la [SPECS_DIR]/test-scenarios.md
 ls -la [SPECS_DIR]/contracts/
-ls -la ADK.md  # or agent-specific file
 ```
 
 Checklist:
 - [ ] data-model.md file exists and contains register/entity definitions
 - [ ] contracts/ directory exists with contract specifications
-- [ ] quickstart.md file exists with user validation steps
+- [ ] test-scenarios.md file exists with user validation steps
 - [ ] Agent context file updated (ADK.md or equivalent)
 - [ ] Progress Tracking shows Phase 1 marked complete
 - [ ] Constitution check passed (no new violations)
 
-### Step 1.10: Announce Phase Completion
+### Step 1.9: Announce Phase Completion
 
-Explicitly state in your response:
+**MANDATORY**: Explicitly state in your response:
 ```
 ✅ Phase 1 (Design) complete. Ready for /tasks command.
 
 **Phase 1 Summary**:
-- data-model.md created: ✅
-- contracts/ created: ✅
-- quickstart.md created: ✅
-- Agent context updated: ✅
+- data-model.md created: ✅ ([register count] registers documented)
+- contracts/ created: ✅ ([file count] contract files)
+- test-scenarios.md created: ✅ ([scenario count] test scenarios)
 - Constitutional compliance: ✅
 ```
 
-**Output**: data-model.md, /contracts/*, quickstart.md, agent-specific context file (e.g., ADK.md)
+**Output**: data-model.md, /contracts/*, test-scenarios.md
 
-   **Quickstart.md Structure**:
+   **test-scenarios.md Structure**:
    ```
    # Quick Start: [FEATURE_NAME]
 
@@ -586,23 +596,14 @@ Explicitly state in your response:
    [References to contracts/, data-model.md, and tasks.md]
    ```
 
-6. **Update agent file incrementally** (O(1) operation):
-   - Run `{SCRIPT}`
-     **IMPORTANT**: Execute it exactly as specified above. Do not add or remove any arguments.
-   - If exists: Add only NEW tech from current plan
-   - Preserve manual additions between markers
-   - Update recent changes (keep last 3)
-   - Keep under 150 lines for token efficiency
-   - Output to repository root
-
-**Output**: data-model.md, /contracts/*, failing tests, quickstart.md, agent-specific file
+**Output**: data-model.md, /contracts/*, test-scenarios.md
 
 ## Phase 2: Task Planning Approach
 *This section describes what the /tasks command will do - DO NOT execute during /plan*
 
 **Task Generation Strategy**:
 - Load `.specify/templates/tasks-template.md` as base
-- Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
+- Generate tasks from Phase 1 design docs (contracts, data model, test-scenarios)
 - Each contract → contract test task [P]
 - Each register → DML implementation task
 - Each user story → integration test task
@@ -627,11 +628,11 @@ Explicitly state in your response:
 
 **Phase 3**: Task execution (/tasks command creates tasks.md)
 **Phase 4**: Implementation (execute tasks.md following constitutional principles)
-**Phase 5**: Validation (run tests, execute quickstart.md, performance validation)
+**Phase 5**: Validation (run tests, verify test-scenarios.md, performance validation)
 
 ## Completion Validation (MANDATORY)
 
-Before reporting /plan command completion, the agent MUST verify ALL these conditions:
+**CRITICAL**: Before reporting /plan command completion, the agent MUST verify ALL these conditions.
 
 ### Phase 0 Verification Checklist
 Run these checks to verify Phase 0 is complete:
@@ -644,37 +645,43 @@ ls -la [SPECS_DIR]/research.md
 grep "NEEDS CLARIFICATION" [SPECS_DIR]/plan.md
 ```
 
+**Checklist** (all must be [x]):
 - [ ] research.md file exists and contains MCP tool outputs
+- [ ] research.md has >= 50 lines (indicates complete research)
 - [ ] Technical Context in plan.md has NO "NEEDS CLARIFICATION" text
 - [ ] Progress Tracking shows "Phase 0: Research complete" checked
-- [ ] All Discovery MCP Tool Status checkboxes marked
+- [ ] All Discovery MCP Tool Status checkboxes marked [x]
 - [ ] MCP tool outputs are documented in research.md with proper structure
 
 ### Phase 1 Verification Checklist
-Run these checks to verify Phase 1 is complete:
 
+**Run these verification commands**:
 ```bash
-# Verify all Phase 1 files exist
+# 1. Verify all Phase 1 files exist
 ls -la [SPECS_DIR]/data-model.md
-ls -la [SPECS_DIR]/quickstart.md
+ls -la [SPECS_DIR]/test-scenarios.md
 ls -la [SPECS_DIR]/contracts/
-ls -la ADK.md  # or agent-specific file
 ```
 
+**Checklist** (all must be [x]):
 - [ ] data-model.md file exists with register/entity definitions
-- [ ] contracts/ directory exists with contract specifications
-- [ ] quickstart.md file exists with user validation steps (NO MCP tool syntax)
-- [ ] Agent context file updated (ADK.md, CLAUDE.md, or equivalent)
+- [ ] data-model.md has "Implementation Patterns" section
+- [ ] contracts/ directory exists with >= 1 contract specification
+- [ ] test-scenarios.md file exists (no MCP tool syntax)
 - [ ] Progress Tracking shows "Phase 1: Design complete" checked
 - [ ] Post-Design Constitution Check shows PASS
 
 ### Overall Completion Checklist
 
+**Final verification**:
 - [ ] Both Phase 0 and Phase 1 are complete
 - [ ] All generated files follow their respective templates
 - [ ] No ERROR states in execution flow
 - [ ] All MANDATORY steps completed
+- [ ] All verification commands executed successfully
 - [ ] Ready for /tasks command
+
+**IF ANY CHECKLIST ITEM FAILS**: Do NOT report completion. Fix the issue and re-verify.
 
 ## Final Report Format (MANDATORY)
 
@@ -683,15 +690,16 @@ After completing ALL verification checks, the agent MUST provide this exact repo
 ```
 ✅ /plan command complete
 
-**Branch**: [branch_name from setup script]
+**Branch**: [branch_name]
+**Date**: [Current date in YYYY-MM-DD format]
+**Feature**: [Feature name from spec.md]
 
 **Files Created**:
 - ✅ plan.md (updated with resolved Technical Context and Progress Tracking)
-- ✅ research.md (MCP tool outputs, architecture decisions)
-- ✅ data-model.md (register definitions, device state, interfaces)
-- ✅ quickstart.md (user validation guide - no MCP syntax)
-- ✅ contracts/ (register access contracts, interface specifications)
-- ✅ [agent-file].md (updated agent context - e.g., ADK.md, CLAUDE.md)
+- ✅ research.md ([line count] lines - MCP tool outputs, architecture decisions)
+- ✅ data-model.md ([register count] registers, [interface count] interfaces)
+- ✅ test-scenarios.md ([scenario count] test scenarios - no MCP syntax)
+- ✅ contracts/ ([file count] contract specifications)
 
 **Phase Status**:
 - ✅ Phase 0 (Research): Complete
@@ -713,7 +721,7 @@ After completing ALL verification checks, the agent MUST provide this exact repo
 ├── plan.md              # ✅ Updated
 ├── research.md          # ✅ Created
 ├── data-model.md        # ✅ Created
-├── quickstart.md        # ✅ Created
+├── test-scenarios.md    # ✅ Created
 └── contracts/           # ✅ Created
     ├── register-access.md
     └── interface-behavior.md
@@ -721,8 +729,9 @@ After completing ALL verification checks, the agent MUST provide this exact repo
 
 **Next Steps**:
 1. Review the generated artifacts in `[SPECS_DIR]/`
-2. Run `/tasks` to generate actionable task breakdown from design artifacts
-3. The /tasks command will create tasks.md based on plan.md, data-model.md, and contracts/
+2. Verify all files contain expected content
+3. Run `/tasks` to generate actionable task breakdown from design artifacts
+4. The /tasks command will create tasks.md based on plan.md, data-model.md, and contracts/
 
 **Ready For**: `/tasks` command execution
 ```
@@ -739,29 +748,61 @@ After completing ALL verification checks, the agent MUST provide this exact repo
 
 
 ## Progress Tracking
-*This checklist is updated during execution flow*
+*AI Agent: Mark [x] as you complete each item (corresponds to Execution Flow in guidance)*
 
 **Phase Status**:
 - [ ] Phase 0: Research complete (/plan command)
+  - [ ] Step 0.1: Research needs identified
+  - [ ] Step 0.2: Discovery MCP tools executed (3 tools)
+  - [ ] Step 0.3: MCP tool outputs parsed
+  - [ ] Step 0.4: research.md created
+  - [ ] Step 0.5: Technical Context updated (no NEEDS CLARIFICATION)
+  - [ ] Step 0.6: Progress Tracking updated
+  - [ ] Step 0.7: Validation checkpoint passed
+  - [ ] Step 0.8: Phase completion announced
 - [ ] Phase 1: Design complete (/plan command)
-- [ ] Phase 2: Task planning complete (/plan command - describe approach only)
-- [ ] Phase 3: Tasks generated (/tasks command)
-- [ ] Phase 4: Implementation complete
-- [ ] Phase 5: Validation passed
+  - [ ] Step 1.1: data-model.md created
+  - [ ] Step 1.2: contracts/ directory created
+  - [ ] Step 1.3: Contract tests planned
+  - [ ] Step 1.4: Test scenarios extracted from spec.md
+  - [ ] Step 1.5: test-scenarios.md created
+  - [ ] Step 1.6: Progress Tracking updated
+  - [ ] Step 1.7: Constitution Check re-evaluated
+  - [ ] Step 1.8: Validation checkpoint passed
+  - [ ] Step 1.9: Phase completion announced
+- [ ] Phase 2: Task planning approach described (/plan command - describe only, do NOT create tasks.md)
+- [ ] Phase 3: Tasks generated (/tasks command - NOT part of /plan)
+- [ ] Phase 4: Implementation complete (NOT part of /plan)
+- [ ] Phase 5: Validation passed (NOT part of /plan)
 
 **Gate Status**:
 - [ ] Initial Constitution Check: PASS
 - [ ] Post-Design Constitution Check: PASS
 - [ ] All NEEDS CLARIFICATION resolved
-- [ ] Complexity deviations documented
+- [ ] Complexity deviations documented (if any)
 
-**Discovery MCP Tool Status**:
+**Discovery MCP Tool Status** (Phase 0):
 - [ ] `get_simics_version()` executed and documented (MANDATORY)
 - [ ] `list_installed_packages()` executed and documented (MANDATORY)
 - [ ] `list_simics_platforms()` executed and documented (MANDATORY)
 - [ ] MCP tool outputs incorporated into research.md
-- [ ] Environmental constraints documented for /implement phase
-- [ ] **Implementation MCP tools NOT executed** (reserved for /implement phase)
+- [ ] Architectural RAG queries executed (0-2 queries)
+- [ ] Environmental constraints documented
+
+**Design Artifact Status** (Phase 1):
+- [ ] data-model.md created with registers/interfaces/state
+- [ ] data-model.md has "Implementation Patterns" section
+- [ ] Pattern RAG queries executed (0-2 queries)
+- [ ] contracts/ directory created with >= 1 file
+- [ ] test-scenarios.md created
+
+**Critical Verification** (Before reporting completion):
+- [ ] **Implementation MCP tools NOT executed** (create_simics_project, add_dml_device_skeleton, build_simics_project reserved for Phase 3)
+- [ ] All verification commands executed successfully
+- [ ] All checklist items marked [x]
+- [ ] Final report generated with accurate counts
+
+**COMPLETION CRITERIA**: All Phase 0 and Phase 1 items marked [x] = Plan ready for /tasks command
 
 ---
 *Based on Constitution v2.1.1 - See `/memory/constitution.md`*
