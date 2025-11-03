@@ -91,7 +91,10 @@
 - **Timing**: Precise timing is NOT required for functional models - focus on functional correctness
 - **Checkpoint/Restore**: Checkpoint and restore functionality is NOT required - Simics handles this automatically for register state
 
-**In later phases**: The /plan and /tasks phases will require reading and studying the DML documents before implementation. This specification should remain focused on hardware behavior, not DML syntax or coding patterns.
+### Structure Requirements
+Each requirement must have:
+1. **User Story**: "As a [role], I want [capability], so that [benefit]"
+2. **Acceptance Criteria**: Numbered list of testable SHALL statements
 
 ## Decision Tree: When to Mark [NEEDS CLARIFICATION]
 
@@ -136,10 +139,14 @@ Is the requirement stated explicitly in user input?
 
 ## Example Feature Description
 
-### Simics Hardware Device Example
-"Implement a DML 1.4 watchdog timer device model for Simics with configurable timeout, hardware reset capability, and memory-mapped control registers. The device should support interrupt generation and integration with QSP-x86 platform."
+[Write 2-4 sentence paragraph summarizing:
+- What the feature/device is
+- Primary purpose and capabilities
+- Key technical context (platform, standards, technology)
+- Scope boundaries]
 
-**Note**: When writing the specification for this, describe the watchdog timer's hardware behavior (countdown mechanism, reset conditions, interrupt generation) without DML implementation details. DML syntax and best practices will be learned in subsequent /plan and /tasks phases using dedicated study documents.
+Example:
+"This document specifies the requirements for a Simics watchdog timer device implementation based on the ARM PrimeCell watchdog specification. The watchdog timer is a 32-bit down-counter that provides system protection through configurable timeout intervals, interrupt generation, and system reset capabilities. The device includes 21 memory-mapped registers for control, status monitoring, peripheral identification, and integration testing. The implementation targets the QSP-x86 platform with a base address of 0x1000 and follows DML 1.4 standards for Simics device modeling."
 
 ---
 ---
@@ -160,9 +167,6 @@ Is the requirement stated explicitly in user input?
 ## Test-Driven Specification: User Stories & Validation Strategy
 
 **Purpose**: Define comprehensive, testable scenarios that drive both specification clarity and test case development. Each scenario should be implementable as automated tests in subsequent phases.
-
-### Primary User Story
-[Describe the main hardware device operation flow in plain language - how software interacts with the device]
 
 ### Functional Test Scenarios (Given-When-Then Format)
 
@@ -227,25 +231,47 @@ Is the requirement stated explicitly in user input?
 
 ## Requirements
 
-### Functional Requirements
-- **FR-001**: Device MUST [specific capability, e.g., "support configurable timeout period"]
-- **FR-002**: Device MUST [specific capability, e.g., "generate interrupt on timeout"]
-- **FR-003**: Software MUST be able to [key interaction, e.g., "clear timeout condition via register write"]
-- **FR-004**: Device MUST [behavior, e.g., "maintain countdown state across read operations"]
-- **FR-005**: Device MUST [hardware interaction, e.g., "assert reset signal to system on timeout expiry"]
+### Requirement 1
 
-*Example of marking unclear requirements:*
-- **FR-006**: Device MUST [NEEDS CLARIFICATION: interrupt behavior not specified - level-triggered or edge-triggered?]
-- **FR-007**: Device MUST [NEEDS CLARIFICATION: register access ordering constraints not specified]
+**User Story:** As a [role], I want [capability], so that [benefit]
 
-### Hardware Specification
+#### Acceptance Criteria
 
-**Device Purpose**:
-- **Device Type**: [e.g., Watchdog timer, Network controller, Storage device, Memory controller]
-- **Primary Function**: [What the device does from software/user perspective]
-- **Use Cases**: [When and why software would use this device]
+1. THE [System] SHALL [specific behavior with precise details]
+2. WHEN [condition], THE [System] SHALL [action with specific outcome]
+3. THE [System] SHALL provide [resource/interface] with [specific attributes]
+4. WHILE [state], THE [System] SHALL [continuous behavior]
+5. THE [System] SHALL NOT [prohibited action] [under specific conditions]
 
-**Register Map** *(parsed from hardware specification document)*:
+*Mark unclear items:*
+- THE [System] SHALL [NEEDS CLARIFICATION: specific question about missing detail]
+
+### Requirement 2
+
+**User Story:** As a [role], I want [capability], so that [benefit]
+
+#### Acceptance Criteria
+
+1. THE [System] SHALL [behavior]
+2. WHEN [condition], THE [System] SHALL [action]
+3. [Continue with numbered criteria...]
+
+### Requirement 3
+
+**User Story:** As a [role], I want [capability], so that [benefit]
+
+#### Acceptance Criteria
+
+1. THE [System] SHALL [behavior]
+2. [Continue...]
+
+[Continue with Requirement 4, 5, 6... minimum 5 requirements]
+
+---
+
+## Hardware Specification
+
+### Register Map
 
 | Offset | Name | Size | Access | Reset | Purpose |
 |--------|------|------|--------|-------|---------|
@@ -295,7 +321,7 @@ Is the requirement stated explicitly in user input?
 
 *Continue for all registers with bit fields, including device identification registers if present...*
 
-**External Interfaces**:
+### External Interfaces
 - **Bus Connection**: [direction: bidirectional] [e.g., "APB bus interface for register access", "Memory-mapped I/O at base address 0x1000", or NEEDS CLARIFICATION]
 - **Interrupt Lines**: [direction: output] [e.g., "WDOGINT signal for timeout events", "IRQ 5 for timeout events", or NEEDS CLARIFICATION]
 - **DMA Channels**: [direction: input/output/bidirectional] [e.g., "Channel 2 for data transfer (bidirectional)", "No DMA required", or NEEDS CLARIFICATION]
@@ -304,18 +330,18 @@ Is the requirement stated explicitly in user input?
 - **Signal Outputs**: [direction: output] [e.g., "WDOGRES (hardware reset line to system controller)", "Status LEDs", "None", or NEEDS CLARIFICATION]
 - **Other Connections**: [direction: specify] [e.g., "GPIO pins for external control (input/output)", or NEEDS CLARIFICATION]
 
-**Operational Behavior** *(parsed from hardware specification)*:
+### Operational Behavior *(parsed from hardware specification)*
 - **Initialization**: [Sequence of register writes needed to initialize device, e.g., "Unlock registers if lock mechanism exists, configure control registers, set timeout/load values, enable device"]
 - **Normal Operation**: [Key register interactions during typical use, e.g., "Counter decrements from load value; when reaches zero, asserts interrupt; software writes to clear register to acknowledge"]
 - **Error Handling**: [How errors are signaled and cleared, e.g., "Register lock prevents unauthorized access; error status bits set on failure; write to clear register to reset error state"]
 - **Interrupts**: [When interrupts fire and how to acknowledge, e.g., "Interrupt asserted when counter reaches zero and interrupt enable bit set; cleared by writing to interrupt clear register"]
 
-**Software Visibility** *(what software can observe/control)*:
+### Software Visibility *(what software can observe/control)*
 - Software can observe: [e.g., "Counter value through VALUE register, interrupt status through status registers, device identity through ID registers"]
 - Software cannot observe: [e.g., "Internal countdown timing details, internal state machine states, clock divider internal operation"]
 - Ordering requirements: [e.g., "Must unlock registers before writing to them, must write to clear register to acknowledge interrupts, must configure control registers before enabling device"]
 
-**Memory Interface Requirements** *(for complex devices)*:
+### Memory Interface Requirements *(for complex devices)*
 - **Address Space**: [Base address and size requirements, e.g., "0x1000 base address, 0x1000 bytes (4KB) address space", or NEEDS CLARIFICATION]
 - **Access Patterns**: [Byte access, unaligned access support, ordering requirements, e.g., "32-bit aligned access for control registers, 8-bit access for ID registers"]
 - **Coherency**: [Cache coherency participation, DMA coherency requirements, e.g., "No special coherency requirements beyond standard memory-mapped I/O"]
