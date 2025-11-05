@@ -78,6 +78,7 @@ AI_CHOICES = {
     "kilocode": "Kilo Code",
     "auggie": "Auggie CLI",
     "roo": "Roo Code",
+    "kiro": "Kiro",
     "adk": "ADK (Agent Development Kit)"
 }
 # Add script type choices
@@ -454,6 +455,7 @@ def setup_project_from_local(project_dir: Path, ai_assistant: str, script_type: 
         "kilocode": ".kilocode/workflows",
         "auggie": ".augment/commands",
         "roo": ".roo/commands",
+        "kiro": ".kiro/specs",
         "adk": ".adk/commands"
     }
     
@@ -470,6 +472,7 @@ def setup_project_from_local(project_dir: Path, ai_assistant: str, script_type: 
         "kilocode": "$ARGUMENTS",
         "auggie": "$ARGUMENTS",
         "roo": "$ARGUMENTS",
+        "kiro": "$ARGUMENTS",
         "adk": "$ARGUMENTS"
     }
     
@@ -486,6 +489,7 @@ def setup_project_from_local(project_dir: Path, ai_assistant: str, script_type: 
         "kilocode": "md",
         "auggie": "md",
         "roo": "md",
+        "kiro": "md",
         "adk": "md"
     }
     
