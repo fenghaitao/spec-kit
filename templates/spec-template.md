@@ -15,27 +15,26 @@
    → Set Created date to current date in YYYY-MM-DD format
    → Extract: Simics device type (timer, controller, interface, peripheral)
    → Extract: registers, interfaces, operational behavior, target platform
-   
+
 2. Mark ALL uncertainties with [NEEDS CLARIFICATION: specific question]
    → Test: Can you write a test without guessing? NO → Mark it
    → Be specific: "interrupt type - level or edge-triggered?"
-   
-3. Complete User Scenarios & Testing (mandatory)
-   → Primary story + 2+ acceptance scenarios + edge cases
-   → If unclear: ERROR "Cannot determine device operation"
-   
+
+3. Complete Test-Driven Specification: User Stories & Validation Strategy (mandatory)
+   → Primary user story + 6+ test scenarios (3 core functional, 2 error/edge case, 1+ integration if applicable)
+   → If unclear: ERROR "Cannot determine testable device operation"
+
 4. Generate Functional Requirements (minimum 5)
    → Each must be testable: "Device MUST [specific capability]"
    → Mark ambiguous behaviors with [NEEDS CLARIFICATION: ...]
-   
+
 5. Complete Hardware Specification (7 subsections)
    → Device Purpose, Register Map, Bit Fields, External Interfaces
    → Operational Behavior, Software Visibility, Memory Interface
-   
+
 6. Complete Simics-Specific Sections (mandatory)
    → Device Behavioral Model (4 subsections)
-   → Validation Framework (Functional Validation)
-   
+
 7. Run Review Checklist and Update Status Field
    → Search entire spec content for [NEEDS CLARIFICATION: ...] markers
    → Count the markers found in the actual content (ignore references in headers/instructions)
@@ -43,7 +42,7 @@
      * If ZERO markers: Set Status to "Ready for Planning"
      * If 1+ markers: Set Status to "Draft ([N] clarifications needed)"
    → Mark [x] objective items if passing (no DML, sections complete)
-   
+
 8. Update Execution Status
    → Mark [x] all completed steps (1-8)
    → Return: SUCCESS (spec ready for human review)
@@ -112,11 +111,12 @@ Is the requirement stated explicitly in user input?
 1. **Abstraction Level**: Functional vs cycle-accurate modeling? (Default: Functional)
 2. **Interrupt Behavior**: Level-triggered or edge-triggered?
 3. **Register Side Effects**: What happens when register is read/written? (Document side effects when they exist - e.g., write triggers action, read clears status)
-4. **Reset Behavior**: What state after reset?
-5. **Error Handling**: How are errors detected and reported?
-6. **System Dependencies**: What other components are required?
-7. **Register Access Types**: Ensure correct access type (R/W, R/O, W/O, W1C) for each register
-8. **Device Identification**: Are there peripheral/vendor ID registers that need documentation?
+4. **Reset Values**: What are the default/reset values for each register and bit field? (MUST document - critical for testing and initialization)
+5. **Reset Behavior**: What state after reset? How do registers initialize?
+6. **Error Handling**: How are errors detected and reported?
+7. **System Dependencies**: What other components are required?
+8. **Register Access Types**: Ensure correct access type (R/W, R/O, W/O, W1C) for each register
+9. **Device Identification**: Are there peripheral/vendor ID registers that need documentation?
 
 **NOT Required for Functional Models** (do NOT mark as [NEEDS CLARIFICATION]):
 - Precise timing requirements (cycle-accurate timing)
@@ -157,18 +157,71 @@ Is the requirement stated explicitly in user input?
 
 ---
 
-## User Scenarios & Testing
+## Test-Driven Specification: User Stories & Validation Strategy
+
+**Purpose**: Define comprehensive, testable scenarios that drive both specification clarity and test case development. Each scenario should be implementable as automated tests in subsequent phases.
 
 ### Primary User Story
 [Describe the main hardware device operation flow in plain language - how software interacts with the device]
 
-### Acceptance Scenarios
-1. **Given** [device state], **When** [register operation], **Then** [expected device behavior]
-2. **Given** [device state], **When** [hardware event], **Then** [expected register state/interrupt]
+### Functional Test Scenarios (Given-When-Then Format)
 
-### Edge Cases
-- What happens when [boundary condition or error state]?
-- How does device handle [invalid register access or timing violation]?
+**Core Functional Tests** (must have 3+ scenarios):
+1. **Scenario**: Device initialization and register access
+   - **Given** device is in reset state
+   - **When** software writes [specific value] to [register name]
+   - **Then** [register state changes] AND [observable device behavior]
+   - **Test Validation**: Read register to verify value, check status bits, verify no error flags
+
+2. **Scenario**: Primary device operation
+   - **Given** device is initialized with [configuration]
+   - **When** [trigger event or register write sequence]
+   - **Then** device performs [expected operation] AND generates [expected output/interrupt]
+   - **Test Validation**: [How to verify the operation completed correctly]
+
+3. **Scenario**: Interrupt handling (if applicable)
+   - **Given** device interrupt is enabled via [register/bit]
+   - **When** [interrupt condition occurs]
+   - **Then** interrupt signal is asserted AND [status register reflects condition]
+   - **Test Validation**: Verify interrupt status, check clear mechanism works
+
+**Error & Edge Case Tests** (must have 2+ scenarios):
+4. **Scenario**: Error detection and recovery
+   - **Given** device is operating normally
+   - **When** [error condition occurs: invalid data, protocol violation, boundary value]
+   - **Then** device detects error, sets [specific status bits], and recovers via [clear procedure]
+   - **Test Validation**: Verify error status, test recovery mechanism
+
+5. **Scenario**: Edge cases and invalid operations
+   - **Given** device in [specific state]
+   - **When** [invalid register access / boundary values / wrong operation sequence]
+   - **Then** device handles gracefully: [error reporting OR defined behavior]
+   - **Test Validation**: [How to verify correct edge case handling]
+
+**Integration Tests** (if device has external interfaces - 1+ scenario):
+6. **Scenario**: Bus/protocol compliance and multi-access
+   - **Given** device connected to [bus type] and supporting [access paths]
+   - **When** [bus transactions / concurrent accesses performed]
+   - **Then** device responds per protocol AND maintains [consistency, ordering]
+   - **Test Validation**: Monitor bus signals, verify data integrity
+
+*Mark any unclear cases with [NEEDS CLARIFICATION: specific behavior under [condition]]?*
+
+### Test Coverage Requirements
+- **Register Coverage**: All registers must be tested (read, write, reset value verification)
+- **Bit Field Coverage**: All functional bit fields must be tested (set, clear, combinations)
+- **State Coverage**: All device states must be reachable and testable
+- **Transition Coverage**: All state transitions must be exercised
+- **Error Coverage**: All error conditions must be testable (detection, reporting, recovery)
+- **Protocol Coverage**: All bus protocol sequences must be validated (if applicable)
+
+### Test Automation Considerations
+*For later /plan and /implement phases:*
+- Each scenario above should map to 1+ automated test cases
+- Test cases should be executable in Simics simulation environment
+- Tests should verify both register state AND device behavior/outputs
+- Consider using Simics scripting (Python) for test automation
+- Define pass/fail criteria explicitly for each test scenario
 
 ---
 
@@ -200,42 +253,44 @@ Is the requirement stated explicitly in user input?
 | 0x04 | STATUS | 32-bit | R/O | 0x0001 | Device status indicators |
 | 0x08 | TIMEOUT | 32-bit | R/W | 0x0000 | Timeout period configuration |
 | 0x0C | COUNTER | 32-bit | R/O | 0x0000 | Current countdown value |
-| 0x10 | INTCLR | 32-bit | W/O | - | Write any value to clear interrupt |
+| 0x10 | INTCLR | 32-bit | W/O | 0x0000 | Write any value to clear interrupt |
 | ... | ... | ... | ... | ... | ... |
 
 *Access types: R/W (Read/Write), R/O (Read-Only), W/O (Write-Only), W1C (Write-1-to-Clear)*
 
+*Reset values: MUST be extracted from specification. Use 0 for write-only registers or when reset value is unknown.*
+
 *Note: Include ALL registers in the register map, including device identification registers (e.g., peripheral ID, vendor ID) if applicable.*
 
-*For each register with bit fields, detail the fields. Document side effects only when they exist (e.g., write triggers action, read clears status, write reloads counter):*
+*For each register with bit fields, detail the fields with their reset value. Document side effects only when they exist (e.g., write triggers action, read clears status, write reloads counter):*
 
-**CONTROL Register (0x00)** bit fields:
-- Bits [31:8]: Reserved (must be 0)
-- Bit 7: INTERRUPT_ENABLE (R/W) - Enable interrupt generation
+**CONTROL Register (0x00)** - Reset: 0x00000000, bit fields:
+- Bits [31:8]: Reserved (must be 0) - Reset: 0x000000
+- Bit 7: INTERRUPT_ENABLE (R/W) - Enable interrupt generation - Reset: 0
   * Side effect: When set to 1, enables interrupt generation; when cleared, disables interrupts
-- Bit 6: DMA_ENABLE (R/W) - Enable DMA transfers
+- Bit 6: DMA_ENABLE (R/W) - Enable DMA transfers - Reset: 0
   * Side effect: When set to 1, enables DMA engine; when cleared, stops DMA transfers
-- Bits [5:1]: Reserved
-- Bit 0: DEVICE_ENABLE (R/W) - Master enable for device operation
+- Bits [5:1]: Reserved - Reset: 0x00
+- Bit 0: DEVICE_ENABLE (R/W) - Master enable for device operation - Reset: 0
   * Side effect: Writing 1 triggers device initialization sequence, resets COUNTER to 0, clears STATUS.ERROR; writing 0 disables device
 
-**STATUS Register (0x04)** bit fields:
-- Bits [31:4]: Reserved
-- Bit 3: ERROR (R/O) - Error condition detected
-- Bit 2: BUSY (R/O) - Device busy processing
-- Bit 1: INTERRUPT_PENDING (R/O) - Interrupt waiting to be serviced
-- Bit 0: READY (R/O) - Device ready for operations
+**STATUS Register (0x04)** - Reset: 0x00000001, bit fields:
+- Bits [31:4]: Reserved - Reset: 0x0000000
+- Bit 3: ERROR (R/O) - Error condition detected - Reset: 0
+- Bit 2: BUSY (R/O) - Device busy processing - Reset: 0
+- Bit 1: INTERRUPT_PENDING (R/O) - Interrupt waiting to be serviced - Reset: 0
+- Bit 0: READY (R/O) - Device ready for operations - Reset: 1
   * Note: This is a read-only status register with no side effects
 
-**TIMEOUT Register (0x08)** bit fields:
-- Bits [31:0]: TIMEOUT_VALUE (R/W) - Timeout period in milliseconds
+**TIMEOUT Register (0x08)** - Reset: 0x00000000, bit fields:
+- Bits [31:0]: TIMEOUT_VALUE (R/W) - Timeout period in milliseconds - Reset: 0x00000000
 
-**COUNTER Register (0x0C)** bit fields:
-- Bits [31:0]: COUNTER_VALUE (R/O) - Current countdown value in milliseconds
+**COUNTER Register (0x0C)** - Reset: 0x00000000, bit fields:
+- Bits [31:0]: COUNTER_VALUE (R/O) - Current countdown value in milliseconds - Reset: 0x00000000
   * Side effect: Reading returns current counter value without affecting countdown
 
-**INTCLR Register (0x10)** bit fields:
-- Bits [31:0]: CLEAR (W/O) - Write any value to clear interrupt
+**INTCLR Register (0x10)** - Reset: 0x00000000 (Write-Only), bit fields:
+- Bits [31:0]: CLEAR (W/O) - Write any value to clear interrupt - Reset: 0x00000000
   * Side effect: Writing any value clears the interrupt status and reloads counter from TIMEOUT register
 
 *Continue for all registers with bit fields, including device identification registers if present...*
@@ -294,16 +349,6 @@ Is the requirement stated explicitly in user input?
 
 ---
 
-## Validation Framework
-
-### Functional Validation
-- **Register Access Validation**: [test register read/write operations]
-- **State Machine Validation**: [test device state transitions]
-- **Protocol Compliance**: [test bus protocol adherence]
-- **Error Path Testing**: [validate error detection and recovery]
-
----
-
 ## Review & Acceptance Checklist
 
 ### AUTOMATED CHECKS (AI Agent MUST verify)
@@ -329,8 +374,8 @@ Is the requirement stated explicitly in user input?
 **Simics-Specific Completeness** (objective - MANDATORY):
 - [ ] Device behavioral model documented
   - *Check: All 4 subsections of "Device Behavioral Model" filled*
-- [ ] Validation framework documented
-  - *Check: "Functional Validation" subsection of "Validation Framework" filled*
+- [ ] Test-driven specification with essential test scenarios
+  - *Check: "Test-Driven Specification" section has 6+ test scenarios (3 core functional, 2 error/edge case, 1+ integration if applicable)*
 
 ---
 
@@ -339,11 +384,11 @@ Is the requirement stated explicitly in user input?
 
 - [ ] **STEP 1**: User description parsed and device context extracted
 - [ ] **STEP 2**: All uncertainties marked with [NEEDS CLARIFICATION: ...]
-- [ ] **STEP 3**: User Scenarios & Testing completed
+- [ ] **STEP 3**: Test-Driven Specification completed (user story + 6+ test scenarios + coverage requirements)
 - [ ] **STEP 4**: Functional requirements generated (minimum 5)
 - [ ] **STEP 5**: Hardware specification completed (7 subsections)
-- [ ] **STEP 6**: Simics-specific sections completed (Device Behavioral Model + Validation Framework)
-- [ ] **STEP 7**: Review checklist executed
+- [ ] **STEP 6**: Simics-specific sections completed (Device Behavioral Model)
+- [ ] **STEP 7**: Review checklist executed and Status field updated
 - [ ] **STEP 8**: Execution status updated (all items marked [x])
 
 **COMPLETION CRITERIA**: All 8 steps marked [x] = Specification ready for human review
