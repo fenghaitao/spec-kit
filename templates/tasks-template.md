@@ -111,7 +111,13 @@ After implementing EACH task in this phase, MUST run `build_simics_project(proje
 - [ ] T022 [P] Register definitions (apply grammar + best practices)
 - [ ] T023 [P] Interface declarations (apply grammar + best practices)
 - [ ] T024 [P] Check DML: `check_with_dmlc(project_path="/absolute/path/to/workspace/simics-project", module="DEVICE_NAME")` ⚠️ ABSOLUTE PATH (validates with AI diagnostics)
+- [ ] T024b **If T024 has errors**: Search memory for solutions: `search_memories(query="[error_keyword] DML compilation", limit=5)` 💾 MEMORY
+  - If memory returns relevant solution → apply it
+  - If memory has no relevant results → error is NEW, proceed with manual resolution
 - [ ] T025 [P] Build: `build_simics_project(project_path="/absolute/path/to/workspace/simics-project", module="DEVICE_NAME")` ⚠️ ABSOLUTE PATH
+- [ ] T025b **After T024-T025, if error was NEW and resolved**: Save solution to memory: `insert_memory(text="ERROR: [error_message] | SOLUTION: [fix_applied] | CONTEXT: [device_name, register/interface affected] | DATE: [date]")` 💾 MEMORY
+  - Only save if error was NOT found in memory search (T024b returned no relevant results)
+  - Skip if solution came from memory (already stored)
 - [ ] T026-T029 Register logic, state management, error handling, validation
 
 ## Phase 3.4: Integration
@@ -218,6 +224,7 @@ Task: "Integration test auth in tests/integration/test_auth.py"
 4. **Study Notes**: Must reference in all DML tasks
 5. **RAG Queries**: OPTIONAL - only if research.md/study notes insufficient
 6. **MCP Absolute Paths**: ALWAYS use absolute paths for `create_simics_project()`, `build_simics_project()`, `run_simics_test()` (SSE transport requirement)
+7. **Memory Tools**: Use `search_memories()` for error resolution, `insert_memory()` to save new solutions (builds institutional knowledge)
 
 ## Common Failures
 - ❌ Skip DML learning (T017-T018)
@@ -230,20 +237,30 @@ Task: "Integration test auth in tests/integration/test_auth.py"
 
 ## Error Recovery (Simics)
 
-**Priority**: Study Notes → Source Docs → RAG (last resort)
+**Priority**: Memory (Institutional Knowledge) → Study Notes → Source Docs → RAG (last resort)
+
+**New vs Known Error Detection**:
+- **Known Error**: `search_memories()` returns relevant results with similarity/relevance
+- **New Error**: `search_memories()` returns empty/irrelevant results → proceed with manual resolution → save solution after fixing
 
 ### Build Errors
-1. **Check Grammar Notes**: Search research.md "DML Grammar Study Notes"
+1. **Search Memory**: `search_memories(query="[error_keyword] DML compilation", limit=5)` for previously solved similar errors
+   - **If relevant match found** → Apply documented solution → Skip to step 8 (no save needed)
+   - **If no match found** → Mark as NEW error → Continue to step 2
+2. **Check Grammar Notes**: Search research.md "DML Grammar Study Notes"
    - Syntax errors → declaration/method/expression syntax
    - Semantic errors → scoping/types/visibility
    - Template errors → template system/inheritance
-2. **Check Best Practices Notes**: Search "DML Best Practices Study Notes"
+3. **Check Best Practices Notes**: Search "DML Best Practices Study Notes"
    - Pattern errors → coding patterns/interfaces
    - Common pitfalls → anti-patterns section
-3. **Check research.md RAG**: Device examples, register patterns from /plan
-4. **Read Source**: Open DML_grammar.md or DML_Device_Development_Best_Practices.md, search error keyword
-5. **RAG Query**: `perform_rag_query("DML 1.4 [error_keyword] syntax solution", source_type="dml", match_count=10)`
-6. **Document**: Add solution to research.md
+4. **Check research.md RAG**: Device examples, register patterns from /plan
+5. **Read Source**: Open DML_grammar.md or DML_Device_Development_Best_Practices.md, search error keyword
+6. **RAG Query**: `perform_rag_query("DML 1.4 [error_keyword] syntax solution", source_type="dml", match_count=10)`
+7. **Document & Save**: 
+   - Add solution to research.md
+   - **If error was NEW (step 1 found nothing)**: Save to memory: `insert_memory(text="ERROR: [error_message] | SOLUTION: [fix_applied] | CONTEXT: [device/register context] | DATE: [date]")`
+8. **Verify Fix**: Re-run check/build to confirm resolution
 
 **Examples**:
 ```
@@ -254,19 +271,29 @@ Task: "Integration test auth in tests/integration/test_auth.py"
 ```
 
 ### Test Failures
-1. **Check Test Patterns**: research.md test sections from /plan
-2. **Check Best Practices**: For device behavior issues
-3. **Check Grammar**: For interface/method issues
-4. **Debugging**: Apply techniques from best practices notes
-5. **RAG Query**: `perform_rag_query("Simics Python test [scenario]", source_type="python")`
+1. **Search Memory**: `search_memories(query="[test_name] Python test failure", limit=5)` for similar test issues
+   - **If relevant match found** → Apply documented solution → Skip to documentation
+   - **If no match found** → Mark as NEW error → Continue to step 2
+2. **Check Test Patterns**: research.md test sections from /plan
+3. **Check Best Practices**: For device behavior issues
+4. **Check Grammar**: For interface/method issues
+5. **Debugging**: Apply techniques from best practices notes
+6. **RAG Query**: `perform_rag_query("Simics Python test [scenario]", source_type="python")`
+7. **Document & Save**: Add to research.md and **if NEW error**: save to memory
 
 ### Runtime Errors
-1. **Check Best Practices** → error scenario
-2. **Check Grammar** → verify syntax correctness
-3. **Re-read Source** → for complex issues
-4. **RAG Query** → similar issues + solutions
+1. **Search Memory**: `search_memories(query="[error_type] runtime error", limit=5)` for previously encountered issues
+   - **If relevant match found** → Apply documented solution → Skip to documentation
+   - **If no match found** → Mark as NEW error → Continue to step 2
+2. **Check Best Practices** → error scenario
+3. **Check Grammar** → verify syntax correctness
+4. **Re-read Source** → for complex issues
+5. **RAG Query** → similar issues + solutions
+6. **Document & Save**: Add to research.md and **if NEW error**: save to memory
 
-**Documentation**: After resolving via steps 4-6, add to research.md:
+**Documentation**: After resolving via steps 4-7, update both:
+1. Add to research.md:
 ```markdown
 **Error**: [message] → **Solution**: [fix] → **Reference**: [source]
 ```
+2. Save to memory: `insert_memory(text="ERROR: [error_message] | SOLUTION: [fix_applied] | CONTEXT: [device/test/runtime context] | DATE: [date]")`
