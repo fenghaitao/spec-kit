@@ -166,6 +166,8 @@ dml 1.4;
 
 device interrupt_device;
 
+import "utility.dml";
+import "simics/devs/signal.dml";
 import "simics/device-api.dml";
 
 param classname = "interrupt_device";
@@ -318,7 +320,7 @@ simics-project/
 - **Bank names**: lowercase_with_underscores
 - **Register names**: descriptive_uppercase
 - **Field names**: descriptive_camelCase
-- **Parameters**: lowercase or uppercase
+- **Parameters**: lowercase or camelCase
 - **Methods**: lowercase_with_underscores
 
 ### 3. Documentation
@@ -390,8 +392,8 @@ bank uart_regs {
             this.val = value;
         }
 
-        method read() -> (uint64 value) {
-            if (lcr.val & 0x80) {
+        method read() -> (uint64) {
+            if (LCR.val & 0x80) {
                 return this.val;  // Divisor latch
             } else {
                 log info: "UART receive read";
@@ -428,7 +430,6 @@ bank uart_regs {
 dml 1.4;
 
 device simple_pci;
-
 import "simics/device-api.dml";
 
 param classname = "simple_pci";
@@ -553,10 +554,10 @@ Following these practices will help you write robust, maintainable DML devices f
 ```dml
 dml 1.4;
 
-// `device` statements must be placed immediately after the DML version declaration
 // Only one device statement is allowed per device (including all imported DML files)
 device DEVICE_NAME;
 
+// Import statements must be placed immediately after the DML version declaration
 import "simics/device-api.dml";
 
 param classname = "DEVICE_NAME";
