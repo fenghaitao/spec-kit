@@ -135,11 +135,25 @@ import "simics/device-api.dml";
 param classname = "interrupt_device";
 param desc = "Device that can generate interrupts";
 
+// connect attribute is used for wire/bus signal/transaction to output
 connect irq {
     param configuration = "optional";
     param desc = "simple_interrupt";
 
     interface signal;
+}
+
+// port attribute is used for wire/bus signal/transaction to input
+port reset_n {
+    param configuration = "optional";
+    param desc = "reset signal input";
+
+    implement signal {
+        // empty implementation as a simple example
+        method signal_raise() {}
+        // empty implementation as a simple example
+        method signal_lower() {}
+    }
 }
 
 bank regs {
