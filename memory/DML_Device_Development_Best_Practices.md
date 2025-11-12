@@ -430,6 +430,7 @@ bank uart_regs {
 dml 1.4;
 
 device simple_pci;
+
 import "simics/device-api.dml";
 
 param classname = "simple_pci";
@@ -557,7 +558,10 @@ dml 1.4;
 // Only one device statement is allowed per device (including all imported DML files)
 device DEVICE_NAME;
 
-// Import statements must be placed immediately after the DML version declaration
+// `device` statements must be placed immediately after the DML version declaration
+// Only one device statement is allowed per device (including all imported DML files)
+device DEVICE_NAME;
+
 import "simics/device-api.dml";
 
 param classname = "DEVICE_NAME";
