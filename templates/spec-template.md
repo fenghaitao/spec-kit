@@ -189,26 +189,6 @@ Example:
    - **Then** interrupt signal is asserted AND [status register reflects condition]
    - **Test Validation**: Verify interrupt status, check clear mechanism works
 
-**Error & Edge Case Tests** (must have 2+ scenarios):
-4. **Scenario**: Error detection and recovery
-   - **Given** device is operating normally
-   - **When** [error condition occurs: invalid data, protocol violation, boundary value]
-   - **Then** device detects error, sets [specific status bits], and recovers via [clear procedure]
-   - **Test Validation**: Verify error status, test recovery mechanism
-
-5. **Scenario**: Edge cases and invalid operations
-   - **Given** device in [specific state]
-   - **When** [invalid register access / boundary values / wrong operation sequence]
-   - **Then** device handles gracefully: [error reporting OR defined behavior]
-   - **Test Validation**: [How to verify correct edge case handling]
-
-**Integration Tests** (if device has external interfaces - 1+ scenario):
-6. **Scenario**: Bus/protocol compliance and multi-access
-   - **Given** device connected to [bus type] and supporting [access paths]
-   - **When** [bus transactions / concurrent accesses performed]
-   - **Then** device responds per protocol AND maintains [consistency, ordering]
-   - **Test Validation**: Monitor bus signals, verify data integrity
-
 *Mark any unclear cases with [NEEDS CLARIFICATION: specific behavior under [condition]]?*
 
 ### Test Coverage Requirements
