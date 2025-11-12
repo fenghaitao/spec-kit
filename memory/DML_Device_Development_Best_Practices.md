@@ -65,9 +65,9 @@ param desc = "A simple device for learning";
 ```dml
 dml 1.4;
 
-import "simics/device-api.dml";  // Always needed for devices
-
 device my_device;
+
+import "simics/device-api.dml";  // Always needed for devices
 ```
 
 ## Device Structure
@@ -97,9 +97,9 @@ param desc = "Device description";
 ```dml
 dml 1.4;
 
-import "simics/device-api.dml";
-
 device basic_mmio;
+
+import "simics/device-api.dml";
 
 param classname = "basic_mmio";
 param desc = "Basic memory-mapped I/O device";
@@ -126,11 +126,11 @@ bank control_regs {
 ```dml
 dml 1.4;
 
+device interrupt_device;
+
 import "utility.dml";
 import "simics/devs/signal.dml";
 import "simics/device-api.dml";
-
-device interrupt_device;
 
 param classname = "interrupt_device";
 param desc = "Device that can generate interrupts";
@@ -177,9 +177,9 @@ method update_interrupt() {
 ```dml
 dml 1.4;
 
-import "simics/device-api.dml";
-
 device timer_device;
+
+import "simics/device-api.dml";
 
 param classname = "timer_device";
 param desc = "Simple timer device";
@@ -287,9 +287,9 @@ log error: "Invalid operation attempted";
 ```dml
 dml 1.4;
 
-import "simics/device-api.dml";
-
 device uart_16550;
+
+import "simics/device-api.dml";
 
 param classname = "uart_16550";
 param desc = "16550-compatible UART device";
@@ -352,9 +352,9 @@ bank uart_regs {
 ```dml
 dml 1.4;
 
-import "simics/device-api.dml";
-
 device simple_pci;
+
+import "simics/device-api.dml";
 
 param classname = "simple_pci";
 param desc = "Simple PCI device template";
@@ -478,11 +478,11 @@ Following these practices will help you write robust, maintainable DML devices f
 ```dml
 dml 1.4;
 
-// Import statements must be placed immediately after the DML version declaration
-import "simics/device-api.dml";
-
+// `device` statements must be placed immediately after the DML version declaration
 // Only one device statement is allowed per device (including all imported DML files)
 device DEVICE_NAME;
+
+import "simics/device-api.dml";
 
 param classname = "DEVICE_NAME";
 param desc = "Device description";
@@ -500,4 +500,4 @@ dmlc --simics-api=7 -I ../linux64/bin/dml/api/7/1.4 -I ../linux64/bin/dml/1.4 in
 
 **Document Status**: ✅ Complete  
 **Last Updated**: Generated after solving DML compilation issues  
-**Tested With**: Simics 7.57.0, DML 1.4, API version 6
+**Tested With**: Simics 7.57.0, DML 1.4, API version 7
