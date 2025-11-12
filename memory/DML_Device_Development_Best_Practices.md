@@ -257,7 +257,7 @@ simics-project/
 - **Bank names**: lowercase_with_underscores
 - **Register names**: descriptive_uppercase
 - **Field names**: descriptive_camelCase
-- **Parameters**: lowercase or camelCase
+- **Parameters**: lowercase or uppercase
 - **Methods**: lowercase_with_underscores
 
 ### 3. Documentation
