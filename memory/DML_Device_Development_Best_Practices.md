@@ -180,6 +180,19 @@ connect irq {
     interface signal;
 }
 
+// port attribute is used for wire/bus signal/transaction to input
+port reset_n {
+    param configuration = "optional";
+    param desc = "reset signal input";
+
+    implement signal {
+        // empty implementation as a simple example
+        method signal_raise() {}
+        // empty implementation as a simple example
+        method signal_lower() {}
+    }
+}
+
 bank regs {
     param function = 0x2000;
     param register_size = 4;
