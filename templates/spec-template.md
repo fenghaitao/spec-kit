@@ -32,10 +32,25 @@
    → Device Purpose, Register Map, Bit Fields, External Interfaces
    → Operational Behavior, Software Visibility, Memory Interface
 
-6. Complete Simics-Specific Sections (mandatory)
+6. Generate IP-XACT 1685-2022 Register Description File (MANDATORY)
+   → Create separate file: [feature-name]-registers.xml (DO NOT include XML in spec.md)
+   → Analyze Hardware Specification section (Register Map table, bit field descriptions, External Interfaces)
+   → For EACH register from Register Map table:
+     * Define basic properties (name, description, offset, size, access)
+     * Add reset value and mask from register bit field descriptions
+     * Define ALL fields with bit positions and access types from bit field descriptions
+     * Add enumerated values where applicable (extract from bit field enumeration descriptions)
+   → Define memory map structure using information from Memory Interface Requirements
+   → Add bus interface based on External Interfaces (Bus Connection)
+   → Include ALL I/O ports from External Interfaces section (Clock, Reset, Interrupt, Signal Outputs, Other Connections)
+   → Add comprehensive documentation extracted from register and field descriptions
+   → Follow XML schema structure detailed in "IP-XACT Register Description Generation Guide" section below
+   → Output: Complete, valid IP-XACT 1685-2022 XML file in separate .xml file
+
+7. Complete Simics-Specific Sections (mandatory)
    → Device Behavioral Model (4 subsections)
 
-7. Run Review Checklist and Update Status Field
+8. Run Review Checklist and Update Status Field
    → Search entire spec content for [NEEDS CLARIFICATION: ...] markers
    → Count the markers found in the actual content (ignore references in headers/instructions)
    → Update the Status field at the top of the spec:
@@ -43,8 +58,8 @@
      * If 1+ markers: Set Status to "Draft ([N] clarifications needed)"
    → Mark [x] objective items if passing (no DML, sections complete)
 
-8. Update Execution Status
-   → Mark [x] all completed steps (1-8)
+9. Update Execution Status
+   → Mark [x] all completed steps (1-9)
    → Return: SUCCESS (spec ready for human review)
 ```
 
@@ -147,6 +162,144 @@ Is the requirement stated explicitly in user input?
 
 Example:
 "This document specifies the requirements for a Simics watchdog timer device implementation based on the ARM PrimeCell watchdog specification. The watchdog timer is a 32-bit down-counter that provides system protection through configurable timeout intervals, interrupt generation, and system reset capabilities. The device includes 21 memory-mapped registers for control, status monitoring, peripheral identification, and integration testing. The implementation targets the QSP-x86 platform with a base address of 0x1000 and follows DML 1.4 standards for Simics device modeling."
+
+## IP-XACT Register Description Generation Guide
+
+**Purpose**: This section provides the XML schema and structure for generating IP-XACT 1685-2022 register description files. The AI agent should generate a **separate .xml file** (NOT included in spec.md).
+
+**File Naming**: `[feature-name]-registers.xml` (e.g., `watchdog-timer-registers.xml`)
+
+**CRITICAL**: Generate complete XML in a separate file. DO NOT copy XML templates or examples into the spec.md file.
+
+### XML Structure Template
+
+#### 1. Component Identification
+```xml
+<ipxact:component
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ipxact="http://www.accellera.org/XMLSchema/IPXACT/1685-2022"
+    xsi:schemaLocation="http://www.accellera.org/XMLSchema/IPXACT/1685-2022 http://www.accellera.org/XMLSchema/IPXACT/1685-2022/index.xsd">
+
+    <ipxact:vendor>[VENDOR_NAME]</ipxact:vendor>
+    <ipxact:library>[LIBRARY_NAME]</ipxact:library>
+    <ipxact:name>[IP_NAME]</ipxact:name>
+    <ipxact:version>[VERSION]</ipxact:version>
+```
+
+#### 2. Bus Interface
+Define the bus interface (e.g., APB4, AXI, AHB) with memory map reference.
+```xml
+<ipxact:busInterfaces>
+    <ipxact:busInterface>
+        <ipxact:name>APB</ipxact:name>
+        <ipxact:busType vendor="AMBA" library="AMBA4" name="APB4" version="r0p0"/>
+        <ipxact:abstractionType vendor="AMBA" library="AMBA4" name="APB4" version="r0p0"/>
+        <ipxact:slave>
+            <ipxact:memoryMapRef memoryMapRef="[MEMORY_MAP_NAME]"/>
+        </ipxact:slave>
+    </ipxact:busInterface>
+</ipxact:busInterfaces>
+```
+
+#### 3. Memory Map Structure
+Define address block with base address, range, and width.
+```xml
+<ipxact:memoryMaps>
+    <ipxact:memoryMap>
+        <ipxact:name>[MEMORY_MAP_NAME]</ipxact:name>
+        <ipxact:addressBlock>
+            <ipxact:name>[BLOCK_NAME]</ipxact:name>
+            <ipxact:baseAddress>0x0</ipxact:baseAddress>
+            <ipxact:range>0x1000</ipxact:range>
+            <ipxact:width>32</ipxact:width>
+
+            <!-- Register definitions go here -->
+
+        </ipxact:addressBlock>
+    </ipxact:memoryMap>
+</ipxact:memoryMaps>
+```
+
+#### 4. Register Definitions
+For EACH register from the Register Map table:
+- Extract: name, description, address offset, size, access type, reset value
+- Define ALL bit fields with: name, description, bitOffset, bitWidth, access
+- Add enumerated values for fields where applicable (from bit field descriptions)
+
+**Basic Register Structure:**
+```xml
+<ipxact:register>
+    <ipxact:name>REGISTER_NAME</ipxact:name>
+    <ipxact:description>Brief description of the register's purpose</ipxact:description>
+    <ipxact:addressOffset>0x00</ipxact:addressOffset>
+    <ipxact:size>32</ipxact:size>
+    <ipxact:access>read-write|read-only|write-only</ipxact:access>
+    <ipxact:reset>
+        <ipxact:value>0x00000000</ipxact:value>
+        <ipxact:mask>0xFFFFFFFF</ipxact:mask>
+    </ipxact:reset>
+
+    <!-- Field definitions go here -->
+
+</ipxact:register>
+```
+
+**Basic Field Structure:**
+```xml
+<ipxact:field>
+    <ipxact:name>field_name</ipxact:name>
+    <ipxact:description>Description of the field's purpose</ipxact:description>
+    <ipxact:bitOffset>0</ipxact:bitOffset>
+    <ipxact:bitWidth>8</ipxact:bitWidth>
+    <ipxact:access>read-write</ipxact:access>
+</ipxact:field>
+```
+
+#### 5. Port Definitions
+For EACH interface from External Interfaces section:
+- Create port for each signal (clock, reset, interrupt, etc.)
+- Specify direction (in/out/inout) and wire type
+
+```xml
+<ipxact:ports>
+    <ipxact:port>
+        <ipxact:name>port_name</ipxact:name>
+        <ipxact:wire>
+            <ipxact:direction>in|out|inout</ipxact:direction>
+            <ipxact:wireTypeDefs>
+                <ipxact:wireTypeDef>
+                    <ipxact:typeName>std_logic</ipxact:typeName>
+                    <!-- Add vector type if needed: -->
+                    <!-- <ipxact:typeName>std_logic_vector(7 downto 0)</ipxact:typeName> -->
+                </ipxact:wireTypeDef>
+            </ipxact:wireTypeDefs>
+        </ipxact:wire>
+    </ipxact:port>
+    <!-- Additional ports -->
+</ipxact:ports>
+```
+
+### Best Practices
+
+**Naming Conventions:**
+- Use UPPERCASE for register and field names (match Hardware Specification)
+- Use descriptive names from the specification
+- Be consistent with naming patterns
+
+**Documentation:**
+- Include clear descriptions for all registers and fields
+- Document reset values and behaviors
+- Note any hardware constraints or requirements
+
+**Organization:**
+- Group related registers together
+- Order registers by address offset
+- Use XML comments to separate functional blocks
+
+**Validation:**
+- Ensure all addresses are properly aligned
+- Verify bit fields don't overlap
+- Check that reset values are within field ranges
 
 ---
 ---
@@ -329,6 +482,10 @@ Example:
 
 ---
 
+**Note**: IP-XACT register description XML is generated in a separate file `[feature-name]-registers.xml` following the guidelines in Part A. Do NOT include XML content in this specification document.
+
+---
+
 ## Device Behavioral Model
 
 ### System Context
@@ -376,6 +533,12 @@ Example:
   - *Check: "External Interfaces" subsection filled*
 - [ ] Operational behavior flows specified
   - *Check: "Operational Behavior" subsection filled*
+- [ ] IP-XACT register description XML file generated
+  - *Check: Complete IP-XACT 1685-2022 XML content provided in "Complete IP-XACT XML Output" section*
+  - *Check: XML includes component ID, bus interface, memory map, ALL registers with ALL fields*
+  - *Check: NO placeholders remain - all [...] replaced with actual extracted values*
+  - *Check: ALL ports from External Interfaces defined*
+  - *Check: Register count matches Register Map table row count*
 
 **Simics-Specific Completeness** (objective - MANDATORY):
 - [ ] Device behavioral model documented
@@ -393,10 +556,11 @@ Example:
 - [ ] **STEP 3**: Test-Driven Specification completed (user story + 6+ test scenarios + coverage requirements)
 - [ ] **STEP 4**: Functional requirements generated (minimum 5)
 - [ ] **STEP 5**: Hardware specification completed (7 subsections)
-- [ ] **STEP 6**: Simics-specific sections completed (Device Behavioral Model)
-- [ ] **STEP 7**: Review checklist executed and Status field updated
-- [ ] **STEP 8**: Execution status updated (all items marked [x])
+- [ ] **STEP 6**: IP-XACT 1685-2022 register description XML file generated in separate .xml file
+- [ ] **STEP 7**: Simics-specific sections completed (Device Behavioral Model)
+- [ ] **STEP 8**: Review checklist executed and Status field updated
+- [ ] **STEP 9**: Execution status updated (all items marked [x])
 
-**COMPLETION CRITERIA**: All 8 steps marked [x] = Specification ready for human review
+**COMPLETION CRITERIA**: All 9 steps marked [x] = Specification ready for human review
 
 ---
