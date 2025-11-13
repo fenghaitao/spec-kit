@@ -568,9 +568,6 @@ Following these practices will help you write robust, maintainable DML devices f
 ```dml
 dml 1.4;
 
-// Only one device statement is allowed per device (including all imported DML files)
-device DEVICE_NAME;
-
 // `device` statements must be placed immediately after the DML version declaration
 // Only one device statement is allowed per device (including all imported DML files)
 device DEVICE_NAME;
