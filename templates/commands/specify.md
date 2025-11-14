@@ -21,27 +21,27 @@ Given that feature description, do this:
 2. Load `templates/spec-template.md` to understand required sections.
 
 3. Write the specification to SPEC_FILE using the template structure, replacing placeholders with concrete details derived from the feature description (arguments) while preserving section order and headings.
-   - **⚠️ CRITICAL**: After writing/updating the spec file, immediately create a git commit (see step 4)
+   - **After completing the specification**, immediately proceed to step 5 to commit
 
-4. **MANDATORY: Git Version Control - Commit After Each Major Update**:
-   - **WHEN**: After completing the specification or making significant updates
-   - **WHAT**: Stage and commit the spec file and any related changes
-   - **HOW**: Use these exact commands:
+4. **MANDATORY: Generate IP-XACT Register Description XML**:
+   - Load `templates/register-template.md` and follow the complete "Hardware Specification Analysis Process"
+   - Create separate file: `[feature-name]-registers.xml` in the same directory as SPEC_FILE
+   - **After completing the XML file**, immediately proceed to step 5 to commit
+
+5. **MANDATORY: Git Commit After Each Major Update**:
+   - **Execute this step after completing step 3 OR step 4**
+   - Stage and commit changes:
      ```bash
      git add -A
      git commit -m "specify: <feature-name> - <section/update-description>"
      ```
-   - **EXAMPLES**:
-     - Initial spec: `git commit -m "specify: device-name - initial specification created"`
-     - Updated requirements: `git commit -m "specify: device-name - updated functional requirements"`
-     - Added clarifications: `git commit -m "specify: device-name - added clarifications section"`
-   - **WHY**: This creates a clear audit trail of specification evolution, making it easy to:
-     - Track how requirements evolved
-     - Understand decision rationale
-     - Review specification history
-     - Revert to previous specification versions if needed
-   - **CRITICAL**: Always commit specification changes to maintain project history
+   - **Examples**:
+     - After step 3: `"specify: device-name - initial specification created"`
+     - After step 4: `"specify: device-name - added IP-XACT register XML"`
+     - After updates: `"specify: device-name - updated functional requirements"`
+   - **Purpose**: Creates audit trail for tracking specification evolution, decision rationale, and enabling version rollback
+   - **Continue**: After committing, proceed to next step or report completion
 
-5. Report completion with branch name, spec file path, and readiness for the next phase.
+6. Report completion with branch name, spec file path, XML file path (if generated), and readiness for the next phase.
 
 Note: The script creates and checks out the new branch and initializes the spec file before writing.
