@@ -13,9 +13,9 @@ Generate an IP-XACT 1685-2022 compliant register description for a hardware IP b
 - No explanatory text before or after
 - Use proper indentation for readability
 
-## Hardware Specification Analysis Process
+## Instructions
 
-Before generating the IP-XACT XML, follow this complete workflow to extract and document all register information:
+Follow this complete workflow to generate IP-XACT XML with comprehensive side-effect documentation:
 
 ### Step 1: Extract Register Map and Layout
 
@@ -41,6 +41,10 @@ Parse the hardware specification to identify and extract:
 - **Reset Value**: Default value after reset (if specified)
 - **Enumerated Values**: Named constants for field values (if defined)
 
+### Step 2: Extract I/O Port/Signal Interfaces
+
+Parse the hardware specification to identify and extract:
+
 **Bus Interface Information**:
 - **Bus Type**: Interface protocol (APB, AXI4, AXI4-Lite, Wishbone, etc.)
 - **Role**: Master or Slave
@@ -53,9 +57,44 @@ Parse the hardware specification to identify and extract:
 - **Type**: Signal type (clock, reset, interrupt, data, control, status)
 - **Description**: Purpose and behavior of the port
 
-### Step 2: Identify Side-Effects
+### Step 3: Generate IP-XACT Register Description XML File
 
-Analyze the functional behavior descriptions to identify read/write side-effects for both registers and fields. These side-effects will be included in the `<ipxact:description>` tags.
+Generate the initial IP-XACT XML structure with all extracted information:
+
+**3.1 Component Identification**:
+- Use placeholders: `[VENDOR_NAME]`, `[LIBRARY_NAME]`, `[IP_NAME]`, `[VERSION]`
+- Include proper namespaces and schema location
+
+**3.2 Bus Interface** (if applicable):
+- Determine bus type from specification (APB, AXI, etc.)
+- Configure as slave or master
+- Reference memory map
+
+**3.3 Memory Map**:
+- Create `<ipxact:memoryMap>` with extracted address block information
+- Set base address (typically 0x0)
+- Calculate range from highest register offset + size
+
+**3.4 Register Definitions** (for EACH register):
+- Define basic properties: name, offset, size, access type
+- Add placeholder `<ipxact:description>` (will be filled in Step 5)
+- Add reset value and mask (if specified)
+
+**3.5 Field Definitions** (for EACH field in EACH register):
+- Calculate bitOffset and bitWidth from bit range
+- Set access type (map W1C → write-1-clear, RC → read-clear, etc.)
+- Add placeholder `<ipxact:description>` (will be filled in Step 5)
+- Add reset value (if specified)
+- Add enumerated values (if defined)
+
+**3.6 Port Definitions**:
+- Extract I/O signals from Step 2
+- Define direction (in/out/inout)
+- Specify wire type and width
+
+### Step 4: Identify Side-Effects
+
+Analyze the functional behavior descriptions to identify read/write side-effects for both registers and fields. Document these for filling into the XML in Step 5.
 
 **Register-to-Functionality Relationships**:
 - Identify all hardware functionalities (timer, interrupt, DMA, etc.)
@@ -104,50 +143,27 @@ Analyze the functional behavior descriptions to identify read/write side-effects
 - Combine functional purpose + side-effects in single description
 - Example: "Control register for timer operation. Bit 0 enables timer countdown. Writing 1 starts timer from LOAD value."
 
-### Step 3: Generate IP-XACT XML Structure
+### Step 5: Fill Description Fields in XML File
 
-**3.1 Component Identification**:
-- Use placeholders: `[VENDOR_NAME]`, `[LIBRARY_NAME]`, `[IP_NAME]`, `[VERSION]`
-- Include proper namespaces and schema location
+Update the XML file generated in Step 3 by filling in the `<ipxact:description>` tags for all registers and fields with the side-effects identified in Step 4.
 
-**3.2 Bus Interface** (if applicable):
-- Determine bus type from specification (APB, AXI, etc.)
-- Configure as slave or master
-- Reference memory map
-
-**3.3 Memory Map**:
-- Create `<ipxact:memoryMap>` with extracted address block information
-- Set base address (typically 0x0)
-- Calculate range from highest register offset + size
-
-**3.4 Register Definitions** (for EACH register):
-- Define basic properties: name, offset, size, access type
-- **CRITICAL**: Populate `<ipxact:description>` with:
+**For EACH Register** - Update `<ipxact:description>`:
+- **CRITICAL**: Populate with comprehensive documentation including:
   - Functional purpose
   - Read side-effects (if any)
   - Write side-effects (if any)
   - Register relationships
   - Example: "Control register. Bit 0 enables timer. Writing 1 starts countdown. Write ignored if locked."
-- Add reset value and mask (if specified)
 
-**3.5 Field Definitions** (for EACH field in EACH register):
-- Calculate bitOffset and bitWidth from bit range
-- Set access type (map W1C → write-1-clear, RC → read-clear, etc.)
-- **CRITICAL**: Populate field `<ipxact:description>` with:
+**For EACH Field** - Update `<ipxact:description>`:
+- **CRITICAL**: Populate with detailed field-level documentation including:
   - Field purpose
   - Field-specific side-effects (W1C, read-to-clear, enable/disable)
   - Conditions (e.g., "ignored if locked", "write 1 to clear")
   - Cross-register effects (e.g., "copies to COUNTER")
   - Example: "Enable bit. Write 1 to start timer countdown from LOAD value. Write 0 to stop timer."
-- Add reset value (if specified)
-- Add enumerated values (if defined)
 
-**3.6 Port Definitions**:
-- Extract I/O signals from specification
-- Define direction (in/out/inout)
-- Specify wire type and width
-
-### Step 4: Validate Output
+### Step 6: Validate Output
 
 **Completeness Checks**:
 - [ ] Every register has side-effects documented (or noted as "no side-effects")
@@ -306,8 +322,10 @@ For each register, include:
 ```
 
 ### 5. Port Definitions
+This section should be placed after `<ipxact:memoryMaps>`.
 ```xml
 <ipxact:ports>
+    <!-- Example of a single-bit (scalar) output port -->
     <ipxact:port>
         <ipxact:name>port_name</ipxact:name>
         <ipxact:wire>
@@ -321,7 +339,23 @@ For each register, include:
             </ipxact:wireTypeDefs>
         </ipxact:wire>
     </ipxact:port>
-    <!-- Additional ports -->
+    <!-- Example of a multi-bit (vector) input port -->
+    <ipxact:port>
+        <ipxact:name>data_in</ipxact:name>
+        <ipxact:wire>
+            <ipxact:direction>in</ipxact:direction>
+            <ipxact:vector>
+                <ipxact:left>7</ipxact:left>
+                <ipxact:right>0</ipxact:right>
+            </ipxact:vector>
+            <ipxact:wireTypeDefs>
+                <ipxact:wireTypeDef>
+                    <ipxact:typeName>std_logic_vector</ipxact:typeName>
+                </ipxact:wireTypeDef>
+            </ipxact:wireTypeDefs>
+        </ipxact:wire>
+    </ipxact:port>
+    <c -->
 </ipxact:ports>
 ```
 
