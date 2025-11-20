@@ -41,14 +41,14 @@ You **MUST** consider the user input before proceeding (if not empty).
 ## Core Principles
 
 1. **Sequential phases** - Complete Phase 0 before Phase 1
-2. **Minimal RAG queries** - Phase 0: 1-2 architectural; Phase 1: 1-2 pattern RAG queries
+2. **Minimal RAG queries** - Phase 0: 3-4 architectural (overview, concepts, patterns); Phase 1: 1-2 RAG queries per pattern needed
 3. **Validate each phase** - Verify files exist before proceeding
 4. **Design only** - No implementation MCP tools (create_simics_project, etc.)
 
 ## Common Pitfalls
 
 - Skipping Discovery MCP tools (get_simics_version, list_installed_packages, list_simics_platforms)
-- Too many RAG queries (limit: 1-2 per phase)
+- Too many RAG queries (limit: 3-4 in Phase 0 for architecture/concepts/patterns)
 - Leaving NEEDS CLARIFICATION unresolved
 - Using MCP tool syntax in test-scenarios.md (use generic Simics CLI descriptions instead)
 - Executing implementation MCP tools during planning (reserved for Phase 3)
@@ -67,17 +67,27 @@ You **MUST** consider the user input before proceeding (if not empty).
    - `list_installed_packages()` → Required Packages
    - `list_simics_platforms()` → Available Platforms
 
-3. **Architectural RAG** (1-2 queries MAX):
-   - Identify device category (timer, UART, PCI, DMA, etc.)
-   - Query high-level architecture overview only
-   - Example: `"DML timer device architecture counter overflow interrupt concepts"`
-   - Extract: Architecture, design patterns, key concepts, **example code snippets**
+3. **Architectural RAG** (3-4 queries MAX):
+   - **Query 1 - Architectural Overview**: Identify device category and query architecture
+     * Example: `"DML timer device architecture counter overflow interrupt concepts"`
+     * Extract: High-level architecture, components, typical registers/interfaces
+   - **Query 2 - Key Design Concepts**: Query specific design concepts for device type
+     * Example: `"DML timer counter overflow interrupt handling key concepts"`
+     * Extract: Core concepts, state management, operational semantics
+   - **Query 3 - Common Patterns**: Query implementation patterns for device category
+     * Example: `"DML timer device common implementation patterns register bank events"`
+     * Extract: Typical DML patterns (io_memory, signals, events), **example code snippets**
+   - **Optional Query 4**: Additional device-specific pattern if needed
+     * Example: `"DML periodic event scheduling timer pattern"`
    - Skip: Detailed implementations, callbacks, test code, error handling
 
 4. **Create research.md** (see plan-template.md for structure):
    - DML Learning Prerequisites
    - Environment Discovery (Simics version, packages, platforms)
-   - Device Architecture Context
+   - Device Architecture Context:
+     * Architectural Overview (from Query 1)
+     * Key Design Concepts (from Query 2)
+     * Common Patterns for This Device Type (from Query 3)
    - Architecture Decisions (resolved NEEDS CLARIFICATION)
    - Implementation Strategy
    - **Example Code References** (code snippets from RAG for implementation reference)

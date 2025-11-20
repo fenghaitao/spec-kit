@@ -47,7 +47,7 @@ specs/[###-feature]/
 ├── plan.md              # This file (/speckit.plan command output)
 ├── research.md          # Phase 0 output (/speckit.plan command)
 ├── data-model.md        # Phase 1 output (/speckit.plan command)
-├── quickstart.md        # Phase 1 output (/speckit.plan command)
+├── test-scenarios.md    # Phase 1 output (/speckit.plan command)
 ├── contracts/           # Phase 1 output (/speckit.plan command)
 └── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
 ```
@@ -59,45 +59,17 @@ specs/[###-feature]/
   real paths (e.g., apps/admin, packages/something). The delivered plan must
   not include Option labels.
 -->
+**Simics Project Structure** (created by MCP tools in Phase 3):
 
 ```text
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
-src/
-├── models/
-├── services/
-├── cli/
-└── lib/
-
-tests/
-├── contract/
-├── integration/
-└── unit/
-
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
-
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
+simics-project/modules/[device-name]/
+  ├── [device-name].dml
+  ├── registers.dml (optional)
+  ├── interfaces.dml (optional)
+  └── test/
+      ├── s-[device-name].py
+      └── test_[name]_common.py
 ```
-
-**Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
 
 ## Complexity Tracking
 
@@ -227,4 +199,66 @@ Use this structure when creating research.md in Phase 0:
 
 ### Next Steps
 [Outline what will happen in Phase 1 (data-model, contracts, test-scenarios)]
+
+---
+
+# data-model.md Structure Template
+
+Use this structure when creating data-model.md in Phase 1:
+
+```markdown
+# Data Model: [FEATURE_NAME]
+
+## Summary
+
+## Registers
+
+*For each register that has side-effect in [device-name]-registers.xml, extract Purpose and Operations; add offsets, side effects, fields:*
+
+### Register: [NAME from spec.md]
+- **Offset**: [hex - assign by order/size] | **Size**: [bits from requirements/research.md] | **Access**: [RO/WO/RW from spec.md]
+- **Reset**: [hex or 0x0000] | **Purpose**: [from spec.md "Purpose"]
+- **Side Effects** (from spec.md "Operational Behavior"):
+  * Read: [behavior] | Write: [behavior] | State: [changes] | Affects: [other registers]
+- **Fields**: [bit fields from spec.md Required Capabilities]
+
+*Example: [device-name]-registers.xml description of "CONTROL" as "Device enable | Writing DEVICE_ENABLE=1 triggers init" → Register CONTROL offset 0x00, Side Effects Write: "Triggers initialization, resets COUNTER to 0"*
+
+## Internal State Variables
+*For each internal state variable needed to implement behavior, document here with data type and purpose, transition:*
+
+## Interfaces
+*For each interface defined in [device-name]-interfaces.xml and spec.md, extract Methods and Purpose:*
+
+### Interface: [INTERFACE_NAME]
+
+## DML Implementation Notes
+*Document DML-specific implementation notes for registers, interfaces, state variables, side-effects, access semantics, etc.*
+
+## Implementation Patterns
+*Patterns gathered via RAG queries to inform implementation approach*
+
+### Pattern: [PATTERN_NAME from RAG results]
+**Applicable To**: [Which registers/interfaces/capabilities]
+**Source**: RAG query - "[query used]"
+**Key Approach**:
+- [High-level pattern point 1]
+- [High-level pattern point 2]
+- [Key DML constructs to use]
+
+**Example Structure** (conceptual, not full implementation):
+```dml
+// Conceptual pattern showing structure only
+[key DML construct examples - no full method bodies]
+```
+
+**Common Pitfalls**:
+- [Pitfall 1 from RAG/Best Practices]
+- [Pitfall 2 from RAG/Best Practices]
+
+**References**:
+- `.specify/memory/DML_Device_Development_Best_Practices.md`: [relevant section]
+- Similar devices from RAG: [device names if found]
+
+**Note**: Detailed implementations will be developed in tasks phase with additional RAG queries.
 ```
