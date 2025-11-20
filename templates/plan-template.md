@@ -80,6 +80,91 @@ simics-project/modules/[device-name]/
 | [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
 | [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
 
+## Plan Completion Checklist
+
+Use this checklist to verify all plan instructions have been completed:
+
+### Setup & Context Loading
+- [ ] Executed setup script (`setup-plan.sh` or `setup-plan.ps1`) and parsed JSON output
+- [ ] Read feature specification (`spec.md`)
+- [ ] Read register definitions XML file (`[device-name]-register.xml`)
+- [ ] Read constitution file (`/memory/constitution.md`)
+- [ ] Loaded plan template (`plan.md`)
+
+### Technical Context Filled
+- [ ] Language/Version specified (no NEEDS CLARIFICATION)
+- [ ] Simics Version documented (from `get_simics_version()`)
+- [ ] Required Packages listed (from `list_installed_packages()`)
+- [ ] Available Platforms documented (from `list_simics_platforms()`)
+- [ ] Device Type identified
+- [ ] Hardware Interfaces defined
+- [ ] Performance Goals specified
+- [ ] Constraints documented
+- [ ] Scale/Scope defined
+
+### Constitution Check Completed
+- [ ] Constitution gates evaluated
+- [ ] Gate results documented (PASS/FAIL)
+- [ ] Violations justified in Complexity Tracking (if any)
+
+### Phase 0: Outline & Research
+- [ ] Identified all unknowns from Technical Context
+- [ ] **Discovery MCP Tools executed**:
+  - [ ] `get_simics_version()` → Simics Version
+  - [ ] `list_installed_packages()` → Required Packages
+  - [ ] `list_simics_platforms()` → Available Platforms
+- [ ] **Architectural RAG queries executed (3-4 MAX)**:
+  - [ ] Query 1: Architectural Overview (device category, architecture)
+  - [ ] Query 2: Key Design Concepts (core concepts, state management)
+  - [ ] Query 3: Common Patterns (DML patterns, code snippets)
+  - [ ] Query 4: Device-specific patterns (if needed)
+- [ ] **research.md created** with:
+  - [ ] DML Learning Prerequisites section
+  - [ ] Environment Discovery (Simics version, packages, platforms)
+  - [ ] Device Architecture Context (overview, concepts, patterns)
+  - [ ] Example Code References (snippets from RAG)
+  - [ ] Architecture Decisions (resolved NEEDS CLARIFICATION)
+  - [ ] Implementation Strategy
+- [ ] **plan.md updated**: All "NEEDS CLARIFICATION" replaced with discovered values
+- [ ] **Validated**: `research.md` exists and contains >= 50 lines
+- [ ] **Validated**: No "NEEDS CLARIFICATION" in `plan.md`
+- [ ] **Git commit**: Phase 0 Research committed
+
+### Phase 1: Design & Contracts
+- [ ] **data-model.md created** with:
+  - [ ] Registers section (extracted from XML + spec.md)
+  - [ ] Internal State Variables section
+  - [ ] Interfaces section
+  - [ ] DML Implementation Notes section
+  - [ ] Implementation Patterns section (from 1-2 RAG queries)
+- [ ] **contracts/ directory created** with:
+  - [ ] `register-access.md` (read/write behavior)
+  - [ ] `interface-behavior.md` (interface contracts)
+- [ ] **test-scenarios.md created** with:
+  - [ ] Scenarios from spec.md "User Scenarios & Testing"
+  - [ ] Generic Simics CLI descriptions (no MCP syntax)
+  - [ ] Validation steps mapped
+  - [ ] Edge cases documented
+  - [ ] Optional: Test patterns from 1-2 RAG queries
+- [ ] **Agent context updated** (executed agent script)
+- [ ] **Constitution Check re-evaluated** after design
+- [ ] **Validated**: `data-model.md` exists with patterns section
+- [ ] **Validated**: `test-scenarios.md` exists with generic CLI
+- [ ] **Validated**: `contracts/` directory has >= 1 file
+- [ ] **Git commit**: Phase 1 Design committed
+
+### Final Validation
+- [ ] All files exist in correct locations
+- [ ] No implementation MCP tools were used during planning
+- [ ] Constitution Check shows PASS (or violations justified)
+- [ ] Ready to proceed to `/tasks` command
+
+### Completion Report Generated
+- [ ] Report includes branch name
+- [ ] Report includes feature name
+- [ ] Report lists all created files with details
+- [ ] Report indicates "Ready For: /tasks command"
+
 ---
 
 # research.md Structure Template
