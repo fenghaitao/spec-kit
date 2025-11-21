@@ -214,9 +214,22 @@ The `/plan` command executes a 2-phase planning workflow for Simics device model
    grep "NEEDS CLARIFICATION" [SPECS_DIR]/plan.md  # Should return nothing
    ```
 
-8. **Git commit**: `git commit -m "plan: [feature] - Phase 0 Research"`
+8. **MANDATORY: Git commit Phase 0 artifacts**:
 
-**Output**: research.md with all NEEDS CLARIFICATION resolved
+   **CRITICAL**: Execute these commands using run_in_terminal tool. Do NOT skip this step.
+
+   ```bash
+   cd [SPECS_DIR]
+   git add research.md plan.md
+   git commit -m "plan: [feature-name] - Phase 0: Research and environment discovery"
+   ```
+
+   **Verify commit**:
+   ```bash
+   git log --oneline -1
+   ```
+
+**Output**: research.md with all NEEDS CLARIFICATION resolved, Phase 0 committed to git
 
 ### Phase 1: Design & Contracts
 
@@ -251,9 +264,22 @@ The `/plan` command executes a 2-phase planning workflow for Simics device model
    ls -la [SPECS_DIR]/data-model.md [SPECS_DIR]/test-scenarios.md [SPECS_DIR]/contracts/
    ```
 
-7. **Git commit**: `git commit -m "plan: [feature] - Phase 1 Design"`
+7. **MANDATORY: Git commit Phase 1 artifacts**:
 
-**Output**: data-model.md, contracts/*, test-scenarios.md
+   **CRITICAL**: Execute these commands using run_in_terminal tool. Do NOT skip this step.
+
+   ```bash
+   cd [SPECS_DIR]
+   git add data-model.md contracts/ test-scenarios.md research.md plan.md
+   git commit -m "plan: [feature-name] - Phase 1: Design artifacts and contracts"
+   ```
+
+   **Verify commit**:
+   ```bash
+   git log --oneline -1
+   ```
+
+**Output**: data-model.md, contracts/*, test-scenarios.md, all artifacts committed to git
 
 ## Completion Validation
 
@@ -263,6 +289,7 @@ Before reporting completion, verify all Phase 0 and Phase 1 requirements:
 - [ ] research.md >= 50 lines with MCP outputs (Simics version, packages, platforms) and architecture context
 - [ ] Technical Context in plan.md has NO "NEEDS CLARIFICATION"
 - [ ] Validation commands from Phase 0 passed successfully
+- [ ] **Git commit executed and verified**: `git log --oneline -1 --grep="Phase 0"`
 
 ### Phase 1 Validation
 - [ ] data-model.md has register/interface definitions + "Implementation Patterns" section
@@ -270,6 +297,7 @@ Before reporting completion, verify all Phase 0 and Phase 1 requirements:
 - [ ] test-scenarios.md uses generic Simics CLI (no MCP syntax)
 - [ ] Constitution Check: PASS
 - [ ] Validation commands from Phase 1 passed successfully
+- [ ] **Git commit executed and verified**: `git log --oneline -1 --grep="Phase 1"`
 
 ### Report Format
 
@@ -286,6 +314,10 @@ Before reporting completion, verify all Phase 0 and Phase 1 requirements:
 - ✅ data-model.md ([X] registers, [X] interfaces, [X] states)
 - ✅ test-scenarios.md ([X] scenarios)
 - ✅ contracts/ ([X] files)
+
+**Git Commits**:
+- ✅ Phase 0: [commit-hash-short] - Research and environment discovery
+- ✅ Phase 1: [commit-hash-short] - Design artifacts and contracts
 
 **Ready For**: /tasks command
 ```

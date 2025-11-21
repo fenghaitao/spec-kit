@@ -571,18 +571,28 @@ Then immediately proceed to Step 5 to commit.
 
 ---
 
-### Step 5: Git Commit
+### Step 5: MANDATORY Git Commit
 
 **Execute this step after completing Step 3 (spec.md) OR Step 4 (XML)**
 
+**CRITICAL**: Execute these commands using run_in_terminal tool. Do NOT skip this step.
+
 Stage and commit changes:
 ```bash
-git add -A
-git commit -m "specify: <feature-name> - <section/update-description>"
+cd [SPECS_DIR]
+git add spec.md
+# If XML was generated:
+git add [device-name]-registers.xml
+git commit -m "specify: [feature-name] - [description]"
 ```
 
-**Examples**:
-- After step 3: `"specify: watchdog-timer - initial hardware specification created"`
+**Verify commit**:
+```bash
+git log --oneline -1
+```
+
+**Commit Message Examples**:
+- After step 3: `"specify: watchdog-timer - initial hardware specification"`
 - After step 4: `"specify: watchdog-timer - added IP-XACT register XML with side-effects"`
 - After updates: `"specify: watchdog-timer - clarified interrupt behavior"`
 
@@ -600,16 +610,18 @@ Report completion with:
 - XML file path (if generated)
 - Number of `[NEEDS CLARIFICATION]` markers (if any)
 - Readiness for the next phase (`/plan`)
+- **Git commit hash**
 
 **Example completion message**:
 ```
 ✅ Hardware specification complete for watchdog-timer
 
 Branch: 001-watchdog-timer
-Spec: .kiro/specs/001-watchdog-timer/requirements.md
+Spec: .kiro/specs/001-watchdog-timer/spec.md
 XML: .kiro/specs/001-watchdog-timer/watchdog-timer-registers.xml
 
 Status: Ready for planning (0 clarifications needed)
+Git Commit: abc1234 - specify: watchdog-timer - initial hardware specification
 
 Next step: Use /plan to generate technical implementation plan
 ```

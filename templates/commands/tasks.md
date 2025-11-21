@@ -67,12 +67,27 @@ You **MUST** consider the user input before proceeding (if not empty).
    - **CRITICAL BUILD REQUIREMENT** annotation for implementation tasks
    - **MCP Absolute Path** requirement for all MCP tool calls
 
-5. **Report**: Output path to generated tasks.md and summary:
+5. **MANDATORY: Git commit tasks.md**:
+
+   **CRITICAL**: Execute these commands using run_in_terminal tool AFTER generating tasks.md. Do NOT skip this step.
+
+   ```bash
+   cd [FEATURE_DIR]
+   git add tasks.md
+   git commit -m "tasks: [feature-name] - Generated implementation tasks ([X] tasks, [Y] phases)"
+   ```
+
+   **Verify commit**:
+   ```bash
+   git log --oneline -1
+   ```
+
+6. **Report**: Output path to generated tasks.md and summary:
    - Total task count
-   - Task count per user story
+   - Task count per phase
    - Parallel opportunities identified
-   - DML learning gate included
    - Format validation: Confirm ALL tasks follow the checklist format (checkbox, ID, labels, file paths)
+   - **Git commit hash**: [commit-hash-short]
 
 Context for task generation: {ARGS}
 
@@ -165,4 +180,4 @@ Simics device modeling follows this 5-phase workflow:
 
 4. **Knowledge Check Before RAG**: Implementation tasks should check existing knowledge (research.md, data-model.md, study notes) before executing RAG queries
 
-5. **Git Commits**: Include git commit instruction after task generation/updates to maintain planning history
+5. **MANDATORY Git Commit**: After generating tasks.md, MUST execute git commit using run_in_terminal tool with commit message: `"tasks: [feature-name] - Generated implementation tasks ([X] tasks, [Y] phases)"`. Verify with `git log --oneline -1`.
