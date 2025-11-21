@@ -82,15 +82,23 @@ You **MUST** consider the user input before proceeding (if not empty).
    - **Validation checkpoints**: Verify each phase completion before proceeding
    - **⚠️ CRITICAL**: After EVERY build or test command, immediately create a git commit (see step 7)
 
-7. **MANDATORY: Git Version Control - Execute After EVERY Build or Test**:
-   - **WHEN**: Immediately after EVERY build attempt (successful or failed) and EVERY test run (pass or fail)
+7. **MANDATORY: Git Version Control - Execute After EVERY Build, Test, Initialization, or Major Update**:
+   - **WHEN**:
+     - Immediately after EVERY build attempt (successful or failed)
+     - Immediately after EVERY test run (pass or fail)
+     - **Immediately after project initialization** (Setup phase completion)
+     - **Immediately after each major DML implementation update** (e.g., completed register bank, completed device method, completed state machine logic)
    - **WHAT**: Stage and commit ALL modified files (source code, tests, configs, DML files, etc.)
-   - **HOW**: Use these exact commands:
+   - **HOW**: Execute using run_in_terminal tool with these exact commands:
      ```bash
+     cd <FEATURE_DIR>
      git add -A
      git commit -m "implement: <task-id> - <step-description> - <result>"
+     git log --oneline -1
      ```
    - **EXAMPLES**:
+     - After initialization: `git commit -m "implement: T001-T005 - project initialization - SUCCESS"`
+     - After DML update: `git commit -m "implement: T015 - register bank implementation - COMPLETED"`
      - After failed build: `git commit -m "implement: T024 - build validation - FAILED: syntax error in registers.dml"`
      - After successful build: `git commit -m "implement: T024 - build validation - SUCCESS"`
      - After failed test: `git commit -m "implement: T031 - comprehensive tests - FAILED: register access error"`
@@ -100,7 +108,9 @@ You **MUST** consider the user input before proceeding (if not empty).
      - Revert to working states
      - Review the implementation journey
      - Debug issues by comparing commits
+     - **Recover from build failures by reverting to last working state**
    - **CRITICAL**: Do NOT skip commits even if the build/test failed - failed attempts are valuable history
+   - **VERIFICATION**: After each git commit, verify with `git log --oneline -1` to confirm commit was created
 
 8. Implementation execution rules:
    - **Setup first**: Initialize project structure, dependencies, configuration
@@ -123,39 +133,69 @@ You **MUST** consider the user input before proceeding (if not empty).
 
    When `build_simics_project()` or `check_with_dmlc()` fails:
 
-   1. **Capture and analyze the error**:
+   1. **Track build failure count**:
+      - Maintain a counter for consecutive build failures on the same task
+      - Reset counter to 0 when build succeeds
+      - **CRITICAL**: If build fails 3 times consecutively on the same implementation attempt:
+        - **STOP execution immediately**
+        - Display failure summary:
+          ```
+          ⚠️ BUILD FAILURE THRESHOLD REACHED (3 consecutive failures)
+
+          Current approach is not working. Options:
+          1. Revert to simpler DML implementation (recommended)
+          2. Continue debugging current approach
+          3. Request human assistance
+
+          Failure history:
+          - Attempt 1: <error summary>
+          - Attempt 2: <error summary>
+          - Attempt 3: <error summary>
+
+          Last successful commit: <git hash>
+          ```
+        - **MANDATORY**: Ask user: "How would you like to proceed? (1/2/3 or provide guidance)"
+        - **Wait for user response** before continuing
+        - If user chooses option 1, revert to last successful commit and implement simpler approach
+        - If user chooses option 2, continue with current debugging approach
+        - If user chooses option 3 or provides guidance, follow user instructions
+
+   2. **Capture and analyze the error**:
       - Use `check_with_dmlc()` for AI-enhanced diagnostics (if not already called)
       - Extract: error type (syntax, semantic, undefined symbol, etc.)
       - Identify: file location, line number, specific construct causing failure
 
-   2. **Review knowledge sources**:
+   3. **Review knowledge sources**:
       - Check `.specify/memory/DML_Device_Development_Best_Practices.md` for relevant patterns
       - Check `.specify/memory/DML_grammar.md` for correct syntax
       - Review research.md for similar issues previously resolved
       - Review data-model.md for intended design
 
-   3. **Execute targeted RAG query** (if knowledge insufficient):
+   4. **Execute targeted RAG query** (if knowledge insufficient):
       - Include specific error message in query
       - Example: `perform_rag_query("DML error: undefined method write_register how to fix", source_type="dml")`
       - Document RAG results in research.md
 
-   4. **Apply fix**:
+   5. **Apply fix**:
       - Make minimal changes to address the specific error
       - Follow DML best practices from knowledge sources
       - Add comments explaining the fix if non-obvious
 
-   5. **Re-validate**:
+   6. **Re-validate**:
       - Run `check_with_dmlc()` → `build_simics_project()` again
-      - If still failing, repeat from step 1 with new error
-      - If passing, proceed to git commit
+      - **Increment failure counter** if still failing
+      - **Check if failure count >= 3**, if so, execute step 1 (user intervention)
+      - If passing, reset failure counter to 0 and proceed to git commit
 
-   6. **Git commit** (MANDATORY even if failed):
+   7. **Git commit** (MANDATORY even if failed):
       ```bash
+      cd <FEATURE_DIR>
       git add -A
-      git commit -m "implement: <task-id> - error recovery - <result>"
+      git commit -m "implement: <task-id> - error recovery attempt <N> - <result>"
+      git log --oneline -1
       ```
 
-   7. **Document solution**:
+   8. **Document solution**:
       - Add error pattern and solution to research.md under "## Build Error Solutions"
       - Include: error message, root cause, fix applied, RAG query used (if any)
 
