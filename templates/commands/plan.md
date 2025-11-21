@@ -174,7 +174,13 @@ The `/plan` command executes a 2-phase planning workflow for Simics device model
    - `list_installed_packages()` → Required Packages
    - `list_simics_platforms()` → Available Platforms
 
-3. **Architectural RAG** (3-4 queries MAX):
+3. **Read DML Grammar** (MANDATORY):
+   - Read `.specify/memory/DML_grammar.md` to understand DML 1.4 syntax
+   - Focus on: device structure, register banks, attributes, methods, events, interfaces
+   - **Purpose**: Understand DML syntax before querying architectural patterns
+   - **Note**: This is reference material, not for copying into research.md
+
+4. **Architectural RAG** (3-4 queries MAX):
    - **Query 1 - Architectural Overview**: Identify device category and query architecture
      * Example: `"DML timer device architecture counter overflow interrupt concepts"`
      * Extract: High-level architecture, components, typical registers/interfaces
@@ -188,7 +194,7 @@ The `/plan` command executes a 2-phase planning workflow for Simics device model
      * Example: `"DML periodic event scheduling timer pattern"`
    - Skip: Detailed implementations, callbacks, test code, error handling
 
-4. **Create research.md** (see plan-template.md for structure):
+5. **Create research.md** (see plan-template.md for structure):
    - DML Learning Prerequisites
    - Environment Discovery (Simics version, packages, platforms)
    - Device Architecture Context:
@@ -198,16 +204,17 @@ The `/plan` command executes a 2-phase planning workflow for Simics device model
    - Architecture Decisions (resolved NEEDS CLARIFICATION)
    - Implementation Strategy
    - **Example Code References** (code snippets from RAG for implementation reference)
+   - **Implementation Notes**: Document key insights from DML grammar and RAG queries that will guide implementation (e.g., "Use bank.set() for register side-effects", "Events require post() in callback methods")
 
-5. **Update plan.md**: Replace all "NEEDS CLARIFICATION" with discovered values
+6. **Update plan.md**: Replace all "NEEDS CLARIFICATION" with discovered values
 
-6. **Validate**:
+7. **Validate**:
    ```bash
    ls -la [SPECS_DIR]/research.md
    grep "NEEDS CLARIFICATION" [SPECS_DIR]/plan.md  # Should return nothing
    ```
 
-7. **Git commit**: `git commit -m "plan: [feature] - Phase 0 Research"`
+8. **Git commit**: `git commit -m "plan: [feature] - Phase 0 Research"`
 
 **Output**: research.md with all NEEDS CLARIFICATION resolved
 

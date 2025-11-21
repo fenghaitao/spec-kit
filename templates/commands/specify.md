@@ -508,16 +508,20 @@ See **register-template.md Section 3** for XML structure.
 
 #### 4.4: Generate Register Definitions
 
-For EACH register extracted in Step 2.2, generate register definition with:
+**MANDATORY**: Create `<ipxact:register>` element for **EVERY** register extracted in Step 2.2, **regardless of whether they have side-effects or not**.
+
+For EACH register, generate register definition with:
 - Basic properties: name, addressOffset, size, access type
 - Volatile flag (true for hardware-updated registers, false for control registers)
 - Reset value and mask
 - **CRITICAL**: Comprehensive `<ipxact:description>` including:
   - Functional purpose
-  - Read side-effects (from Step 2.4.3)
-  - Write side-effects (from Step 2.4.4)
-  - Cross-register dependencies (from Step 2.4.2)
-  - Lock/protection constraints (from Step 2.4.2)
+  - Read side-effects (from Step 2.4.3) - if none, explicitly state "No read side-effects"
+  - Write side-effects (from Step 2.4.4) - if none, explicitly state "No write side-effects"
+  - Cross-register dependencies (from Step 2.4.2) - if none, omit this section
+  - Lock/protection constraints (from Step 2.4.2) - if none, omit this section
+
+**Important**: Do NOT skip registers without side-effects. Simple control/status registers still need full register definitions with descriptions stating they have no side-effects.
 
 See **register-template.md Section 4** for XML structure and examples.
 

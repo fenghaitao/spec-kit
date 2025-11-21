@@ -41,21 +41,22 @@ You **MUST** consider the user input before proceeding (if not empty).
 3. **Execute task generation workflow**:
    - Load plan.md and extract: DML version, Simics API, device type, register map, project structure
    - Load spec.md and extract: Functional requirements, operational hardware behaviors, state machines, hardware/software interactions, register descriptions, test scenarios
-   - Load [device-name]-registers.xml and extract: register names, offsets, sizes, access types, bit fields, reset values, side-effect descriptions
+   - Load [device-name]-registers.xml and extract: register names, offsets, sizes, access types, bit fields, reset values, **side-effect descriptions**
    - If research.md exists: Extract environment discovery (Simics version, packages, platforms), architecture decisions, device patterns for setup tasks
-   - If data-model.md exists: Extract registers with side-effects, interfaces, state variables, DML implementation notes → map to DML implementation tasks
+   - If data-model.md exists: Extract registers with side-effects, interfaces, state variables, DML implementation notes → map to **behavior implementation tasks** (NOT basic register definitions)
    - If contracts/ exists: Extract register access contracts, interface behavior contracts → map to test tasks
    - If test-scenarios.md exists: Extract test scenarios → map to test implementation tasks
    - Map functional requirements to implementation tasks (see Task Organization by Requirement Category)
+   - **IMPORTANT**: Phase 1 creates basic register definitions - Phase 3 tasks focus on side-effects, behaviors, state transitions, HW/SW flows
    - Generate dependency graph showing phase dependencies and within-phase parallelization
    - Create parallel execution opportunities per phase
-   - Validate task completeness (all registers, interfaces, requirements, test scenarios covered)
+   - Validate task completeness (all side-effects, behaviors, interfaces, requirements, test scenarios covered)
 
 4. **Generate tasks.md**: Use `.specify/templates/tasks-template.md` as structure, fill with:
    - Correct device name from plan.md
-   - Phase 1: Setup tasks (Simics project creation, DML device skeleton, DMLC checkout)
+   - Phase 1: Setup tasks (Simics project creation, DML device skeleton with basic register definitions in [device-name]-registers.dml, DMLC checkout)
    - Phase 2: Tests First (TDD - optional test RAG, contract tests, workflow tests)
-   - Phase 3: DML Implementation (registers, interfaces, state management with on-demand RAG)
+   - Phase 3: DML Implementation (register side-effects/behaviors, state transitions, HW/SW interaction flows with on-demand RAG - NOT basic register definitions)
    - Phase 4: Integration (memory mapping, interrupts, checkpointing with on-demand RAG)
    - Phase 5: Polish (validation, documentation, cleanup)
    - All tasks must follow the strict checklist format (see Task Generation Rules below)
@@ -117,13 +118,15 @@ Map functional requirements from spec.md to implementation tasks:
 
 1. **From Functional Requirements (spec.md)**:
    - Each requirement maps to specific implementation tasks
-   - Example: "Countdown Timer Logic" → register definitions + counter logic + state management tasks
-   - Example: "Interrupt Generation" → interrupt interface + signal handling tasks
+   - Example: "Countdown Timer Logic" → counter logic + state management + behavior implementation tasks
+   - Example: "Interrupt Generation" → interrupt interface + signal handling + trigger logic tasks
 
 2. **From Register Map (spec.md + XML)**:
-   - Each register → register definition task in registers.dml
-   - Each register with side-effects → handler implementation task
-   - Group related registers (e.g., all control registers, all status registers)
+   - **NOTE**: Basic register definitions already exist in `[device-name]-registers.dml` from Phase 1 setup
+   - **Focus on**: Register side-effects, read/write behaviors, cross-register dependencies
+   - Each register with side-effects → implement read/write callback handlers
+   - Each register with hardware behavior → implement state updates, triggers, or side-effects
+   - Group related behaviors (e.g., control register writes trigger actions, status register reads update state)
 
 3. **From External Interfaces (spec.md)**:
    - Each interface (interrupt, memory, signal) → interface implementation task
@@ -144,9 +147,9 @@ Map functional requirements from spec.md to implementation tasks:
 
 Simics device modeling follows this 5-phase workflow:
 
-- **Phase 1**: Setup (Simics project initialization with MCP tools)
+- **Phase 1**: Setup (Simics project initialization with MCP tools, includes basic register definitions in [device-name]-registers.dml and device skeleton in [device-name].dml)
 - **Phase 2**: Tests First (TDD - optional test RAG, contract tests, workflow tests - MUST FAIL before implementation)
-- **Phase 3**: DML Implementation (registers, interfaces, logic with on-demand RAG and CRITICAL BUILD REQUIREMENT)
+- **Phase 3**: DML Implementation (register side-effects, hardware behaviors, state transitions, SW/HW interaction flows with on-demand RAG and CRITICAL BUILD REQUIREMENT - NOT basic register definitions)
 - **Phase 4**: Integration (memory, interrupts, checkpointing with on-demand RAG and CRITICAL BUILD REQUIREMENT)
 - **Phase 5**: Polish (validation, documentation, cleanup)
 
@@ -158,6 +161,8 @@ Simics device modeling follows this 5-phase workflow:
 
 2. **No Separate Build Tasks**: check_with_dmlc and build_simics_project are NOT separate tasks - they are validation steps after EVERY implementation task
 
-3. **Knowledge Check Before RAG**: Implementation tasks should check existing knowledge (research.md, data-model.md, study notes) before executing RAG queries
+3. **Phase 1 Provides Base Structure**: Phase 1 setup creates `[device-name]-registers.dml` with basic register definitions and `[device-name].dml` with device skeleton. **Phase 3 tasks must focus on register side-effects, behaviors, state transitions, and HW/SW flows - NOT basic register definitions**
 
-4. **Git Commits**: Include git commit instruction after task generation/updates to maintain planning history
+4. **Knowledge Check Before RAG**: Implementation tasks should check existing knowledge (research.md, data-model.md, study notes) before executing RAG queries
+
+5. **Git Commits**: Include git commit instruction after task generation/updates to maintain planning history
