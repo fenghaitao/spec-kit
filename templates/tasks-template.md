@@ -152,29 +152,28 @@ Do NOT mark task done until build succeeds. Do NOT proceed to next task if build
 
 **Note**: Do NOT create separate tasks for check_with_dmlc/build_simics_project calls - they are mandatory validation steps after EVERY implementation task, not standalone tasks.
 
-### Register Implementation (from data-model.md + register XML)
+**⚠️ IMPORTANT**: Basic register definitions already exist in `[device-name]-registers.dml` and device skeleton in `[device-name].dml` from Phase 1 setup. DO NOT create tasks for basic register definitions. Focus on register side-effects, hardware behaviors, state transitions, and HW/SW interaction flows.
 
-- [ ] T009 [P] Register definitions in `simics-project/modules/DEVICE_NAME/DEVICE_NAME-registers.dml`:
-  - Review research.md and data-model.md for register patterns
-  - **RAG if needed**: `perform_rag_query("DML register bank definition pattern io_memory", source_type="dml")` → document in research.md
-  - Define register bank structure
-  - Add register declarations with offsets, sizes, access types
-  - Add bit field definitions
-  - Set reset values
-  - Check_with_dmlc → build
+### Register Read/Write Side-Effects Implementation (from data-model.md + spec.md)
 
-- [ ] T010 Register read/write handlers in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
-  - Review `.specify/memory/DML_Device_Development_Best_Practices.md` for side-effect patterns
+- [ ] T009 [P] Register read/write side-effects in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
+  - Review spec.md for register read/write behaviors
   - Review data-model.md for register side-effects
-  - **RAG if needed**: `perform_rag_query("DML register read write callback side effects", source_type="dml")` → document in research.md
-  - Implement read callbacks for each register
-  - Implement write callbacks for each register
-  - Add side-effects from data-model.md
+  - Review `.specify/memory/DML_Device_Development_Best_Practices.md` for side-effect patterns
+  - **RAG if needed**: `perform_rag_query("DML register read write callback side effects clear on read control actions", source_type="dml")` → document in research.md
+  - **Read side-effects**: Implement read callbacks for registers with side-effects
+    * Status register updates on read
+    * Clear-on-read behaviors
+    * Hardware state changes triggered by reads
+  - **Write side-effects**: Implement write callbacks for control registers
+    * Control actions and triggers
+    * Hardware state updates
+    * Command execution
   - Check_with_dmlc → build
 
 ### Interface Implementation (from data-model.md)
 
-- [ ] T011 [P] Interface declarations in `simics-project/modules/DEVICE_NAME/interfaces.dml`:
+- [ ] T010 [P] Interface declarations in `simics-project/modules/DEVICE_NAME/interfaces.dml`:
   - Review research.md and data-model.md for interface patterns
   - Review `.specify/memory/DML_grammar.md` for interface syntax
   - **RAG if needed**: `perform_rag_query("DML interface implementation io_memory signal", source_type="dml")` → document in research.md
@@ -183,22 +182,36 @@ Do NOT mark task done until build succeeds. Do NOT proceed to next task if build
   - Add interface contracts from contracts/interface-behavior.md (if exists)
   - Check_with_dmlc → build
 
-### Device Logic (from spec.md operational behaviors)
+### Hardware Behavior & State Transitions (from spec.md operational behaviors)
 
-- [ ] T012 State management in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
-  - Review spec.md for state transitions and operational behaviors
-  - Review data-model.md for internal state variables
+- [ ] T011 Hardware state machine implementation in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
+  - Review spec.md for operational behaviors and state transitions
+  - Review data-model.md for internal state variables and state machine design
   - **RAG if needed**: `perform_rag_query("DML state machine implementation event handling", source_type="dml")` → document in research.md
   - Define internal state variables from data-model.md
-  - Implement state transitions
-  - Add state validation
+  - Implement hardware state transitions (idle, active, busy, error states)
+  - Add state validation and guards
+  - Implement state-dependent behaviors
+  - Add hardware event handling (timers, interrupts, external signals)
+  - Check_with_dmlc → build
+
+- [ ] T012 Hardware/Software interaction flows in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
+  - Review spec.md for SW/HW interaction scenarios
+  - Review data-model.md for interaction patterns
+  - **RAG if needed**: `perform_rag_query("DML software hardware interaction patterns driver model", source_type="dml")` → document in research.md
+  - Implement SW-initiated operations (configuration, control commands)
+  - Implement HW-initiated notifications (status updates, interrupts)
+  - Add handshaking protocols between SW and HW
+  - Implement synchronization mechanisms
+  - Add timing and sequencing constraints
   - Check_with_dmlc → build
 
 - [ ] T013 Error handling and validation in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
   - Review `.specify/memory/DML_Device_Development_Best_Practices.md` for error handling patterns
   - **RAG if needed**: `perform_rag_query("DML error handling validation logging", source_type="dml")` → document in research.md
-  - Add input validation
-  - Implement error detection
+  - Add input validation (register values, operation sequences)
+  - Implement error detection (invalid states, illegal operations)
+  - Add error reporting (status registers, interrupts)
   - Add logging for debugging
   - Check_with_dmlc → build
 
