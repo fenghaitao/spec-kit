@@ -82,32 +82,32 @@ simics-project/modules/[device-name]/
 
 ## Plan Completion Checklist
 
-Use this checklist to verify all plan instructions have been completed:
+Use this checklist to verify all /plan command steps have been completed:
 
-### Setup & Context Loading
+### Step 1: Setup & Context Loading
 - [ ] Executed setup script (`setup-plan.sh` or `setup-plan.ps1`) and parsed JSON output
 - [ ] Read feature specification (`spec.md`)
 - [ ] Read register definitions XML file (`[device-name]-register.xml`)
 - [ ] Read constitution file (`/memory/constitution.md`)
 - [ ] Loaded plan template (`plan.md`)
 
-### Technical Context Filled
-- [ ] Language/Version specified (no NEEDS CLARIFICATION)
-- [ ] Simics Version documented (from `get_simics_version()`)
-- [ ] Required Packages listed (from `list_installed_packages()`)
-- [ ] Available Platforms documented (from `list_simics_platforms()`)
-- [ ] Device Type identified
-- [ ] Hardware Interfaces defined
-- [ ] Performance Goals specified
-- [ ] Constraints documented
-- [ ] Scale/Scope defined
+### Step 2: Technical Context & Constitution Check
+- [ ] **Technical Context filled**:
+  - [ ] Language/Version specified (no NEEDS CLARIFICATION)
+  - [ ] Simics Version marked (will be resolved in Phase 0)
+  - [ ] Required Packages marked (will be resolved in Phase 0)
+  - [ ] Available Platforms marked (will be resolved in Phase 0)
+  - [ ] Device Type identified
+  - [ ] Hardware Interfaces defined
+  - [ ] Performance Goals specified
+  - [ ] Constraints documented
+  - [ ] Scale/Scope defined
+- [ ] **Constitution Check completed**:
+  - [ ] Constitution gates evaluated
+  - [ ] Gate results documented (PASS/FAIL)
+  - [ ] Violations justified in Complexity Tracking (if any)
 
-### Constitution Check Completed
-- [ ] Constitution gates evaluated
-- [ ] Gate results documented (PASS/FAIL)
-- [ ] Violations justified in Complexity Tracking (if any)
-
-### Phase 0: Outline & Research
+### Step 3: Phase 0 - Outline & Research
 - [ ] Identified all unknowns from Technical Context
 - [ ] **Discovery MCP Tools executed**:
   - [ ] `get_simics_version()` → Simics Version
@@ -130,7 +130,7 @@ Use this checklist to verify all plan instructions have been completed:
 - [ ] **Validated**: No "NEEDS CLARIFICATION" in `plan.md`
 - [ ] **Git commit**: Phase 0 Research committed
 
-### Phase 1: Design & Contracts
+### Step 4: Phase 1 - Design & Contracts
 - [ ] **data-model.md created** with:
   - [ ] Registers section (extracted from XML + spec.md)
   - [ ] Internal State Variables section
@@ -153,17 +153,12 @@ Use this checklist to verify all plan instructions have been completed:
 - [ ] **Validated**: `contracts/` directory has >= 1 file
 - [ ] **Git commit**: Phase 1 Design committed
 
-### Final Validation
+### Step 5: Completion Validation & Report
 - [ ] All files exist in correct locations
 - [ ] No implementation MCP tools were used during planning
 - [ ] Constitution Check shows PASS (or violations justified)
+- [ ] Completion report generated with all file details
 - [ ] Ready to proceed to `/tasks` command
-
-### Completion Report Generated
-- [ ] Report includes branch name
-- [ ] Report includes feature name
-- [ ] Report lists all created files with details
-- [ ] Report indicates "Ready For: /tasks command"
 
 ---
 

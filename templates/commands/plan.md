@@ -24,26 +24,133 @@ $ARGUMENTS
 
 You **MUST** consider the user input before proceeding (if not empty).
 
-## Outline
+## Workflow Overview
 
-1. **Setup**: Run `{SCRIPT}` from repo root and parse JSON for FEATURE_SPEC, IMPL_PLAN, SPECS_DIR, BRANCH.
+The `/plan` command executes a 2-phase planning workflow for Simics device modeling:
 
-2. **Load context**: Read FEATURE_SPEC (hardware specification), register XML file (`[SPECS_DIR]/[device-name]-register.xml`), and `/memory/constitution.md`. Load IMPL_PLAN template (already copied).
+1. **Setup & Context Loading** - Initialize environment and load specifications
+2. **Phase 0: Outline & Research** - Discover environment, query architecture, create research.md
+3. **Phase 1: Design & Contracts** - Create data-model.md, contracts/, test-scenarios.md
+4. **Completion Validation & Report** - Verify artifacts and report readiness for /tasks
 
-3. **Execute workflow**: Follow IMPL_PLAN template structure:
-   - Fill Technical Context (mark unknowns "NEEDS CLARIFICATION")
-   - Fill Constitution Check, evaluate gates
-   - **Phase 0**: Discovery MCP tools → Architectural RAG queries (1-2 max) → research.md → Git commit
-   - **Phase 1**: data-model.md (DML patterns) + contracts/ + test-scenarios.md → Agent context update → Git commit
+**Key Outputs**: plan.md (filled), research.md, data-model.md, contracts/, test-scenarios.md
 
-4. **Report**: Branch, artifacts, ready for /tasks command.
+---
+
+## Detailed Steps
+
+### Step 1: Setup & Context Loading
+
+**Actions**:
+1. Run `{SCRIPT}` from repository root
+2. Parse JSON output for: FEATURE_SPEC, IMPL_PLAN, SPECS_DIR, BRANCH
+3. Read FEATURE_SPEC (hardware specification at `[SPECS_DIR]/spec.md`)
+4. Read register XML file (`[SPECS_DIR]/[device-name]-register.xml`)
+5. Read constitution file (`/memory/constitution.md`)
+6. Load IMPL_PLAN template (already copied to `[SPECS_DIR]/plan.md`)
+
+**Deliverable**: Environment configured, context loaded, ready for planning
+
+### Step 2: Fill Technical Context & Constitution Check
+
+**Actions**:
+1. Extract technical details from spec.md and mark unknowns as "NEEDS CLARIFICATION"
+2. Fill Technical Context section in plan.md:
+   - Language/Version: DML 1.4
+   - Simics Version: Mark NEEDS CLARIFICATION (will be resolved in Phase 0)
+   - Required Packages: Mark NEEDS CLARIFICATION (will be resolved in Phase 0)
+   - Available Platforms: Mark NEEDS CLARIFICATION (will be resolved in Phase 0)
+   - Device Type, Hardware Interfaces, Performance Goals, Constraints, Scale/Scope
+3. Evaluate constitution gates (complexity, architecture, dependencies)
+4. Document gate results (PASS/FAIL) and justify violations if any
+
+**Deliverable**: plan.md Technical Context filled, Constitution Check completed
+
+### Step 3: Execute Phase 0 (Outline & Research)
+
+**Actions**:
+1. Identify all "NEEDS CLARIFICATION" items from Technical Context
+2. Execute Discovery MCP Tools (MANDATORY):
+   - `get_simics_version()` → Simics Version
+   - `list_installed_packages()` → Required Packages
+   - `list_simics_platforms()` → Available Platforms
+3. Execute Architectural RAG queries (3-4 MAX):
+   - Query 1: Architectural Overview
+   - Query 2: Key Design Concepts
+   - Query 3: Common Patterns (with code snippets)
+   - Query 4: Device-specific patterns (optional)
+4. Create research.md with structure from plan-template.md
+5. Update plan.md: Replace all "NEEDS CLARIFICATION" with discovered values
+6. Validate Phase 0 completion
+7. Git commit Phase 0 artifacts
+
+**Deliverable**: research.md, plan.md (fully resolved)
+
+### Step 4: Execute Phase 1 (Design & Contracts)
+
+**Actions**:
+1. Create data-model.md:
+   - Extract registers from XML and spec.md
+   - Execute 1-2 DML pattern RAG queries
+   - Document Implementation Patterns with code snippets
+2. Create contracts/ directory with register-access.md and interface-behavior.md
+3. Create test-scenarios.md from spec.md "User Scenarios & Testing"
+4. Update agent context with DML/Simics technology
+5. Re-evaluate Constitution Check
+6. Validate Phase 1 completion
+7. Git commit Phase 1 artifacts
+
+**Deliverable**: data-model.md, contracts/, test-scenarios.md
+
+### Step 5: Validate Completion & Report
+
+**Actions**:
+1. Execute validation checks for Phase 0 and Phase 1
+2. Verify all files exist with required content
+3. Confirm no "NEEDS CLARIFICATION" remains
+4. Generate completion report with file details
+
+**Deliverable**: Completion report, ready for /tasks command
+
+---
 
 ## Core Principles
 
-1. **Sequential phases** - Complete Phase 0 before Phase 1
-2. **Minimal RAG queries** - Phase 0: 3-4 architectural (overview, concepts, patterns); Phase 1: 1-2 RAG queries per pattern needed
-3. **Validate each phase** - Verify files exist before proceeding
-4. **Design only** - No implementation MCP tools (create_simics_project, etc.)
+### 1. Sequential Phase Execution
+- **Complete Phase 0 before Phase 1** - Research findings inform design decisions
+- **No skipping steps** - Each phase builds on previous phase outputs
+- **Validate before proceeding** - Use validation commands to confirm phase completion
+- **Rationale**: Architectural understanding from Phase 0 prevents design rework in Phase 1
+
+### 2. Minimal, Targeted RAG Queries
+- **Phase 0 Limit: 3-4 architectural queries** - Focus on overview, concepts, patterns
+- **Phase 1 Limit: 1-2 queries per pattern** - Only for specific DML/test patterns needed
+- **Query Purpose**: Architectural guidance and code snippets, NOT detailed implementations
+- **Rationale**: Excessive RAG queries dilute context and slow planning; detailed patterns gathered during implementation
+
+### 3. Complete Resolution of Unknowns
+- **Mark unknowns as "NEEDS CLARIFICATION"** in Technical Context during initial fill
+- **Resolve ALL unknowns in Phase 0** using Discovery MCP tools and architectural RAG
+- **ERROR if any remain** - No unresolved NEEDS CLARIFICATION before Phase 1
+- **Rationale**: Ambiguity in planning leads to implementation blockers and rework
+
+### 4. Design-Only Workflow
+- **NO implementation MCP tools** - create_simics_project, add_dml_code, etc. reserved for Phase 3 (tasks)
+- **Use ONLY**: get_simics_version, list_installed_packages, list_simics_platforms, RAG queries
+- **Focus on artifacts**: research.md, data-model.md, contracts/, test-scenarios.md
+- **Rationale**: Separation of planning (design) from execution (implementation) ensures complete understanding before coding
+
+### 5. Validate Each Deliverable
+- **File existence checks** - Verify files created before marking phase complete
+- **Content validation** - Confirm minimum line counts, required sections present
+- **Constitution compliance** - Re-check gates after design artifacts created
+- **Rationale**: Early validation catches incomplete work before downstream dependencies fail
+
+### 6. Git Commit Per Phase
+- **Phase 0 commit** - After research.md created and plan.md updated
+- **Phase 1 commit** - After data-model.md, contracts/, test-scenarios.md created
+- **Commit messages** - Use format: `"plan: [feature] - Phase X [Name]"`
+- **Rationale**: Phase-level commits provide clear audit trail and enable rollback if needed
 
 ## Common Pitfalls
 
@@ -143,24 +250,19 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 ## Completion Validation
 
-Before reporting completion, verify:
+Before reporting completion, verify all Phase 0 and Phase 1 requirements:
 
-### Phase 0
-```bash
-ls -la [SPECS_DIR]/research.md
-grep "NEEDS CLARIFICATION" [SPECS_DIR]/plan.md  # Should return nothing
-```
+### Phase 0 Validation
 - [ ] research.md >= 50 lines with MCP outputs (Simics version, packages, platforms) and architecture context
-- [ ] Technical Context has NO "NEEDS CLARIFICATION"
+- [ ] Technical Context in plan.md has NO "NEEDS CLARIFICATION"
+- [ ] Validation commands from Phase 0 passed successfully
 
-### Phase 1
-```bash
-ls -la [SPECS_DIR]/data-model.md [SPECS_DIR]/test-scenarios.md [SPECS_DIR]/contracts/
-```
+### Phase 1 Validation
 - [ ] data-model.md has register/interface definitions + "Implementation Patterns" section
 - [ ] contracts/ has >= 1 file (register-access.md, interface-behavior.md)
 - [ ] test-scenarios.md uses generic Simics CLI (no MCP syntax)
 - [ ] Constitution Check: PASS
+- [ ] Validation commands from Phase 1 passed successfully
 
 ### Report Format
 

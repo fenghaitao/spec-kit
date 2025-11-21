@@ -1,94 +1,147 @@
-# Tasks: [FEATURE NAME]
+---
 
-**Status**: No## Format: `[ID] [P?] Description`
-**[P]** = Can run in parallel (different files, no dependencies)
-Include exact file paths in descriptions
+des**Prerequisites**:
+- **Required**: plan.md, spec.md, [device-name]-registers.xml
+- **Optional**: research.md, data-model.md, contracts/, test-scenarios.md
 
-**⚠️ CRITICAL - MCP Tool Paths (SSE Transport)**:
-- **ALWAYS use ABSOLUTE paths** for MCP tools: `create_simics_project()`, `build_simics_project()`, `run_simics_test()`
-- **NEVER use relative paths** like `"./simics-project"` or `"../project"`
-- **WHY**: SSE transport MCP servers run in different process/directory context
-- **HOW**: Use `os.getcwd()` or workspace root to construct: `"/full/path/to/workspace/simics-project"`
-- **Example**: `create_simics_project(project_path="/home/user/workspace/simics-project")`tarted | In Progress | Completed | Blocked
-**Input**: Design documents from `/specs/[###-feature-name]/`
-**Prerequisites**: plan.md (required), data-model.md, contracts/
+**Tests**: Tests are REQUIRED for Simics device modeling (TDD approach)
 
-## Execution Flow (main)
-```
-1. Load plan.md → Extract: DML version, Simics API, device type, register map
-2. Load design docs:
-   → data-model.md: Extract registers, interfaces, state variables → DML implementation tasks
-   → contracts/: Each contract file → test tasks (register-access.md, interface-behavior.md)
-   → research.md: Extract MCP tool outputs, architecture decisions, device patterns
-3. Generate tasks by category:
-   → Setup: MCP tools (get_simics_version, create_simics_project, add_dml_device_skeleton, checkout_and_build_dmlc)
-   → **Knowledge Gates** (before tests/implementation):
-     • Research Review: Read research.md → extract MCP outputs, architecture decisions, patterns
-     • Test RAG Queries: Get test patterns before writing tests
-     • DML Learning Gate: Read DML_grammar.md before DML implementation
-   → Tests: Contract tests (register access, interface behavior, device workflows)
-   → Core: Register definitions, interface declarations, device logic, state management
-   → Integration: Memory mapping, interrupt/reset signals, checkpointing
-   → Polish: Performance validation, documentation, final tests
-4. Apply task rules:
-   → Different files = mark [P] for parallel (registers.dml vs interfaces.dml)
-   → Same file = sequential (no [P])
-   → Research review before tests/implementation
-   → Test RAG queries before writing tests
-   → Tests before DML learning (TDD)
-   → DML learning before DML implementation
-   → Optional RAG queries: LLM checks knowledge first, uses RAG if needed
-   → check_with_dmlc + build_simics_project after EVERY implementation task (not separate tasks)
-5. Number tasks sequentially (T001, T002...)
-6. Generate dependency graph
-7. Create parallel execution examples
-8. Validate task completeness:
-   → All contracts have tests?
-   → All registers have DML implementations?
-   → All interfaces declared?
-   → Research review task before tests?
-   → Test RAG queries before test writing?
-   → DML learning gate before DML implementation?
-   → CRITICAL BUILD REQUIREMENT mentions checking knowledge before RAG?
-   → No separate check_with_dmlc/build_simics_project tasks?
-9. Return: SUCCESS (tasks ready for execution)
-```
+**Organization**: Tasks are organized by implementation phases to enable proper dependency management and incremental implementation
 
-## Format: `[ID] [P?] Description`
+## Task Format: `- [ ] [ID] [P?] Description`
+
+- **[ID]**: Task identifier (T001, T002, T003...)
 - **[P]**: Can run in parallel (different files, no dependencies)
 - Include exact file paths in descriptions
 
+--- list template for Simics DML 1.4 device model implementation"
+---
+
+# Tasks: [DEVICE NAME]
+
+**Input**: Design documents from `/specs/[###-feature-name]/`
+**Prerequisites**:
+- **Required**: plan.md, spec.md, [device-name]-register.xml
+- **Optional**: research.md, data-model.md, contracts/, test-scenarios.md
+
+**Tests**: Tests are REQUIRED for Simics device modeling (TDD approach).
+
+**Organization**: Tasks are organized by implementation phases to enable proper dependency management and incremental implementation.
+
+## Format: `[ID] [P?] Description`
+
+- **[ID]**: Sequential task ID (T001, T002, T003...)
+- **[P]**: Can run in parallel (different files, no dependencies)
+- Include exact file paths in descriptions
+
+---
+
 ## Path Conventions
 
-- **Project structure**: `./simics-project/modules/device-name/`, `./simics-project/modules/device-name/test/` at repository root
-- **DML files**: `device-name.dml`, `registers.dml`, `interfaces.dml` in module directory
-- **Test files**: `test_*.py` in module test directory
+- **Simics Project Structure**: `simics-project/modules/[device-name]/` at repository root
+- **DML Files**: `[device-name].dml`, `registers.dml`(optional), `interfaces.dml`(optional) in module directory
+- **Test Files**: `test_*.py` in `simics-project/modules/[device-name]/test/` directory
 
-## Phase 3.1: Setup
+**⚠️ CRITICAL - MCP Tool Paths (SSE Transport)**:
+- **ALWAYS use ABSOLUTE paths** for MCP tools
+- **NEVER use relative paths** like `"./simics-project"` or `"../project"`
+- **WHY**: SSE transport MCP servers run in different process/directory context
+- **HOW**: Use workspace root to construct: `"/full/path/to/workspace/simics-project"`
+- **Example**: `create_simics_project(project_path="/home/user/workspace/simics-project")`
 
-- [ ] T001 Verify connection: `get_simics_version()`
-- [ ] T002 Create project: `create_simics_project(project_path="/absolute/path/to/workspace/simics-project")` ⚠️ ABSOLUTE PATH
-- [ ] T003 Add skeleton: `add_dml_device_skeleton(project_path="/absolute/path/to/workspace/simics-project", device_name="DEVICE_NAME")` ⚠️ ABSOLUTE PATH
-- [ ] T004 Checkout DMLC: `checkout_and_build_dmlc(project_path="/absolute/path/to/workspace/simics-project")` ⚠️ ABSOLUTE PATH
-- [ ] T005 [P] Verify build: `build_simics_project(project_path="/absolute/path/to/workspace/simics-project", module="DEVICE_NAME")` ⚠️ ABSOLUTE PATH
+<!--
+  ============================================================================
+  IMPORTANT: The tasks below are EXAMPLE TASKS for illustration purposes only.
 
-## Phase 3.2: Tests First (TDD) ⚠️ MUST COMPLETE BEFORE 3.3
+  The /tasks command MUST replace these with actual tasks based on:
+  - Functional requirements from spec.md (hardware behaviors, not user stories)
+  - Register definitions from [device-name]-registers.xml
+  - DML implementation patterns from data-model.md and research.md
+  - Test scenarios from test-scenarios.md or spec.md
+  - Architecture decisions from research.md
 
-**CRITICAL: These tests MUST be written and MUST FAIL before ANY implementation**
+  Tasks MUST be organized by implementation phases following the Simics device modeling workflow:
+  - Setup → Knowledge Acquisition → Tests First (TDD) → DML Implementation → Integration → Polish
 
-- [ ] T006 **GATE**: Read research.md → extract architecture decisions, MCP tool outputs, design patterns → document in implementation notes
-- [ ] T007 [P] **RAG Query**: Execute `perform_rag_query("Simics Python device testing register read write verification patterns", source_type="python", match_count=10)` for test patterns
-- [ ] T008 [P] Register access test - implement using RAG patterns
-- [ ] T009 [P] Interface behavior test - implement using RAG patterns
-- [ ] T010 [P] Device workflow test - implement using RAG patterns
-- [ ] T011 [P] Validate test environment: `run_simics_test(project_path="/absolute/path/to/workspace/simics-project", suite="modules/DEVICE_NAME/test")` ⚠️ ABSOLUTE PATH
+  DO NOT keep these example tasks in the generated tasks.md file.
+  ============================================================================
+-->
 
-## Phase 3.3: Core Implementation (ONLY after tests are failing)
+---
+
+## Phase 1: Setup (Simics Project Initialization)
+
+**Purpose**: Initialize Simics project structure and verify environment
+
+- [ ] T001 Verify Simics connection: `get_simics_version()`
+- [ ] T002 Create Simics project: `create_simics_project(project_path="/absolute/path/to/workspace/simics-project")` ⚠️ ABSOLUTE PATH
+- [ ] T003 Generate DML register and dummy device definitions: `generate_dml_registers(project_path="/absolute/path/to/workspace/simics-project", device_name="DEVICE_NAME", reg_xml="/absolute/path/to/[device-name]-registers.xml")` ⚠️ ABSOLUTE PATH
+- [ ] T004 [P] Verify initial build: `build_simics_project(project_path="/absolute/path/to/workspace/simics-project", module="DEVICE_NAME")` ⚠️ ABSOLUTE PATH
+
+**Checkpoint**: Simics project structure ready, DML compiler available
+
+---
+
+## Phase 2: Tests First (TDD) ⚠️ MUST COMPLETE BEFORE DML IMPLEMENTATION
+
+**Purpose**: Write tests that define expected device behavior (tests must FAIL initially)
+
+**⚠️ CRITICAL**: These tests MUST be written and MUST FAIL before ANY DML implementation
+
+**Knowledge Acquisition**: On-demand as needed for test writing
+
+### Test Pattern Research (On-Demand RAG)
+
+- [ ] T005 **RAG Query** (if test patterns needed): Execute `perform_rag_query("Simics Python device testing register read write verification patterns", source_type="python", match_count=10)` → document test patterns in research.md
+
+### Contract Tests (from contracts/ if exists)
+
+- [ ] T006 [P] Register access test in `simics-project/modules/DEVICE_NAME/test/test_register_access.py`:
+  - Review spec.md for register behaviors
+  - Review contracts/register-access.md (if exists) for test contracts
+  - Test register read operations
+  - Test register write operations
+  - Test reset values
+  - Test access violations (RO/WO enforcement)
+  - Use patterns from T005 RAG query if executed
+
+### Workflow Tests (from test-scenarios.md if exists)
+
+- [ ] T007 [P] Device workflow test in `simics-project/modules/DEVICE_NAME/test/test_device_workflow.py`:
+  - Review spec.md for operational behaviors
+  - Review test-scenarios.md (if exists) for test scenarios
+  - Test device initialization sequence
+  - Test normal operation scenarios
+  - Test error conditions
+  - Test state persistence
+  - Use patterns from T005 RAG query if executed
+
+### Validation
+
+- [ ] T008 Validate test environment: `run_simics_test(project_path="/absolute/path/to/workspace/simics-project", suite="modules/DEVICE_NAME/test")` ⚠️ ABSOLUTE PATH
+  - **Expected**: Tests should FAIL (device not implemented yet)
+  - **If tests pass**: Tests are not correctly checking device behavior
+
+**Checkpoint**: All tests written and failing - ready for DML implementation
+
+---
+
+## Phase 3: DML Implementation (ONLY after tests are failing)
+
+**Purpose**: Implement DML device model to make tests pass
+
+**Knowledge Acquisition**: On-demand as needed for each implementation task
 
 **⚠️ CRITICAL BUILD REQUIREMENT**:
 Before implementing EACH task in this phase:
-1. Check if you have sufficient knowledge from research.md, data-model.md, and study notes
-2. If knowledge is insufficient, execute `perform_rag_query()` to get missing patterns
+1. Review available knowledge sources:
+   - research.md (if exists): Architecture decisions, device patterns, example code
+   - data-model.md (if exists): Registers, interfaces, DML implementation notes
+   - `.specify/memory/DML_Device_Development_Best_Practices.md`: DML patterns and pitfalls
+   - `.specify/memory/DML_grammar.md`: DML 1.4 language reference
+   - Device skeleton in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`
+2. If knowledge is insufficient for the specific task, execute `perform_rag_query()` with targeted question
+3. Document RAG results in research.md for future reference
 3. Then proceed with implementation
 
 After implementing EACH task:
@@ -99,339 +152,271 @@ Do NOT mark task done until build succeeds. Do NOT proceed to next task if build
 
 **Note**: Do NOT create separate tasks for check_with_dmlc/build_simics_project calls - they are mandatory validation steps after EVERY implementation task, not standalone tasks.
 
-- [ ] T012 **GATE**: Read .specify/memory/DML_grammar.md → document in implementation notes
-- [ ] T013 **GATE**: Review study notes
-- [ ] T014 **GATE**: Read device skeleton
-- [ ] T015 [P] Register definitions in registers.dml (apply grammar + best practices + RAG if needed) [Then check_with_dmlc + build per CRITICAL BUILD REQUIREMENT]
-- [ ] T016 [P] Interface declarations in interfaces.dml (apply grammar + best practices + RAG if needed) [Then check_with_dmlc + build per CRITICAL BUILD REQUIREMENT]
-- [ ] T017-T020 Register logic, state management, error handling, validation (check_with_dmlc + build after EACH)
+### Register Implementation (from data-model.md + register XML)
 
-## Phase 3.4: Integration
+- [ ] T009 [P] Register definitions in `simics-project/modules/DEVICE_NAME/DEVICE_NAME-registers.dml`:
+  - Review research.md and data-model.md for register patterns
+  - **RAG if needed**: `perform_rag_query("DML register bank definition pattern io_memory", source_type="dml")` → document in research.md
+  - Define register bank structure
+  - Add register declarations with offsets, sizes, access types
+  - Add bit field definitions
+  - Set reset values
+  - Check_with_dmlc → build
 
-- [ ] T021 Connect device to memory interface using transact() methods (check knowledge, use RAG if needed) [Then check_with_dmlc + build per CRITICAL BUILD REQUIREMENT]
-- [ ] T022 Implement interrupt line connections and events (check knowledge, use RAG if needed) [Then check_with_dmlc + build per CRITICAL BUILD REQUIREMENT]
-- [ ] T023 Add external port communications and protocols (check knowledge, use RAG if needed) [Then check_with_dmlc + build per CRITICAL BUILD REQUIREMENT]
-- [ ] T024 Integrate with Simics checkpointing and state management (check knowledge, use RAG if needed) [Then check_with_dmlc + build per CRITICAL BUILD REQUIREMENT]
-- [ ] T025 [P] Run comprehensive tests: `run_simics_test(project_path="/absolute/path/to/workspace/simics-project", suite="modules/DEVICE_NAME/test")` ⚠️ ABSOLUTE PATH
+- [ ] T010 Register read/write handlers in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
+  - Review `.specify/memory/DML_Device_Development_Best_Practices.md` for side-effect patterns
+  - Review data-model.md for register side-effects
+  - **RAG if needed**: `perform_rag_query("DML register read write callback side effects", source_type="dml")` → document in research.md
+  - Implement read callbacks for each register
+  - Implement write callbacks for each register
+  - Add side-effects from data-model.md
+  - Check_with_dmlc → build
 
-## Phase 3.5: Polish
+### Interface Implementation (from data-model.md)
 
-- [ ] T026 [P] Performance validation (<1% simulation overhead)
-- [ ] T027 [P] Code review and cleanup (DML grammar compliance, error handling, logging)
-- [ ] T028 [P] Update device documentation (README.md with usage examples)
-- [ ] T029 [P] Update test documentation
-- [ ] T030 Final validation: `run_simics_test(project_path="/absolute/path/to/workspace/simics-project")` ⚠️ ABSOLUTE PATH
+- [ ] T011 [P] Interface declarations in `simics-project/modules/DEVICE_NAME/interfaces.dml`:
+  - Review research.md and data-model.md for interface patterns
+  - Review `.specify/memory/DML_grammar.md` for interface syntax
+  - **RAG if needed**: `perform_rag_query("DML interface implementation io_memory signal", source_type="dml")` → document in research.md
+  - Declare required Simics interfaces (io_memory, signal, etc.)
+  - Implement interface methods
+  - Add interface contracts from contracts/interface-behavior.md (if exists)
+  - Check_with_dmlc → build
 
-## Dependencies
+### Device Logic (from spec.md operational behaviors)
 
-**Task Flow**:
-- T001-T005 (Setup) → T006 (Research Review) → T007-T011 (Test RAG + Tests) → T012-T014 (DML Learning) → T015+ (Implementation with optional RAG) → T021-T025 (Integration with optional RAG) → T026-T030 (Polish)
+- [ ] T012 State management in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
+  - Review spec.md for state transitions and operational behaviors
+  - Review data-model.md for internal state variables
+  - **RAG if needed**: `perform_rag_query("DML state machine implementation event handling", source_type="dml")` → document in research.md
+  - Define internal state variables from data-model.md
+  - Implement state transitions
+  - Add state validation
+  - Check_with_dmlc → build
 
-**Critical Path**:
-- Setup → Research review → Test RAG + Tests → DML learning → Implementation (with optional RAG) → Integration (with optional RAG) → Polish
+- [ ] T013 Error handling and validation in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
+  - Review `.specify/memory/DML_Device_Development_Best_Practices.md` for error handling patterns
+  - **RAG if needed**: `perform_rag_query("DML error handling validation logging", source_type="dml")` → document in research.md
+  - Add input validation
+  - Implement error detection
+  - Add logging for debugging
+  - Check_with_dmlc → build
 
-**Parallel Opportunities**:
-- T007-T008 (Test RAG queries - if multiple query categories)
-- T008-T010 (Test file creation - different files)
-- T015-T016 (Register and interface files - different files)
-- T026-T029 (Polish tasks - documentation and validation)
+**Checkpoint**: Core device functionality implemented - tests should start passing
 
-## Parallel Example
+---
 
-**Test Creation (After T007 RAG query)**:
-```bash
-# Can run T008-T010 in parallel (different test files):
-Task T008: "Register access test - implement using RAG patterns"
-Task T009: "Interface behavior test - implement using RAG patterns"
-Task T010: "Device workflow test - implement using RAG patterns"
+## Phase 4: Integration
+
+**Purpose**: Connect device to Simics infrastructure
+
+**Knowledge Acquisition**: On-demand as needed for integration tasks
+
+**⚠️ CRITICAL BUILD REQUIREMENT**: Same as Phase 3 applies to all integration tasks
+
+- [ ] T014 Memory interface connection in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
+  - Review research.md and data-model.md for memory mapping patterns
+  - **RAG if needed**: `perform_rag_query("DML io_memory interface memory mapped registers", source_type="dml")` → document in research.md
+  - Implement io_memory interface methods
+  - Connect register bank to memory space
+  - Add memory access validation
+  - Check_with_dmlc → build
+
+- [ ] T015 Interrupt/signal connections in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
+  - Review spec.md for interrupt requirements
+  - Review data-model.md for signal interface patterns
+  - **RAG if needed**: `perform_rag_query("DML signal interface interrupt generation", source_type="dml")` → document in research.md
+  - Implement signal interface for interrupt output
+  - Add interrupt generation logic
+  - Connect to interrupt controller
+  - Check_with_dmlc → build
+
+- [ ] T016 External port communications in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
+  - Review spec.md for external interface requirements
+  - **RAG if needed**: `perform_rag_query("DML port interface device communication", source_type="dml")` → document in research.md
+  - Implement required port interfaces
+  - Add communication protocols
+  - Integrate with other devices if needed
+  - Check_with_dmlc → build
+
+- [ ] T017 Checkpointing and state serialization in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
+  - Review `.specify/memory/DML_Device_Development_Best_Practices.md` for checkpoint patterns
+  - **RAG if needed**: `perform_rag_query("DML checkpoint save restore state serialization", source_type="dml")` → document in research.md
+  - Implement checkpoint save methods
+  - Implement checkpoint restore methods
+  - Add state validation
+  - Check_with_dmlc → build
+
+- [ ] T018 [P] Run comprehensive tests: `run_simics_test(project_path="/absolute/path/to/workspace/simics-project", suite="modules/DEVICE_NAME/test")` ⚠️ ABSOLUTE PATH
+  - **Expected**: All tests should PASS
+  - **If tests fail**: Review failures and fix implementation
+
+**Checkpoint**: Device fully integrated with Simics - all tests passing
+
+---
+
+## Phase 5: Polish & Validation
+
+**Purpose**: Final validation, optimization, and documentation
+
+- [ ] T019 [P] Performance validation:
+  - Measure simulation overhead
+  - Verify <1% performance impact (or per requirements)
+  - Optimize hot paths if needed
+
+- [ ] T020 [P] Code review and cleanup:
+  - Verify DML grammar compliance
+  - Check error handling completeness
+  - Review logging statements
+  - Remove debug code
+  - Add code comments
+
+- [ ] T021 [P] Update device documentation in `simics-project/modules/DEVICE_NAME/README.md`:
+  - Add device description
+  - Document register map
+  - Add usage examples
+  - Include configuration instructions
+
+- [ ] T022 [P] Update test documentation in `simics-project/modules/DEVICE_NAME/test/README.md`:
+  - Document test scenarios
+  - Add test execution instructions
+  - Include troubleshooting guide
+
+- [ ] T023 Final validation: `run_simics_test(project_path="/absolute/path/to/workspace/simics-project")` ⚠️ ABSOLUTE PATH
+  - Run all project tests
+  - Verify no regressions
+  - Confirm all scenarios pass
+
+**Checkpoint**: Device model complete and validated
+
+---
+
+## Dependencies & Execution Order
+
+### Phase Dependencies
+
+- **Setup (Phase 1)**: No dependencies - can start immediately
+  - T001 → T002 → T003 → T004
+- **Knowledge Acquisition (Phase 2)**: Depends on Setup (T004) completion - BLOCKS all implementation
+  - T005 → T006 → T007 → T008 → T009 (sequential reading)
+- **Tests First (Phase 3)**: Depends on Knowledge Acquisition (T009) completion - BLOCKS DML implementation
+  - T010 → T011, T012, T013 (parallel after RAG query) → T014
+- **DML Implementation (Phase 4)**: Depends on Tests (T014) completion - Core device logic
+  - T015 || T017 (parallel - different files)
+  - T016 (depends on T015 - same file)
+  - T018 → T019 (sequential - same file, state before error handling)
+- **Integration (Phase 5)**: Depends on DML Implementation (T019) completion - Simics connectivity
+  - T020 → T021 → T022 → T023 → T024 (mostly sequential, building on each other)
+- **Polish (Phase 6)**: Depends on Integration (T024) completion - Final validation
+  - T025 || T026 || T027 || T028 (all parallel) → T029
+
+### Within Each Phase
+
+- **Setup (Phase 1)**:
+  - T001-T003: Sequential (each step depends on previous)
+  - T004: Can run after T003 completes
+
+- **Knowledge Acquisition (Phase 2)**:
+  - T005-T009: Sequential reading and note-taking
+  - Must read research.md (T005) before other documents
+  - Must complete all gates before proceeding to Phase 3
+
+- **Tests (Phase 3)**:
+  - T010: Must complete first (RAG query for test patterns)
+  - T011, T012, T013: Can all run in parallel after T010 (different test files)
+  - T014: Validation step after all tests written
+
+- **DML Implementation (Phase 4)**:
+  - T015 (registers.dml) and T017 (interfaces.dml): Can run in parallel (different files)
+  - T016: Depends on T015 (modifying same file - registers.dml)
+  - T018-T019: Sequential (same file - DEVICE_NAME.dml, state management before error handling)
+
+- **Integration (Phase 5)**:
+  - T020-T023: Mostly sequential (build on each other, same file)
+  - T024: Validation step after all integration complete
+
+- **Polish (Phase 6)**:
+  - T025, T026, T027, T028: All can run in parallel (different concerns/files)
+  - T029: Final validation after all polish tasks complete
+
+### Parallel Opportunities
+
+- **Setup**: Limited parallelization - mostly sequential setup steps
+- **Knowledge**: No parallelization - sequential reading for comprehension
+- **Tests**: T011 || T012 || T013 (after T010 completes)
+- **DML Implementation**: T015 || T017 (different files: registers.dml and interfaces.dml)
+- **Integration**: Limited parallelization - mostly sequential due to dependencies
+- **Polish**: T025 || T026 || T027 || T028 (all different concerns)
+
+### Critical Path
+
+The critical path through all phases:
 ```
+T001 → T002 → T003 → T004 (Setup)
+  ↓
+T005 → T006 → T007 → T008 → T009 (Knowledge - BLOCKS everything)
+  ↓
+T010 → T011/T012/T013 → T014 (Tests - BLOCKS implementation)
+  ↓
+T015 → T016 → T018 → T019 (DML Implementation)
+  ↓
+T020 → T021 → T022 → T023 → T024 (Integration)
+  ↓
+T025/T026/T027/T028 → T029 (Polish)
+```
+
+**Total Minimum Time**: 29 tasks (with some parallelization possible in Phases 3, 4, and 6)
+
+---
+
+## Parallel Example: Test Creation
+
+```bash
+# After T010 RAG query completes, launch all test creation together:
+Task T011: "Register access test in simics-project/modules/DEVICE_NAME/test/test_register_access.py"
+Task T012: "Interface behavior test in simics-project/modules/DEVICE_NAME/test/test_interface_behavior.py"
+Task T013: "Device workflow test in simics-project/modules/DEVICE_NAME/test/test_device_workflow.py"
+```
+
+---
+
+## Implementation Strategy
+
+### TDD Workflow with On-Demand Knowledge
+
+1. Complete Phase 1: Setup → Simics project ready
+2. Complete Phase 2: Tests First → All tests written and FAILING (RAG on-demand for test patterns)
+3. **VALIDATE**: Tests must fail before proceeding to implementation
+4. Complete Phase 3: DML Implementation → Tests start passing (RAG on-demand per implementation need)
+5. Complete Phase 4: Integration → All tests passing (RAG on-demand per integration need)
+6. Complete Phase 5: Polish → Final validation
+
+### On-Demand Knowledge Acquisition
+
+For each implementation task (Phase 3 & 4):
+1. Review available knowledge sources:
+   - research.md (architecture decisions, patterns from planning phase)
+   - data-model.md (registers, interfaces, implementation notes)
+   - `.specify/memory/DML_Device_Development_Best_Practices.md` (patterns & pitfalls)
+   - `.specify/memory/DML_grammar.md` (DML 1.4 reference)
+   - Device skeleton (generated structure)
+2. If knowledge is sufficient → proceed with implementation
+3. If knowledge is insufficient → execute targeted RAG query → document results in research.md
+4. Implement the task using available knowledge
+5. Validate: check_with_dmlc → build_simics_project
+6. Only mark done when build succeeds
+7. Git commit the change
+
+---
 
 ## Notes
+
 - [P] tasks = different files, no dependencies
-- Verify tests fail before implementing
-- Commit after each task
-- Avoid: vague tasks, same file conflicts
-
-## Task Generation Rules
-*Applied during main() execution*
-
-1. **From Contracts**: Each contract file → contract test tasks [P] (register access, interface behavior)
-2. **From Data Model**: Each register → DML implementation task, each interface → DML declaration task
-3. **From User Stories**: Each workflow → integration test [P], quickstart steps → validation tasks
-4. **Ordering**: Setup → Research Review → Test RAG Query → Tests → DML Learning → Implementation (with optional RAG) → Integration (with optional RAG) → Polish
-
-## Validation Checklist
-*GATE: Checked by main() before returning*
-
-- [ ] All contracts have corresponding tests
-- [ ] All entities have model tasks
-- [ ] All tests come before implementation
-- [ ] Parallel tasks truly independent
-- [ ] Each task specifies exact file path
-- [ ] No task modifies same file as another [P] task
-- [ ] **All MCP tool calls use ABSOLUTE paths** (SSE transport requirement)
-- [ ] All MCP tool calls specify correct project_path parameter
-- [ ] **No separate tasks for check_with_dmlc/build_simics_project** (they are validation steps in CRITICAL BUILD REQUIREMENT, not standalone tasks)
-- [ ] Test execution tasks use appropriate suite parameter
-- [ ] Device name consistently used across MCP tool calls
-- [ ] RAG queries placed before test writing tasks
-- [ ] Implementation tasks mention checking knowledge before using RAG
-
-## Critical Gates
-
-### Research Review Gate:
-- [ ] Read research.md completely
-- [ ] Extract and document in implementation notes:
-  - **Architecture Decisions**: Key design choices, rationale
-  - **Device Architecture Context**: High-level device patterns
-  - **Patterns & Best Practices**: Coding patterns, conventions
-  - **Constraints**: Technical limitations, requirements
-  - **Dependencies**: Libraries, versions, compatibility notes
-  - **MCP Tool Outputs**: Simics version, packages, platform info
-- [ ] Verify comprehensive notes before writing tests
-
-**What's in research.md**:
-- Environment discovery results (MCP tool outputs)
-- High-level device architecture overview (1-2 RAG queries for context)
-- Architecture decisions from spec.md analysis
-- Design implications for implementation
-
-**What's NOT in research.md** (gathered during implementation):
-- Detailed register implementation patterns → Use RAG during implementation
-- Specific callback/method code → Use RAG during error recovery
-- Test code examples → Use RAG before writing tests
-- Error handling details → Use RAG during debugging
-
-### DML Learning Gate:
-- [ ] Read DML_grammar.md completely
-- [ ] Document learnings in implementation notes: "## DML Grammar Study Notes"
-- [ ] Verify comprehensive notes before starting DML implementation
-
-**Note**: Tests are written using RAG query patterns first, and don't require deep DML study yet
-
-## Execution Rules
-1. **Prerequisites**: Verify plan.md and data-model.md exist
-2. **Research Review**: Read research.md BEFORE writing tests or implementation
-3. **RAG Before Tests**: Execute RAG queries BEFORE implementing tests
-4. **RAG During Implementation**: Check knowledge first, use RAG only if needed
-5. **DML Learning**: DML learning gate before ANY DML implementation
-6. **Tests First**: Tests written using RAG patterns, before DML learning
-7. **Study Notes**: Must reference in all DML tasks
-8. **MCP Absolute Paths**: ALWAYS use absolute paths for `create_simics_project()`, `build_simics_project()`, `run_simics_test()` (SSE transport requirement)
-9. **Validation Workflow**: After EVERY DML implementation task: check knowledge → use RAG if needed → implement → `check_with_dmlc()` → `build_simics_project()` → mark task done (NOT separate tasks)
-
-## Common Failures
-- ❌ Skip research.md review before tests/implementation
-- ❌ Skip DML learning gate
-- ❌ Incomplete study notes
-- ❌ Ignore study notes during implementation
-- ❌ Test after DML learning (should be before)
-- ❌ Skip RAG queries before test writing
-- ❌ Create separate RAG query tasks for implementation (should check knowledge first)
-- ❌ **Use relative paths for MCP tools** (must be absolute for SSE transport)
-- ❌ **Create separate tasks for check_with_dmlc/build_simics_project** (they are validation steps, not tasks)
-- ✅ **Correct**: Setup → Research review → RAG query → tests → DML learning → implementation (check knowledge, use RAG if needed, then check_with_dmlc + build after each) → absolute paths for all MCP calls
-
-## Error Recovery
-
-**CRITICAL**: DO NOT guess fixes. Always use RAG queries with error-specific query strings to get solutions and examples.
-
-### Build Errors
-
-**Step 1: Extract Error Information**
-**REQUIRED**: Use `check_with_dmlc(project_path="/absolute/path/to/workspace/simics-project", module="DEVICE_NAME")` to get AI-enhanced diagnostics.
-
-From the diagnostic output, identify:
-- **Error type**: syntax | semantic | template | pattern
-- **Error keyword**: Core error term (e.g., "expected ';'", "unknown attribute")
-- **Error context**: Affected construct (e.g., "register declaration", "interface method")
-- **Error location**: File path + line number
-- **AI suggestions**: Review any automatic fix suggestions provided by the tool
-
-**Step 2: Check Study Notes (If Available)**
-If DML study notes exist from learning gate:
-1. Search "DML Grammar Study Notes" → syntax/declaration issues
-2. On match → Apply pattern, skip to Step 6
-3. On no match → Continue to Step 3
-
-**Step 3: Query for Solution (Max 2 Attempts)**
-
-**Attempt 1 - Specific Query:**
-```python
-perform_rag_query(
-    query=f"DML 1.4 {error_keyword} {error_context} fix solution example",
-    source_type="dml",  # or "docs" for grammar/syntax errors
-    match_count=10
-)
-```
-
-**If no relevant results, Attempt 2 - Broadened Query:**
-```python
-perform_rag_query(
-    query=f"DML 1.4 {error_type} common issues examples",
-    source_type="docs",
-    match_count=15
-)
-```
-
-**Query Pattern Examples:**
-- `"syntax error: expected ';'"` → `"DML 1.4 register declaration semicolon syntax"`
-- `"unknown attribute"` → `"DML 1.4 attribute declarations scoping"`
-- `"template not found"` → `"DML 1.4 template inheritance interface"`
-
-**Step 4: Review RAG Results**
-- Examine code examples showing correct usage
-- Identify pattern differences from your implementation
-- Note relevant documentation excerpts
-
-**Step 5: Apply Fix**
-- Use examples as reference (adapt, don't copy blindly)
-- Ensure fix aligns with Grammar study notes (if available)
-- Apply to your specific use case
-
-**Step 6: Verify & Iterate**
-```bash
-build_simics_project(project_path="/absolute/path/to/workspace/simics-project", module="DEVICE_NAME")
-```
-- ✅ **Build succeeds** → Continue to Step 7
-- ❌ **Same error** → Try Attempt 2 query or escalate
-- ⚠️ **New error** → Return to Step 1 with new error
-
-**Step 7: Document Solution (Only If Build Succeeded)**
-Append to `.specify/dml_diagnostics.md`:
-```markdown
-## [Error Type]: [Error Keyword] - [Date]
-
-**Location**: `[file:line]`  
-**Fix**: [One-line summary of what was changed]
-
-### Problem
-[2-3 sentences: What was wrong, why it failed]
-
-### Solution
-**Source**: [AI suggestion | RAG pattern | Study notes reference]  
-**Changes**:
-```dml
-// Before (incorrect)
-[Brief code snippet showing the error]
-
-// After (corrected)
-[Brief code snippet showing the fix]
-```
-
-**Key Lesson**: [One sentence about the pattern/rule to remember]
-
----
-```
-Then mark task complete.
-
-**Example Entry**:
-```markdown
-## Syntax Error: Expected semicolon - 2025-10-31
-
-**Location**: `registers.dml:45`  
-**Fix**: Added semicolon after register declaration
-
-### Problem
-Register declaration was missing terminating semicolon. DML grammar requires semicolon after param declarations inside register body.
-
-### Solution
-**Source**: DML Grammar Study Notes (register declaration syntax)  
-**Changes**:
-```dml
-// Before (incorrect)
-register control @ 0x00 {
-    param size = 4
-}
-
-// After (corrected)
-register control @ 0x00 {
-    param size = 4;
-}
-```
-
-**Key Lesson**: All param declarations must end with semicolon in DML 1.4
-
----
-```
-
-### Test Failures
-
-**Step 1: Identify Test Failure Type**
-- Register access test → read/write/reset behavior
-- Interface behavior test → method calls/return values
-- Device workflow test → state transitions/events
-- Python test framework → assertions/setup/teardown
-
-**Step 2: Query for Solution (Max 2 Attempts)**
-```python
-# Attempt 1 - Specific
-perform_rag_query(
-    query=f"Simics Python test {test_scenario} example working code",
-    source_type="python",
-    match_count=10
-)
-```
-
-**Query Pattern Examples:**
-- `"register read returns wrong value"` → `"Simics Python test register read write verification"`
-- `"interface method not found"` → `"Simics Python test interface method invocation"`
-- `"device state transition failed"` → `"Simics Python test device state workflow"`
-
-**Step 3: Review RAG Results**
-- Examine working test examples
-- Identify differences from your test implementation
-- Note test patterns and assertions
-
-**Step 4: Apply Fix**
-- Adapt test patterns to your specific scenario
-- Ensure test aligns with device behavior from spec.md
-
-**Step 5: Verify**
-```bash
-run_simics_test(project_path="/absolute/path/to/workspace/simics-project", suite="modules/DEVICE_NAME/test")
-```
-
-### Runtime Errors
-
-**Step 1: Identify Runtime Issue Type**
-- Device behavior → unexpected state/response
-- Interface errors → connection/communication failures
-- Memory errors → access violations/unmapped regions
-- Event/timing → callback/sequence issues
-
-**Step 2: Check Study Notes (If Available)**
-If DML study notes exist:
-1. Search "DML Best Practices Study Notes" → device behavior patterns
-2. On match → Apply pattern, skip to Step 5
-3. On no match → Continue to Step 3
-
-**Step 3: Query for Solution (Max 2 Attempts)**
-```python
-# Attempt 1 - Specific
-perform_rag_query(
-    query=f"DML 1.4 {error_scenario} {error_context} runtime fix example",
-    source_type="dml",
-    match_count=10
-)
-```
-
-**Query Pattern Examples:**
-- `"device not responding to memory write"` → `"DML 1.4 memory mapped IO write handler"`
-- `"interrupt not firing"` → `"DML 1.4 interrupt signal raise event trigger"`
-- `"state not preserved"` → `"DML 1.4 checkpoint state serialization"`
-
-**Step 4: Review RAG Results**
-- Examine correct implementation patterns
-- Identify behavioral differences
-- Note state management approaches
-
-**Step 5: Apply Fix**
-- Adapt patterns to your device implementation
-- Ensure behavior matches spec.md requirements
-
-**Step 6: Verify**
-```bash
-build_simics_project(project_path="/absolute/path/to/workspace/simics-project", module="DEVICE_NAME")
-run_simics_test(project_path="/absolute/path/to/workspace/simics-project", suite="modules/DEVICE_NAME/test")
-```
+- Verify tests fail before implementing (TDD)
+- RAG queries are on-demand - only execute when knowledge is insufficient
+- Run check_with_dmlc + build after EVERY implementation task
+- Document RAG results in research.md for reuse
+- Commit after each task or logical group
+- Always use absolute paths for MCP tools (SSE transport requirement)
+- Do NOT create separate tasks for check_with_dmlc/build_simics_project (they are validation steps)
+- Stop at any checkpoint to validate phase independently

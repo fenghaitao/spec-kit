@@ -17,6 +17,27 @@ The text the user typed after `/specify` in the triggering message **is** the fe
 
 Given the IP hardware specification, follow this structured workflow:
 
+**Workflow Overview**:
+1. **Step 1**: Run feature setup script (creates branch and spec file)
+2. **Step 2**: Parse hardware specification document (extract all device information)
+   - 2.1: Device overview and categorization
+   - 2.2: Register map and bit fields
+   - 2.3: I/O ports and signals
+   - 2.4: Register side-effects and behaviors
+   - 2.5: Validation checkpoint
+3. **Step 3**: Generate hardware behavior specification (create spec.md)
+   - 3.1: [NEEDS CLARIFICATION] marker guidelines
+   - 3.2: Functional requirements generation
+   - 3.3: Test scenario generation
+   - 3.4: Finalize specification
+4. **Step 4**: Generate IP-XACT register XML (create device-registers.xml)
+   - 4.1-4.6: XML structure generation
+   - 4.7: Validate and finalize XML
+5. **Step 5**: Git commit (after Step 3 or Step 4)
+6. **Step 6**: Report completion
+
+---
+
 ### Step 1: Run Feature Setup Script
 
 Run the script `{SCRIPT}` from repo root and parse its JSON output for BRANCH_NAME and SPEC_FILE. All file paths must be absolute.
@@ -307,6 +328,8 @@ Before proceeding to Step 3, verify your extraction work against **Section 1** o
 
 ### Step 3: Generate Hardware Behavior Specification
 
+**Objective**: Create comprehensive hardware specification documenting all device behaviors from the Hardware Specification Document analysis.
+
 Load the full content of `templates/spec-template.md` to use as the foundation for the specification.
 
 Write the specification to SPEC_FILE by filling in the placeholders and completing all sections of the loaded template based on your analysis from Step 2. **Do not omit any sections from the template, including all checklists and boilerplate text.**
@@ -319,7 +342,9 @@ When completing the template, pay special attention to the **Hardware Behavior D
 - Define state machines and operational modes
 - Document timing requirements and ordering constraints
 
-**[NEEDS CLARIFICATION] Marker Guidelines**:
+---
+
+#### 3.1: [NEEDS CLARIFICATION] Marker Guidelines
 
 Follow these principles when marking unclear requirements:
 
@@ -350,24 +375,104 @@ Follow these principles when marking unclear requirements:
    - Checkpoint/restore implementation details
    - Performance targets (unless explicitly part of spec)
 
-**After Completing the Specification**:
+---
 
-1. **List All Clarifications**: In the "Clarifications Required" section of spec-template.md, list all `[NEEDS CLARIFICATION: ...]` markers found in the document
+#### 3.2: Functional Requirements Generation
+
+When generating requirements in the "Functional Requirements" section:
+
+1. **Coverage Requirements**:
+   - Minimum 5 requirements covering key device capabilities
+   - Each requirement must comprehensively cover aspects from Hardware Specification
+   - Organize by logical capability groups (core functionality, registers, states, interfaces, errors)
+
+2. **Requirement Structure** - Use this exact format:
+
+```
+### Requirement [N]: [Requirement Title - Descriptive Capability Name]
+
+**User Story**: As a [role/stakeholder], I want [desired capability], so that [business/technical benefit]
+
+**Acceptance Criteria**:
+1. THE device SHALL [mandatory behavior from Hardware Specification with observable outcome]
+2. WHEN [specific condition from state machine/flows], THE device SHALL [action with measurable result]
+3. THE device SHALL provide [register/interface/signal] with [specific attributes from Hardware Specification]
+4. WHILE in [device state], THE device SHALL [continuous behavior requirement]
+5. THE device SHALL NOT [prohibited action or invalid state] under [specific conditions]
+
+*[Additional numbered criteria as needed - minimum 5 per requirement]*
+```
+
+3. **Acceptance Criteria Patterns**:
+   - **"THE device SHALL [behavior]"**: Unconditional mandatory behavior
+   - **"WHEN [condition], THE device SHALL [action]"**: Conditional behavior with trigger
+   - **"WHILE [state], THE device SHALL [continuous behavior]"**: State-dependent ongoing behavior
+   - **"THE device SHALL NOT [prohibited action] under [conditions]"**: Negative constraint
+
+4. **Key Extraction Principles**:
+   - Each requirement MUST be testable without guessing
+   - Use SHALL for all mandatory behaviors (not "will", "should", "may")
+   - Each requirement must be verifiable through observable hardware behavior (register reads, signal states, state indicators)
+   - **Register side-effects**: Explicitly document what happens beyond storing the value (counter reloads, interrupt clears, state changes)
+   - Cross-reference sections: side-effects often appear in flows, not register definitions
+   - Mark unclear behaviors with [NEEDS CLARIFICATION: specific question]
+
+5. **Testability Check**:
+   - Before writing each requirement, ask: "Can I write a test for this without guessing?"
+   - If answer is NO, mark for clarification instead of guessing
+
+---
+
+#### 3.3: Test Scenario Generation
+
+When generating test scenarios in the "User Scenarios & Testing" section, use this format:
+
+```
+[N]. **Scenario [N]: [Scenario Name]**
+   - **States**: [INITIAL_STATE] → [INTERMEDIATE_STATE] → [FINAL_STATE]
+   - **Flow**: Flow [X] ([Flow Name])
+   - **Requirements**: Requirement [Y] ([requirement description])
+   - **Given** [initial device state and preconditions]
+   - **When** [software action or hardware event]
+     1. [Specific action/step 1]
+     2. [Specific action/step 2]
+   - **Then** [expected device behavior and observable changes]
+     - [Observable outcome 1]
+     - [Observable outcome 2]
+   - **Test Validation**:
+     - [How to verify outcome 1]
+     - [How to verify outcome 2]
+```
+
+Each scenario MUST explicitly reference:
+- **Device States**: Which states are involved (from Device States and Transitions section)
+- **Operational Flow**: Which flow it validates (from Software/Hardware Interaction Flows section)
+- **Requirements**: Which requirements it verifies (from Functional Requirements section)
+
+This ensures complete traceability from hardware specification → requirements → test scenarios.
+
+---
+
+#### 3.4: Finalize Specification
+
+After completing all sections of the specification:
+
+1. **List All Clarifications**: In the "Clarifications Required" section, list all `[NEEDS CLARIFICATION: ...]` markers found in the document
 2. **Count Markers**: Count total number of clarification markers (ignore markers in instructions/headers)
 3. **Update Status Field**: At the top of spec.md:
    - If ZERO markers → Status: `"Ready for Planning"`
    - If 1+ markers → Status: `"Draft ([N] clarifications needed)"`
-4. **Mark Execution Steps**: Mark steps 6 and 7 as complete in the Execution Status section
+4. **Mark Completion**: Check all applicable boxes in the "Specification Generation Status" section
 
-Then immediately proceed to step 5 to commit.
+Then immediately proceed to Step 5 to commit.
 
 ### Step 4: Generate IP-XACT Register Description XML
 
-**Objective**: Create machine-readable register map with comprehensive side-effect documentation.
+**Objective**: Create machine-readable register map with comprehensive side-effect documentation for DML code generation.
 
 Load `templates/register-template.md` for complete XML structure reference and examples.
 
-**Generation Workflow**:
+---
 
 #### 4.1: Generate Component Identification
 
@@ -441,7 +546,9 @@ For EACH I/O signal extracted in Step 2.3:
 
 See **register-template.md Section 5** for XML structure.
 
-#### 4.7: XML Validation
+---
+
+#### 4.7: Validate and Finalize XML
 
 Before saving, validate your XML against **Section 2** of `templates/validation-checklist.md` (**reference only - do not edit that file**):
 
@@ -456,11 +563,13 @@ Before saving, validate your XML against **Section 2** of `templates/validation-
 
 **Output**: Create file `[device-name]-registers.xml` in the same directory as SPEC_FILE.
 
-**After completing the XML file**, immediately proceed to Step 5 to commit.
+Then immediately proceed to Step 5 to commit.
 
-### Step 5: Git Commit After Each Major Update
+---
 
-**Execute this step after completing step 3 OR step 4**
+### Step 5: Git Commit
+
+**Execute this step after completing Step 3 (spec.md) OR Step 4 (XML)**
 
 Stage and commit changes:
 ```bash
@@ -475,7 +584,9 @@ git commit -m "specify: <feature-name> - <section/update-description>"
 
 **Purpose**: Creates audit trail for tracking specification evolution, decision rationale, and enabling version rollback.
 
-**Continue**: After committing, proceed to next step or report completion.
+Then proceed to Step 6 to report completion.
+
+---
 
 ### Step 6: Report Completion
 
@@ -499,13 +610,46 @@ Status: Ready for planning (0 clarifications needed)
 Next step: Use /plan to generate technical implementation plan
 ```
 
+---
+
 ## Key Principles for Hardware IP Specification
 
-1. **Hardware Behavior Focus**: Document what the hardware does from a functional perspective, not implementation details
-2. **Software Visibility**: Emphasize what software can observe and control through registers
-3. **Side-Effect Documentation**: Thoroughly document all register read/write side-effects
-4. **Co-Working Flows**: Include software/hardware interaction sequences
-5. **Precision Over Assumptions**: Mark ambiguities rather than guessing
-6. **Testability**: Ensure all behaviors are testable in simulation
+**Core Philosophy**: Document WHAT the hardware does (functional behavior), not HOW to implement it (DML/code details).
 
-Note: The script creates and checks out the new branch and initializes the spec file before writing.
+### 1. Hardware Behavior Focus
+- Describe observable device behaviors from software perspective
+- Document state machines, transitions, and operational flows
+- Specify register side-effects and cross-dependencies explicitly
+- Define timing requirements and ordering constraints
+
+### 2. Software Visibility
+- Emphasize what software CAN observe: register values, interrupt signals, output pins
+- Clarify what software CANNOT observe: internal FSM states, clock dividers, intermediate states
+- Document software/hardware interaction sequences (initialization, interrupt handling, error recovery)
+
+### 3. Side-Effect Documentation
+- Thoroughly document ALL register read/write side-effects
+- Cross-reference sections: side-effects often appear in flows, not register definitions
+- Document register relationships and cross-dependencies bidirectionally
+- Specify lock/protection mechanisms, reload/copy behaviors, enable/disable gating
+
+### 4. Testability First
+- Every requirement MUST be testable through observable behavior
+- Use test-driven thinking: "Can I write a test without guessing?"
+- Create complete traceability: Hardware Spec → Requirements → Test Scenarios
+- Ensure each state, transition, and flow has at least one test scenario
+
+### 5. Precision Over Assumptions
+- Mark ambiguities with [NEEDS CLARIFICATION: specific question]
+- NEVER guess or infer unstated requirements
+- Provide options when possible to guide clarification
+- Document NOT required: cycle-accurate timing, checkpoint/restore, performance (unless specified)
+
+### 6. Comprehensive Coverage
+- Extract from ALL hardware specification aspects: registers, interfaces, states, flows, ordering, memory
+- Minimum quality bars: 5+ requirements, 3+ test scenarios
+- Organize by logical capability groups: core functionality, registers, states, interfaces, errors
+- Ensure bidirectional documentation: every requirement validates a behavior, every behavior has a requirement
+
+**Note**: The script creates and checks out the new branch and initializes the spec file before writing.
+

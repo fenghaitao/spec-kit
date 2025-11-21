@@ -139,67 +139,45 @@ Test Validation:
 
 **Purpose**: Define testable, verifiable requirements derived from the Hardware Specification. Each requirement must be traceable to hardware behaviors and validated by test scenarios.
 
-**Generation Guidelines**:
-- Extract requirements from Hardware Specification (registers, states, interfaces, flows)
-- Each requirement MUST be testable without guessing
-- Use SHALL for mandatory behaviors
-- Minimum 5 requirements covering key device capabilities
-- Mark unclear behaviors with [NEEDS CLARIFICATION: specific question]
+**CRITICAL**: Generate requirements that comprehensively cover ALL aspects of the Hardware Specification section above:
+- **Register Map**: All registers, reset values, access types, and **side-effects**
+- **External Interfaces and Signals**: All interrupt outputs, reset inputs, other signals (assertion/clear conditions)
+- **Device States and Transitions**: All device states and all state transitions
+- **Software/Hardware Interaction Flows**: All documented operational flows
+- **Register Access Ordering**: Any critical ordering constraints
+- **Memory Interface**: Address space, access patterns, timing requirements
 
-### Requirement 1: [Core Device Capability]
+---
 
-**User Story**: As a [role], I want [capability], so that [benefit]
+**EXAMPLE - Watchdog Timer Device**:
 
-**Acceptance Criteria**:
-1. THE device SHALL [specific behavior from Hardware Specification]
-2. WHEN [condition from state machine/flows], THE device SHALL [action with observable outcome]
-3. THE device SHALL provide [register/interface/signal] with [specific attributes from Hardware Specification]
-4. WHILE in [device state], THE device SHALL [continuous behavior]
-5. THE device SHALL NOT [prohibited action] under [specific conditions]
+### Requirement 1: Countdown Timer Logic
 
-*Example - Watchdog Timer:*
-**User Story**: As a system developer, I want a watchdog timer that monitors system health, so that I can automatically recover from software hangs
-**Acceptance Criteria**:
-1. THE device SHALL count down from LOAD value to zero at system clock rate
-2. WHEN counter reaches zero AND INTEN=1, THE device SHALL assert interrupt signal
-3. THE device SHALL provide INTCLR register to clear interrupt status
-4. WHILE RESEN=1, THE device SHALL assert reset signal on second consecutive timeout
-5. THE device SHALL NOT allow writes to LOAD register when LOCK is enabled
-
-### Requirement 2: [Register Interface]
-
-**User Story**: As a [role], I want [capability], so that [benefit]
+**User Story**: As a system developer, I want a countdown timer that decrements at a predictable rate, so that I can monitor software execution deadlines
 
 **Acceptance Criteria**:
-1. THE device SHALL [behavior]
-2. THE device SHALL [behavior]
-3. [Continue with numbered criteria...]
+1. THE device SHALL count down from WDOGLOAD value to zero at system clock rate when INTEN=1
+2. THE device SHALL provide WDOGVALUE register to read current counter value in real-time
+3. WHEN INTEN transitions from 0→1, THE device SHALL reload counter with WDOGLOAD value and transition to COUNTING state
+4. WHEN WDOGLOAD is written during counting, THE device SHALL update reload value but NOT affect current counter
+5. THE device SHALL NOT decrement counter when INTEN=0 (disabled state)
+6. WHILE counter is active, THE device SHALL decrement WDOGVALUE by 1 every clock cycle
 
-### Requirement 3: [State Management]
+### Requirement 2: Interrupt Generation and Clearing
 
-**User Story**: As a [role], I want [capability], so that [benefit]
-
-**Acceptance Criteria**:
-1. THE device SHALL [behavior]
-2. [Continue...]
-
-### Requirement 4: [External Interfaces]
-
-**User Story**: As a [role], I want [capability], so that [benefit]
+**User Story**: As a driver developer, I want interrupt generation on timeout, so that I can respond to watchdog events in software
 
 **Acceptance Criteria**:
-1. THE device SHALL [behavior]
-2. [Continue...]
+1. WHEN counter reaches zero AND INTEN=1, THE device SHALL assert wdogint interrupt signal within 1 clock cycle
+2. THE device SHALL transition from COUNTING to INTERRUPT_PENDING state when counter reaches zero
+3. THE device SHALL reload counter with WDOGLOAD value when WDOGINTCLR register is written (register side-effect)
+4. THE device SHALL clear wdogint interrupt signal when WDOGINTCLR is written (register side-effect)
+5. WHILE in INTERRUPT_PENDING state, THE device SHALL keep wdogint asserted until WDOGINTCLR is written
+6. WHEN WDOGINTCLR is written, THE device SHALL transition from INTERRUPT_PENDING to COUNTING state
 
-### Requirement 5: [Error Handling]
+---
 
-**User Story**: As a [role], I want [capability], so that [benefit]
-
-**Acceptance Criteria**:
-1. THE device SHALL [behavior]
-2. [Continue...]
-
-*[Add Requirement 6, 7, 8... as needed to cover all key device capabilities]*
+*[Generate similar requirements for your device, covering all key capabilities from Hardware Specification]*
 
 ---
 
@@ -235,28 +213,7 @@ Test Validation:
 
 ### Functional Test Scenarios (Given-When-Then Format)
 
-**CRITICAL**: Each scenario must explicitly reference:
-- **Device States**: Which states are involved (e.g., RESET → IDLE → ACTIVE)
-- **Operational Flow**: Which flow it validates (e.g., Flow 1: Device Initialization)
-- **Requirements**: Which requirements it verifies (e.g., Requirement 1, 2)
-
-**Scenario Template**:
-```
-[N]. **Scenario [N]: [Scenario Name]**
-   - **States**: [INITIAL_STATE] → [INTERMEDIATE_STATE] → [FINAL_STATE]
-   - **Flow**: Flow [X] ([Flow Name])
-   - **Requirements**: Requirement [Y] ([requirement description])
-   - **Given** [initial device state and preconditions]
-   - **When** [software action or hardware event]
-     1. [Specific action/step 1]
-     2. [Specific action/step 2]
-   - **Then** [expected device behavior and observable changes]
-     - [Observable outcome 1]
-     - [Observable outcome 2]
-   - **Test Validation**:
-     - [How to verify outcome 1]
-     - [How to verify outcome 2]
-```
+**CRITICAL**: Each scenario must explicitly reference device states, operational flows, and requirements for full traceability.
 
 **Example Scenarios**:
 
@@ -351,25 +308,27 @@ Test Validation:
 
 ---
 
-## Execution Status
-*AI Agent: Mark [x] as you complete each step*
+## Specification Generation Status
+*AI Agent: Mark [x] as each section is completed*
 
-- [ ] **STEP 1**: Hardware specification extracted (registers, interfaces, states, flows from source documents)
-- [ ] **STEP 2**: Device operational model defined (states, transitions, interaction flows, ordering constraints)
-- [ ] **STEP 3**: Functional requirements generated (minimum 5 requirements with user stories and SHALL statements derived from Hardware Specification)
-- [ ] **STEP 4**: Test scenarios generated (at least 3 functional scenarios with states, flows, requirements references, and validation steps)
-- [ ] **STEP 5**: Hardware specification documented (register map, interfaces, operational model, memory interface)
-- [ ] **STEP 6**: Device behavioral model documented (system context, state management, data processing, error handling)
-- [ ] **STEP 7**: Clarifications documented (all [NEEDS CLARIFICATION] markers listed in "Clarifications Required" section)
-- [ ] **STEP 8**: Status field updated (count clarifications, update Status at top of document)
-- [ ] **STEP 9**: Completeness validated (all checklist items verified)
+### Section Completion
+- [ ] **Hardware Specification**: Register map, external interfaces, operational model, memory interface documented
+- [ ] **Functional Requirements**: Minimum 5 requirements with user stories and SHALL statements generated
+- [ ] **Device Behavioral Model**: System context, state management, data processing, error handling documented
+- [ ] **Test Scenarios**: Minimum 3 scenarios with states, flows, requirements references, and validation steps generated
 
-**COMPLETION CRITERIA**: All 9 steps marked [x] = Specification ready for human review
+### Quality Validation
+- [ ] **Clarifications Listed**: All [NEEDS CLARIFICATION] markers documented in "Clarifications Required" section
+- [ ] **Status Updated**: Clarification count complete, Status field at top updated
+- [ ] **Traceability Verified**: All requirements mapped to test scenarios, all states/transitions covered
+- [ ] **Completeness Check**: All mandatory sections complete, all checklists items verified
 
-**TRACEABILITY CHECK**:
-- [ ] Each test scenario references device states
-- [ ] Each test scenario references operational flows
-- [ ] Each test scenario references functional requirements
+**COMPLETION CRITERIA**: All 8 checkboxes marked [x] = Specification ready for planning phase
+
+**TRACEABILITY REQUIREMENTS**:
+- [ ] Each test scenario references device states (from Device States and Transitions)
+- [ ] Each test scenario references operational flows (from Software/Hardware Interaction Flows)
+- [ ] Each test scenario references functional requirements (Requirement N)
 - [ ] Each device state has at least one test scenario
 - [ ] Each state transition has at least one test scenario
 - [ ] Each functional requirement has at least one test scenario
