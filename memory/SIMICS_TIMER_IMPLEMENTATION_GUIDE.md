@@ -78,6 +78,8 @@ Elapsed Simulation Time * Frequency = Elapsed Cycles
 // filepath: example-timer.dml
 dml 1.4;
 
+device example_timer;
+
 // Define log group for timer messages
 loggroup timer_example;
 
