@@ -789,6 +789,11 @@ event absolute_timer_event is (simple_time_event) {
             remove();
         post(timeout);
     }
+
+    method cancel() {
+        if (posted())
+            remove();
+    }
 }
 
 bank abs_timer_bank is (timer_helper) {
