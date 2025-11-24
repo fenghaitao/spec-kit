@@ -66,6 +66,7 @@ You **MUST** consider the user input before proceeding (if not empty).
    - Implementation strategy section (TDD, on-demand knowledge acquisition)
    - **CRITICAL BUILD REQUIREMENT** annotation for implementation tasks
    - **MCP Absolute Path** requirement for all MCP tool calls
+   - **NOTE**: Template already includes mandatory git commit tasks at the end of each phase
 
 5. **MANDATORY: Git commit tasks.md**:
 
@@ -167,6 +168,8 @@ Simics device modeling follows this 5-phase workflow:
 - **Phase 3**: DML Implementation (register side-effects, hardware behaviors, state transitions, SW/HW interaction flows with on-demand RAG and CRITICAL BUILD REQUIREMENT - NOT basic register definitions)
 - **Phase 4**: Integration (memory, interrupts, checkpointing with on-demand RAG and CRITICAL BUILD REQUIREMENT)
 - **Phase 5**: Polish (validation, documentation, cleanup)
+
+**⚠️ Phase Completion Git Commits**: The template includes a mandatory git commit task at the end of each phase to create an audit trail and enable rollback to working states.
 
 ---
 

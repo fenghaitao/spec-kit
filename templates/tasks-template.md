@@ -77,8 +77,15 @@ des**Prerequisites**:
 - [ ] T002 Create Simics project: `create_simics_project(project_path="/absolute/path/to/workspace/simics-project")` ⚠️ ABSOLUTE PATH
 - [ ] T003 Generate DML register and dummy device definitions: `generate_dml_registers(project_path="/absolute/path/to/workspace/simics-project", device_name="DEVICE_NAME", reg_xml="/absolute/path/to/[device-name]-registers.xml")` ⚠️ ABSOLUTE PATH
 - [ ] T004 [P] Verify initial build: `build_simics_project(project_path="/absolute/path/to/workspace/simics-project", module="DEVICE_NAME")` ⚠️ ABSOLUTE PATH
+- [ ] T005 **MANDATORY: Git commit Phase 1 completion**:
+  ```bash
+  cd /absolute/path/to/workspace
+  git add simics-project/
+  git commit -m "setup: Phase 1 complete - Simics project initialized with register definitions"
+  git log --oneline -1
+  ```
 
-**Checkpoint**: Simics project structure ready, DML compiler available
+**Checkpoint**: Simics project structure ready, DML compiler available, Phase 1 committed
 
 ---
 
@@ -92,11 +99,11 @@ des**Prerequisites**:
 
 ### Test Pattern Research (On-Demand RAG)
 
-- [ ] T005 **RAG Query** (if test patterns needed): Execute `perform_rag_query("Simics Python device testing register read write verification patterns", source_type="python", match_count=10)` → document test patterns in research.md
+- [ ] T006 **RAG Query** (if test patterns needed): Execute `perform_rag_query("Simics Python device testing register read write verification patterns", source_type="python", match_count=10)` → document test patterns in research.md
 
 ### Contract Tests (from contracts/ if exists)
 
-- [ ] T006 [P] Register access test in `simics-project/modules/DEVICE_NAME/test/test_register_access.py`:
+- [ ] T007 [P] Register access test in `simics-project/modules/DEVICE_NAME/test/test_register_access.py`:
   - Review spec.md for register behaviors
   - Review contracts/register-access.md (if exists) for test contracts
   - Test register read operations
@@ -107,7 +114,7 @@ des**Prerequisites**:
 
 ### Workflow Tests (from test-scenarios.md if exists)
 
-- [ ] T007 [P] Device workflow test in `simics-project/modules/DEVICE_NAME/test/test_device_workflow.py`:
+- [ ] T008 [P] Device workflow test in `simics-project/modules/DEVICE_NAME/test/test_device_workflow.py`:
   - Review spec.md for operational behaviors
   - Review test-scenarios.md (if exists) for test scenarios
   - Test device initialization sequence
@@ -118,11 +125,19 @@ des**Prerequisites**:
 
 ### Validation
 
-- [ ] T008 Validate test environment: `run_simics_test(project_path="/absolute/path/to/workspace/simics-project", suite="modules/DEVICE_NAME/test")` ⚠️ ABSOLUTE PATH
+- [ ] T009 Validate test environment: `run_simics_test(project_path="/absolute/path/to/workspace/simics-project", suite="modules/DEVICE_NAME/test")` ⚠️ ABSOLUTE PATH
   - **Expected**: Tests should FAIL (device not implemented yet)
   - **If tests pass**: Tests are not correctly checking device behavior
 
-**Checkpoint**: All tests written and failing - ready for DML implementation
+- [ ] T010 **MANDATORY: Git commit Phase 2 completion**:
+  ```bash
+  cd /absolute/path/to/workspace
+  git add simics-project/modules/DEVICE_NAME/test/
+  git commit -m "tests: Phase 2 complete - All tests written and failing (TDD)"
+  git log --oneline -1
+  ```
+
+**Checkpoint**: All tests written and failing - ready for DML implementation, Phase 2 committed
 
 ---
 
@@ -156,7 +171,7 @@ Do NOT mark task done until build succeeds. Do NOT proceed to next task if build
 
 ### Register Read/Write Side-Effects Implementation (from data-model.md + spec.md)
 
-- [ ] T009 [P] Register read/write side-effects in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
+- [ ] T011 [P] Register read/write side-effects in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
   - Review spec.md for register read/write behaviors
   - Review data-model.md for register side-effects
   - Review `.specify/memory/DML_Device_Development_Best_Practices.md` for side-effect patterns
@@ -173,7 +188,7 @@ Do NOT mark task done until build succeeds. Do NOT proceed to next task if build
 
 ### Interface Implementation (from data-model.md)
 
-- [ ] T010 [P] Interface declarations in `simics-project/modules/DEVICE_NAME/interfaces.dml`:
+- [ ] T012 [P] Interface declarations in `simics-project/modules/DEVICE_NAME/interfaces.dml`:
   - Review research.md and data-model.md for interface patterns
   - Review `.specify/memory/DML_grammar.md` for interface syntax
   - **RAG if needed**: `perform_rag_query("DML interface implementation io_memory signal", source_type="dml")` → document in research.md
@@ -184,7 +199,7 @@ Do NOT mark task done until build succeeds. Do NOT proceed to next task if build
 
 ### Hardware Behavior & State Transitions (from spec.md operational behaviors)
 
-- [ ] T011 Hardware state machine implementation in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
+- [ ] T013 Hardware state machine implementation in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
   - Review spec.md for operational behaviors and state transitions
   - Review data-model.md for internal state variables and state machine design
   - **RAG if needed**: `perform_rag_query("DML state machine implementation event handling", source_type="dml")` → document in research.md
@@ -195,7 +210,7 @@ Do NOT mark task done until build succeeds. Do NOT proceed to next task if build
   - Add hardware event handling (timers, interrupts, external signals)
   - Check_with_dmlc → build
 
-- [ ] T012 Hardware/Software interaction flows in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
+- [ ] T014 Hardware/Software interaction flows in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
   - Review spec.md for SW/HW interaction scenarios
   - Review data-model.md for interaction patterns
   - **RAG if needed**: `perform_rag_query("DML software hardware interaction patterns driver model", source_type="dml")` → document in research.md
@@ -206,7 +221,7 @@ Do NOT mark task done until build succeeds. Do NOT proceed to next task if build
   - Add timing and sequencing constraints
   - Check_with_dmlc → build
 
-- [ ] T013 Error handling and validation in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
+- [ ] T015 Error handling and validation in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
   - Review `.specify/memory/DML_Device_Development_Best_Practices.md` for error handling patterns
   - **RAG if needed**: `perform_rag_query("DML error handling validation logging", source_type="dml")` → document in research.md
   - Add input validation (register values, operation sequences)
@@ -215,7 +230,15 @@ Do NOT mark task done until build succeeds. Do NOT proceed to next task if build
   - Add logging for debugging
   - Check_with_dmlc → build
 
-**Checkpoint**: Core device functionality implemented - tests should start passing
+- [ ] T016 **MANDATORY: Git commit Phase 3 completion**:
+  ```bash
+  cd /absolute/path/to/workspace
+  git add simics-project/modules/DEVICE_NAME/
+  git commit -m "implement: Phase 3 complete - DML core functionality with side-effects and behaviors"
+  git log --oneline -1
+  ```
+
+**Checkpoint**: Core device functionality implemented - tests should start passing, Phase 3 committed
 
 ---
 
@@ -227,7 +250,7 @@ Do NOT mark task done until build succeeds. Do NOT proceed to next task if build
 
 **⚠️ CRITICAL BUILD REQUIREMENT**: Same as Phase 3 applies to all integration tasks
 
-- [ ] T014 Memory interface connection in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
+- [ ] T017 Memory interface connection in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
   - Review research.md and data-model.md for memory mapping patterns
   - **RAG if needed**: `perform_rag_query("DML io_memory interface memory mapped registers", source_type="dml")` → document in research.md
   - Implement io_memory interface methods
@@ -235,7 +258,7 @@ Do NOT mark task done until build succeeds. Do NOT proceed to next task if build
   - Add memory access validation
   - Check_with_dmlc → build
 
-- [ ] T015 Interrupt/signal connections in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
+- [ ] T018 Interrupt/signal connections in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
   - Review spec.md for interrupt requirements
   - Review data-model.md for signal interface patterns
   - **RAG if needed**: `perform_rag_query("DML signal interface interrupt generation", source_type="dml")` → document in research.md
@@ -244,7 +267,7 @@ Do NOT mark task done until build succeeds. Do NOT proceed to next task if build
   - Connect to interrupt controller
   - Check_with_dmlc → build
 
-- [ ] T016 External port communications in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
+- [ ] T019 External port communications in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
   - Review spec.md for external interface requirements
   - **RAG if needed**: `perform_rag_query("DML port interface device communication", source_type="dml")` → document in research.md
   - Implement required port interfaces
@@ -252,7 +275,7 @@ Do NOT mark task done until build succeeds. Do NOT proceed to next task if build
   - Integrate with other devices if needed
   - Check_with_dmlc → build
 
-- [ ] T017 Checkpointing and state serialization in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
+- [ ] T020 Checkpointing and state serialization in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
   - Review `.specify/memory/DML_Device_Development_Best_Practices.md` for checkpoint patterns
   - **RAG if needed**: `perform_rag_query("DML checkpoint save restore state serialization", source_type="dml")` → document in research.md
   - Implement checkpoint save methods
@@ -260,11 +283,19 @@ Do NOT mark task done until build succeeds. Do NOT proceed to next task if build
   - Add state validation
   - Check_with_dmlc → build
 
-- [ ] T018 [P] Run comprehensive tests: `run_simics_test(project_path="/absolute/path/to/workspace/simics-project", suite="modules/DEVICE_NAME/test")` ⚠️ ABSOLUTE PATH
+- [ ] T021 [P] Run comprehensive tests: `run_simics_test(project_path="/absolute/path/to/workspace/simics-project", suite="modules/DEVICE_NAME/test")` ⚠️ ABSOLUTE PATH
   - **Expected**: All tests should PASS
   - **If tests fail**: Review failures and fix implementation
 
-**Checkpoint**: Device fully integrated with Simics - all tests passing
+- [ ] T022 **MANDATORY: Git commit Phase 4 completion**:
+  ```bash
+  cd /absolute/path/to/workspace
+  git add simics-project/modules/DEVICE_NAME/
+  git commit -m "integrate: Phase 4 complete - Device integrated with Simics infrastructure, all tests passing"
+  git log --oneline -1
+  ```
+
+**Checkpoint**: Device fully integrated with Simics - all tests passing, Phase 4 committed
 
 ---
 
@@ -272,35 +303,43 @@ Do NOT mark task done until build succeeds. Do NOT proceed to next task if build
 
 **Purpose**: Final validation, optimization, and documentation
 
-- [ ] T019 [P] Performance validation:
+- [ ] T023 [P] Performance validation:
   - Measure simulation overhead
   - Verify <1% performance impact (or per requirements)
   - Optimize hot paths if needed
 
-- [ ] T020 [P] Code review and cleanup:
+- [ ] T024 [P] Code review and cleanup:
   - Verify DML grammar compliance
   - Check error handling completeness
   - Review logging statements
   - Remove debug code
   - Add code comments
 
-- [ ] T021 [P] Update device documentation in `simics-project/modules/DEVICE_NAME/README.md`:
+- [ ] T025 [P] Update device documentation in `simics-project/modules/DEVICE_NAME/README.md`:
   - Add device description
   - Document register map
   - Add usage examples
   - Include configuration instructions
 
-- [ ] T022 [P] Update test documentation in `simics-project/modules/DEVICE_NAME/test/README.md`:
+- [ ] T026 [P] Update test documentation in `simics-project/modules/DEVICE_NAME/test/README.md`:
   - Document test scenarios
   - Add test execution instructions
   - Include troubleshooting guide
 
-- [ ] T023 Final validation: `run_simics_test(project_path="/absolute/path/to/workspace/simics-project")` ⚠️ ABSOLUTE PATH
+- [ ] T027 Final validation: `run_simics_test(project_path="/absolute/path/to/workspace/simics-project")` ⚠️ ABSOLUTE PATH
   - Run all project tests
   - Verify no regressions
   - Confirm all scenarios pass
 
-**Checkpoint**: Device model complete and validated
+- [ ] T028 **MANDATORY: Git commit Phase 5 completion**:
+  ```bash
+  cd /absolute/path/to/workspace
+  git add simics-project/modules/DEVICE_NAME/
+  git commit -m "polish: Phase 5 complete - Device model validated, optimized, and documented"
+  git log --oneline -1
+  ```
+
+**Checkpoint**: Device model complete and validated, Phase 5 committed
 
 ---
 
