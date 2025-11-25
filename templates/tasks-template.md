@@ -4,9 +4,9 @@ des**Prerequisites**:
 - **Required**: plan.md, spec.md, [device-name]-registers.xml
 - **Optional**: research.md, data-model.md, contracts/, test-scenarios.md
 
-**Tests**: Tests are REQUIRED for Simics device modeling (TDD approach)
+**Tests**: Tests are REQUIRED for Simics device modeling (TDD approach).
 
-**Organization**: Tasks are organized by implementation phases to enable proper dependency management and incremental implementation
+**Organization**: Tasks are organized by implementation phases to enable proper dependency management and incremental implementation.
 
 ## Task Format: `- [ ] [ID] [P?] Description`
 
@@ -21,7 +21,7 @@ des**Prerequisites**:
 
 **Input**: Design documents from `/specs/[###-feature-name]/`
 **Prerequisites**:
-- **Required**: plan.md, spec.md, [device-name]-register.xml
+- **Required**: plan.md, spec.md, [device-name]-registers.xml
 - **Optional**: research.md, data-model.md, contracts/, test-scenarios.md
 
 **Tests**: Tests are REQUIRED for Simics device modeling (TDD approach).
@@ -89,257 +89,380 @@ des**Prerequisites**:
 
 ---
 
-## Phase 2: Tests First (TDD) ⚠️ MUST COMPLETE BEFORE DML IMPLEMENTATION
+## Phase 2: Foundational (Knowledge & Base Infrastructure) ⚠️ BLOCKS ALL REQUIREMENTS
 
-**Purpose**: Write tests that define expected device behavior (tests must FAIL initially)
+**Purpose**: Establish foundational knowledge and base test infrastructure that ALL requirements depend on
 
-**⚠️ CRITICAL**: These tests MUST be written and MUST FAIL before ANY DML implementation
+**⚠️ CRITICAL**: No requirement implementation can begin until this phase is complete
 
-**Knowledge Acquisition**: On-demand as needed for test writing
+### Knowledge Acquisition
 
-### Test Pattern Research (On-Demand RAG)
+- [ ] T006 Review design documents for implementation context:
+  - Read spec.md Hardware Specification (register map, external interfaces, operational model)
+  - Read spec.md Functional Requirements (all requirements overview)
+  - Read data-model.md (if exists): Registers, interfaces, state variables, DML patterns
+  - Read test-scenarios.md (if exists): Test coverage planning
+  - Document key findings and patterns in research.md
 
-- [ ] T006 **RAG Query** (if test patterns needed): Execute `perform_rag_query("Simics Python device testing register read write verification patterns", source_type="python", match_count=10)` → document test patterns in research.md
+- [ ] T007 **RAG Query** (if DML patterns needed): Execute `perform_rag_query("DML device modeling common patterns register bank interface signal event", source_type="dml", match_count=10)` → document patterns in research.md
 
-### Contract Tests (from contracts/ if exists)
+### Base Test Infrastructure
 
-- [ ] T007 [P] Register access test in `simics-project/modules/DEVICE_NAME/test/test_register_access.py`:
-  - Review spec.md for register behaviors
+> **NOTE**: These foundational tests validate infrastructure used by ALL requirements
+
+- [ ] T008 [P] **RAG Query** (if test patterns needed): Execute `perform_rag_query("Simics Python device testing register read write verification patterns", source_type="python", match_count=10)` → document test patterns in research.md
+
+- [ ] T009 [P] Base register access test in `simics-project/modules/DEVICE_NAME/test/test_register_access.py`:
+  - Review spec.md Hardware Spec register map for ALL registers (functional + ID + configuration)
   - Review contracts/register-access.md (if exists) for test contracts
-  - Test register read operations
-  - Test register write operations
-  - Test reset values
-  - Test access violations (RO/WO enforcement)
-  - Use patterns from T005 RAG query if executed
+  - Test register read/write operations for all register types
+  - Test reset values for all registers
+  - Test access violations (RO/WO enforcement, protection mechanisms)
+  - Use patterns from T008 RAG query if executed
 
-### Workflow Tests (from test-scenarios.md if exists)
+- [ ] T010 [P] Base memory interface test in `simics-project/modules/DEVICE_NAME/test/test_memory_interface.py`:
+  - Review spec.md Hardware Spec Memory Interface Requirements
+  - Test access width validation (per spec requirements)
+  - Test alignment validation (per spec requirements)
+  - Test burst access handling (per spec requirements)
+  - Test error responses for invalid access patterns
+  - Use patterns from T008 RAG query if executed
 
-- [ ] T008 [P] Device workflow test in `simics-project/modules/DEVICE_NAME/test/test_device_workflow.py`:
-  - Review spec.md for operational behaviors
-  - Review test-scenarios.md (if exists) for test scenarios
-  - Test device initialization sequence
-  - Test normal operation scenarios
-  - Test error conditions
-  - Test state persistence
-  - Use patterns from T005 RAG query if executed
-
-### Validation
-
-- [ ] T009 Validate test environment: `run_simics_test(project_path="/absolute/path/to/workspace/simics-project", suite="modules/DEVICE_NAME/test")` ⚠️ ABSOLUTE PATH
+- [ ] T011 Validate base test environment: `run_simics_test(project_path="/absolute/path/to/workspace/simics-project", suite="modules/DEVICE_NAME/test")` ⚠️ ABSOLUTE PATH
   - **Expected**: Tests should FAIL (device not implemented yet)
   - **If tests pass**: Tests are not correctly checking device behavior
 
-- [ ] T010 **MANDATORY: Git commit Phase 2 completion**:
+- [ ] T012 **MANDATORY: Git commit Phase 2 completion**:
   ```bash
   cd /absolute/path/to/workspace
   git add simics-project/modules/DEVICE_NAME/test/
-  git commit -m "tests: Phase 2 complete - All tests written and failing (TDD)"
+  git add research.md
+  git commit -m "foundation: Phase 2 complete - Knowledge acquired and base tests written (TDD)"
   git log --oneline -1
   ```
 
-**Checkpoint**: All tests written and failing - ready for DML implementation, Phase 2 committed
+**Checkpoint**: Foundation established - knowledge documented, base infrastructure tests written and failing, ready for requirement implementation
 
 ---
 
-## Phase 3: DML Implementation (ONLY after tests are failing)
+<!--
+  ============================================================================
+  REQUIREMENT-BASED PHASES (Phase 3+)
 
-**Purpose**: Implement DML device model to make tests pass
+  Each requirement from spec.md Functional Requirements becomes its own phase:
+  - Phase N: Requirement X
+    - N.1: Tests for Requirement X (write first, must fail)
+    - N.2: Implementation for Requirement X (make tests pass)
+    - N.3: Validation & Commit (tests pass, git commit)
 
-**Knowledge Acquisition**: On-demand as needed for each implementation task
+  Benefits:
+  - Incremental delivery (each requirement independently testable)
+  - Clear TDD workflow (test → implement → validate per requirement)
+  - Better progress tracking (requirement completion vs phase percentage)
+  - Parallelization opportunities (different requirements, different agents)
+  - Natural mapping to spec.md structure
 
-**⚠️ CRITICAL BUILD REQUIREMENT**:
-Before implementing EACH task in this phase:
-1. Review available knowledge sources:
-   - research.md (if exists): Architecture decisions, device patterns, example code
-   - data-model.md (if exists): Registers, interfaces, DML implementation notes
-   - `.specify/memory/DML_Device_Development_Best_Practices.md`: DML patterns and pitfalls
-   - `.specify/memory/DML_grammar.md`: DML 1.4 language reference
-   - Device skeleton in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`
-2. If knowledge is insufficient for the specific task, execute `perform_rag_query()` with targeted question
-3. Document RAG results in research.md for future reference
-3. Then proceed with implementation
+  The example below shows typical hardware device requirements. Replace with
+  actual requirements from spec.md Functional Requirements section.
+  ============================================================================
+-->
+
+## Phase 3: Requirement 1 - [Requirement Name] (Priority: [P0/P1/P2])
+
+**Goal**: [Brief description from spec.md Functional Requirements]
+
+**Maps to**:
+- spec.md: Requirement 1 section
+- test-scenarios.md: Scenario(s) [X, Y, Z] (if exists)
+- data-model.md: [Relevant sections] (if exists)
+
+**⚠️ CRITICAL BUILD REQUIREMENT** (applies to ALL implementation tasks):
+Before implementing EACH task:
+1. Review available knowledge: research.md, data-model.md, DML best practices, DML grammar
+2. If knowledge insufficient → execute targeted `perform_rag_query()` → document in research.md
+3. Implement the task
 
 After implementing EACH task:
-1. `check_with_dmlc(project_path="/absolute/path/to/workspace/simics-project", module="DEVICE_NAME")` for AI-enhanced diagnostics
-2. `build_simics_project(project_path="/absolute/path/to/workspace/simics-project", module="DEVICE_NAME")` to verify compilation
+1. `check_with_dmlc(project_path="/absolute/path", module="DEVICE_NAME")` for diagnostics
+2. `build_simics_project(project_path="/absolute/path", module="DEVICE_NAME")` to verify compilation
+3. Only mark done when build succeeds
 
-Do NOT mark task done until build succeeds. Do NOT proceed to next task if build fails.
+**Note**: Basic register definitions exist from Phase 1. Focus on register side-effects, hardware behaviors, state transitions, and HW/SW interaction flows.
 
-**Note**: Do NOT create separate tasks for check_with_dmlc/build_simics_project calls - they are mandatory validation steps after EVERY implementation task, not standalone tasks.
+---
 
-**⚠️ IMPORTANT**: Basic register definitions already exist in `[device-name]-registers.dml` and device skeleton in `[device-name].dml` from Phase 1 setup. DO NOT create tasks for basic register definitions. Focus on register side-effects, hardware behaviors, state transitions, and HW/SW interaction flows.
+### 3.1 Tests for Requirement 1 ⚠️ WRITE FIRST
 
-### Register Read/Write Side-Effects Implementation (from data-model.md + spec.md)
+> **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T011 [P] Register read/write side-effects in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
-  - Review spec.md for register read/write behaviors
-  - Review data-model.md for register side-effects
-  - Review `.specify/memory/DML_Device_Development_Best_Practices.md` for side-effect patterns
-  - **RAG if needed**: `perform_rag_query("DML register read write callback side effects clear on read control actions", source_type="dml")` → document in research.md
-  - **Read side-effects**: Implement read callbacks for registers with side-effects
-    * Status register updates on read
-    * Clear-on-read behaviors
-    * Hardware state changes triggered by reads
-  - **Write side-effects**: Implement write callbacks for control registers
-    * Control actions and triggers
-    * Hardware state updates
-    * Command execution
+- [ ] T013 [P] Test for Requirement 1 in `simics-project/modules/DEVICE_NAME/test/test_requirement_1.py`:
+  - Review spec.md Requirement 1 acceptance criteria
+  - Review test-scenarios.md for relevant scenarios (if exists)
+  - Review data-model.md for registers/interfaces involved (if exists)
+  - **Test acceptance criterion 1**: [Describe test for criterion 1]
+  - **Test acceptance criterion 2**: [Describe test for criterion 2]
+  - **Test acceptance criterion 3**: [Describe test for criterion 3]
+  - **RAG if needed**: `perform_rag_query("[specific test question]", source_type="python")` → document in research.md
+
+- [ ] T014 Validate Requirement 1 tests fail: `run_simics_test(project_path="/absolute/path/to/workspace/simics-project", suite="modules/DEVICE_NAME/test/test_requirement_1.py")` ⚠️ ABSOLUTE PATH
+  - **Expected**: Tests should FAIL (not implemented yet)
+  - **If tests pass**: Tests are not correctly checking requirement
+
+---
+
+### 3.2 Implementation for Requirement 1
+
+> **Goal**: Implement [specific feature/behavior] to pass Requirement 1 tests (T013)
+
+- [ ] T015 [P] Implement [Feature A] in `simics-project/modules/DEVICE_NAME/[file].dml`:
+  - Review spec.md Hardware Spec for [feature] details
+  - Review data-model.md for [feature] implementation notes (if exists)
+  - **RAG if needed**: `perform_rag_query("[specific DML question]", source_type="dml")` → document in research.md
+  - Implement [specific functionality]
   - Check_with_dmlc → build
 
-### Interface Implementation (from data-model.md)
-
-- [ ] T012 [P] Interface declarations in `simics-project/modules/DEVICE_NAME/interfaces.dml`:
-  - Review research.md and data-model.md for interface patterns
-  - Review `.specify/memory/DML_grammar.md` for interface syntax
-  - **RAG if needed**: `perform_rag_query("DML interface implementation io_memory signal", source_type="dml")` → document in research.md
-  - Declare required Simics interfaces (io_memory, signal, etc.)
-  - Implement interface methods
-  - Add interface contracts from contracts/interface-behavior.md (if exists)
+- [ ] T016 [P] Implement [Feature B] in `simics-project/modules/DEVICE_NAME/[file].dml`:
+  - Review spec.md Hardware Spec for [feature] details
+  - Review data-model.md for [feature] implementation notes (if exists)
+  - **RAG if needed**: `perform_rag_query("[specific DML question]", source_type="dml")` → document in research.md
+  - Implement [specific functionality]
   - Check_with_dmlc → build
 
-### Hardware Behavior & State Transitions (from spec.md operational behaviors)
+---
 
-- [ ] T013 Hardware state machine implementation in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
-  - Review spec.md for operational behaviors and state transitions
-  - Review data-model.md for internal state variables and state machine design
-  - **RAG if needed**: `perform_rag_query("DML state machine implementation event handling", source_type="dml")` → document in research.md
-  - Define internal state variables from data-model.md
-  - Implement hardware state transitions (idle, active, busy, error states)
-  - Add state validation and guards
-  - Implement state-dependent behaviors
-  - Add hardware event handling (timers, interrupts, external signals)
-  - Check_with_dmlc → build
+### 3.3 Validation & Commit
 
-- [ ] T014 Hardware/Software interaction flows in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
-  - Review spec.md for SW/HW interaction scenarios
-  - Review data-model.md for interaction patterns
-  - **RAG if needed**: `perform_rag_query("DML software hardware interaction patterns driver model", source_type="dml")` → document in research.md
-  - Implement SW-initiated operations (configuration, control commands)
-  - Implement HW-initiated notifications (status updates, interrupts)
-  - Add handshaking protocols between SW and HW
-  - Implement synchronization mechanisms
-  - Add timing and sequencing constraints
-  - Check_with_dmlc → build
+- [ ] T017 Validate Requirement 1 tests pass: `run_simics_test(project_path="/absolute/path/to/workspace/simics-project", suite="modules/DEVICE_NAME/test/test_requirement_1.py")` ⚠️ ABSOLUTE PATH
+  - **Expected**: Tests should PASS
+  - **If tests fail**: Fix implementation until tests pass
 
-- [ ] T015 Error handling and validation in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
-  - Review `.specify/memory/DML_Device_Development_Best_Practices.md` for error handling patterns
-  - **RAG if needed**: `perform_rag_query("DML error handling validation logging", source_type="dml")` → document in research.md
-  - Add input validation (register values, operation sequences)
-  - Implement error detection (invalid states, illegal operations)
-  - Add error reporting (status registers, interrupts)
-  - Add logging for debugging
-  - Check_with_dmlc → build
-
-- [ ] T016 **MANDATORY: Git commit Phase 3 completion**:
+- [ ] T018 **MANDATORY: Git commit Requirement 1 completion**:
   ```bash
   cd /absolute/path/to/workspace
   git add simics-project/modules/DEVICE_NAME/
-  git commit -m "implement: Phase 3 complete - DML core functionality with side-effects and behaviors"
+  git commit -m "implement: Requirement 1 complete - [feature name] implemented and tested"
   git log --oneline -1
   ```
 
-**Checkpoint**: Core device functionality implemented - tests should start passing, Phase 3 committed
+**Checkpoint**: Requirement 1 complete and independently testable - can proceed to Requirement 2
 
 ---
 
-## Phase 4: Integration
+## Phase 4: Requirement 2 - [Requirement Name] (Priority: [P0/P1/P2])
 
-**Purpose**: Connect device to Simics infrastructure
+**Goal**: [Brief description from spec.md Functional Requirements]
 
-**Knowledge Acquisition**: On-demand as needed for integration tasks
+**Maps to**:
+- spec.md: Requirement 2 section
+- test-scenarios.md: Scenario(s) [A, B] (if exists)
+- data-model.md: [Relevant sections] (if exists)
 
-**⚠️ CRITICAL BUILD REQUIREMENT**: Same as Phase 3 applies to all integration tasks
+---
 
-- [ ] T017 Memory interface connection in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
+### 4.1 Tests for Requirement 2 ⚠️ WRITE FIRST
+
+> **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
+
+- [ ] T019 [P] Test for Requirement 2 in `simics-project/modules/DEVICE_NAME/test/test_requirement_2.py`:
+  - Review spec.md Requirement 2 acceptance criteria
+  - Review test-scenarios.md for relevant scenarios (if exists)
+  - Review data-model.md for registers/interfaces involved (if exists)
+  - **Test acceptance criterion 1**: [Describe test for criterion 1]
+  - **Test acceptance criterion 2**: [Describe test for criterion 2]
+  - **RAG if needed**: `perform_rag_query("[specific test question]", source_type="python")` → document in research.md
+
+- [ ] T020 Validate Requirement 2 tests fail: `run_simics_test(project_path="/absolute/path/to/workspace/simics-project", suite="modules/DEVICE_NAME/test/test_requirement_2.py")` ⚠️ ABSOLUTE PATH
+  - **Expected**: Tests should FAIL (not implemented yet)
+
+---
+
+### 4.2 Implementation for Requirement 2
+
+> **Goal**: Implement [specific feature/behavior] to pass Requirement 2 tests (T019)
+
+- [ ] T021 [P] Implement [Feature C] in `simics-project/modules/DEVICE_NAME/[file].dml`:
+  - Review spec.md Hardware Spec for [feature] details
+  - Review data-model.md for [feature] implementation notes (if exists)
+  - **RAG if needed**: Execute targeted RAG query → document in research.md
+  - Implement [specific functionality]
+  - Check_with_dmlc → build
+
+- [ ] T022 [P] Implement [Feature D] in `simics-project/modules/DEVICE_NAME/[file].dml`:
+  - Review spec.md Hardware Spec for [feature] details
+  - Review data-model.md for [feature] implementation notes (if exists)
+  - **RAG if needed**: Execute targeted RAG query → document in research.md
+  - Implement [specific functionality]
+  - Check_with_dmlc → build
+
+---
+
+### 4.3 Validation & Commit
+
+- [ ] T023 Validate Requirement 2 tests pass: `run_simics_test(project_path="/absolute/path/to/workspace/simics-project", suite="modules/DEVICE_NAME/test/test_requirement_2.py")` ⚠️ ABSOLUTE PATH
+  - **Expected**: Tests should PASS
+
+- [ ] T024 **MANDATORY: Git commit Requirement 2 completion**:
+  ```bash
+  cd /absolute/path/to/workspace
+  git add simics-project/modules/DEVICE_NAME/
+  git commit -m "implement: Requirement 2 complete - [feature name] implemented and tested"
+  git log --oneline -1
+  ```
+
+**Checkpoint**: Requirements 1 AND 2 complete - can proceed to Requirement 3
+
+---
+
+<!--
+  ============================================================================
+  REPEAT PATTERN for Requirement 3, 4, 5, etc.
+
+  Each requirement gets its own phase with:
+  - Phase N: Requirement X - [Name]
+    - N.1 Tests for Requirement X
+    - N.2 Implementation for Requirement X
+    - N.3 Validation & Commit
+
+  Continue until all functional requirements from spec.md are covered.
+  ============================================================================
+-->
+
+## Phase 5: Requirement 3 - [Requirement Name] (Priority: [P0/P1/P2])
+
+[Follow same pattern as Phase 3 and 4]
+
+---
+
+## Phase 6: Requirement 4 - [Requirement Name] (Priority: [P0/P1/P2])
+
+[Follow same pattern as Phase 3 and 4]
+
+---
+
+<!--
+  ============================================================================
+  COVERAGE VALIDATION before Integration
+
+  Before proceeding to Integration phase, validate ALL requirements complete:
+  ============================================================================
+-->
+
+**Coverage Validation Before Integration**:
+- [ ] ALL functional requirements from spec.md have dedicated phases above
+- [ ] ALL registers from spec.md Hardware Spec implemented (functional + ID registers)
+- [ ] ALL external signals from spec.md Hardware Spec implemented (interrupts + clocks + resets)
+- [ ] ALL memory access validation from spec.md Hardware Spec implemented
+- [ ] ALL device states and transitions from spec.md implemented
+- [ ] ALL SW/HW interaction flows from spec.md implemented
+- [ ] ALL requirement tests pass independently
+
+---
+
+## Phase N-1: Integration & Interfaces
+
+**Purpose**: Connect all requirements together and integrate with Simics infrastructure
+
+**Note**: This phase begins after ALL functional requirements (Phase 3, 4, 5...) are complete
+
+**⚠️ CRITICAL BUILD REQUIREMENT**: Same as requirement phases - check_with_dmlc → build after EACH task
+
+- [ ] T[N-5] Memory interface connection in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
+  - Review spec.md Hardware Spec Memory Interface Requirements
   - Review research.md and data-model.md for memory mapping patterns
   - **RAG if needed**: `perform_rag_query("DML io_memory interface memory mapped registers", source_type="dml")` → document in research.md
   - Implement io_memory interface methods
   - Connect register bank to memory space
-  - Add memory access validation
+  - Validate memory access patterns (from base tests T010)
   - Check_with_dmlc → build
 
-- [ ] T018 Interrupt/signal connections in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
-  - Review spec.md for interrupt requirements
+- [ ] T[N-4] Interrupt/signal connections in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
+  - Review spec.md Hardware Spec External Interfaces for interrupt requirements
   - Review data-model.md for signal interface patterns
   - **RAG if needed**: `perform_rag_query("DML signal interface interrupt generation", source_type="dml")` → document in research.md
-  - Implement signal interface for interrupt output
-  - Add interrupt generation logic
+  - Implement signal interface for interrupt outputs
+  - Add interrupt generation logic with timing requirements
   - Connect to interrupt controller
   - Check_with_dmlc → build
 
-- [ ] T019 External port communications in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
-  - Review spec.md for external interface requirements
+- [ ] T[N-3] External port communications in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
+  - Review spec.md Hardware Spec for external interface requirements
   - **RAG if needed**: `perform_rag_query("DML port interface device communication", source_type="dml")` → document in research.md
   - Implement required port interfaces
   - Add communication protocols
   - Integrate with other devices if needed
   - Check_with_dmlc → build
 
-- [ ] T020 Checkpointing and state serialization in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
+- [ ] T[N-2] Checkpointing and state serialization in `simics-project/modules/DEVICE_NAME/DEVICE_NAME.dml`:
   - Review `.specify/memory/DML_Device_Development_Best_Practices.md` for checkpoint patterns
   - **RAG if needed**: `perform_rag_query("DML checkpoint save restore state serialization", source_type="dml")` → document in research.md
-  - Implement checkpoint save methods
+  - Implement checkpoint save methods for ALL state variables
   - Implement checkpoint restore methods
   - Add state validation
   - Check_with_dmlc → build
 
-- [ ] T021 [P] Run comprehensive tests: `run_simics_test(project_path="/absolute/path/to/workspace/simics-project", suite="modules/DEVICE_NAME/test")` ⚠️ ABSOLUTE PATH
-  - **Expected**: All tests should PASS
-  - **If tests fail**: Review failures and fix implementation
+- [ ] T[N-1] [P] Run comprehensive tests: `run_simics_test(project_path="/absolute/path/to/workspace/simics-project", suite="modules/DEVICE_NAME/test")` ⚠️ ABSOLUTE PATH
+  - **Expected**: ALL tests should PASS (base tests + all requirement tests)
+  - **If tests fail**: Review failures and fix integration issues
 
-- [ ] T022 **MANDATORY: Git commit Phase 4 completion**:
+- [ ] T[N] **MANDATORY: Git commit Integration completion**:
   ```bash
   cd /absolute/path/to/workspace
   git add simics-project/modules/DEVICE_NAME/
-  git commit -m "integrate: Phase 4 complete - Device integrated with Simics infrastructure, all tests passing"
+  git commit -m "integrate: Integration complete - Device integrated with Simics infrastructure, all tests passing"
   git log --oneline -1
   ```
 
-**Checkpoint**: Device fully integrated with Simics - all tests passing, Phase 4 committed
+**Checkpoint**: Device fully integrated with Simics - all tests passing
 
 ---
 
-## Phase 5: Polish & Validation
+## Phase N: Polish & Validation
 
 **Purpose**: Final validation, optimization, and documentation
 
-- [ ] T023 [P] Performance validation:
+- [ ] T[N+1] [P] Performance validation:
   - Measure simulation overhead
-  - Verify <1% performance impact (or per requirements)
+  - Verify <1% performance impact (or per requirements from spec.md)
   - Optimize hot paths if needed
+  - Document performance characteristics
 
-- [ ] T024 [P] Code review and cleanup:
+- [ ] T[N+2] [P] Code review and cleanup:
   - Verify DML grammar compliance
   - Check error handling completeness
   - Review logging statements
   - Remove debug code
-  - Add code comments
+  - Add code comments for complex logic
+  - Verify coding standards compliance
 
-- [ ] T025 [P] Update device documentation in `simics-project/modules/DEVICE_NAME/README.md`:
-  - Add device description
-  - Document register map
-  - Add usage examples
-  - Include configuration instructions
+- [ ] T[N+3] [P] Update device documentation in `simics-project/modules/DEVICE_NAME/README.md`:
+  - Add device description and purpose
+  - Document register map (ALL registers including ID registers)
+  - Document external interfaces (ALL signals: interrupts, clocks, resets)
+  - Add usage examples and configuration steps
+  - Include integration instructions
+  - Add troubleshooting guide
 
-- [ ] T026 [P] Update test documentation in `simics-project/modules/DEVICE_NAME/test/README.md`:
-  - Document test scenarios
+- [ ] T[N+4] [P] Update test documentation in `simics-project/modules/DEVICE_NAME/test/README.md`:
+  - Document test scenarios (base tests + all requirement tests)
   - Add test execution instructions
-  - Include troubleshooting guide
+  - Include test coverage report
+  - Add troubleshooting guide for test failures
 
-- [ ] T027 Final validation: `run_simics_test(project_path="/absolute/path/to/workspace/simics-project")` ⚠️ ABSOLUTE PATH
-  - Run all project tests
+- [ ] T[N+5] Final validation: `run_simics_test(project_path="/absolute/path/to/workspace/simics-project")` ⚠️ ABSOLUTE PATH
+  - Run all project tests (base + all requirements + integration)
   - Verify no regressions
   - Confirm all scenarios pass
+  - Generate test coverage report
 
-- [ ] T028 **MANDATORY: Git commit Phase 5 completion**:
+- [ ] T[N+6] **MANDATORY: Git commit Polish completion**:
   ```bash
   cd /absolute/path/to/workspace
   git add simics-project/modules/DEVICE_NAME/
-  git commit -m "polish: Phase 5 complete - Device model validated, optimized, and documented"
+  git commit -m "polish: Device model complete - validated, optimized, and documented"
   git log --oneline -1
   ```
 
-**Checkpoint**: Device model complete and validated, Phase 5 committed
+**Checkpoint**: Device model complete and production-ready
 
 ---
 
@@ -347,128 +470,106 @@ Do NOT mark task done until build succeeds. Do NOT proceed to next task if build
 
 ### Phase Dependencies
 
-- **Setup (Phase 1)**: No dependencies - can start immediately
-  - T001 → T002 → T003 → T004
-- **Knowledge Acquisition (Phase 2)**: Depends on Setup (T004) completion - BLOCKS all implementation
-  - T005 → T006 → T007 → T008 → T009 (sequential reading)
-- **Tests First (Phase 3)**: Depends on Knowledge Acquisition (T009) completion - BLOCKS DML implementation
-  - T010 → T011, T012, T013 (parallel after RAG query) → T014
-- **DML Implementation (Phase 4)**: Depends on Tests (T014) completion - Core device logic
-  - T015 || T017 (parallel - different files)
-  - T016 (depends on T015 - same file)
-  - T018 → T019 (sequential - same file, state before error handling)
-- **Integration (Phase 5)**: Depends on DML Implementation (T019) completion - Simics connectivity
-  - T020 → T021 → T022 → T023 → T024 (mostly sequential, building on each other)
-- **Polish (Phase 6)**: Depends on Integration (T024) completion - Final validation
-  - T025 || T026 || T027 || T028 (all parallel) → T029
+- **Phase 1 (Setup)**: No dependencies - start immediately
+  - T001 → T002 → T003 → T004 → T005
 
-### Within Each Phase
+- **Phase 2 (Foundational)**: Depends on Phase 1 (T005) - BLOCKS all requirements
+  - T006 → T007 (RAG queries)
+  - T008 → T009 || T010 (parallel base tests)
+  - T011 → T012 (validation + commit)
 
-- **Setup (Phase 1)**:
-  - T001-T003: Sequential (each step depends on previous)
-  - T004: Can run after T003 completes
+- **Phase 3 (Requirement 1)**: Depends on Phase 2 (T012) - First requirement
+  - 3.1 Tests: T013 → T014 (write tests, validate they fail)
+  - 3.2 Implementation: T015 || T016 (parallel if different files)
+  - 3.3 Validation: T017 → T018 (tests pass, commit)
 
-- **Knowledge Acquisition (Phase 2)**:
-  - T005-T009: Sequential reading and note-taking
-  - Must read research.md (T005) before other documents
-  - Must complete all gates before proceeding to Phase 3
+- **Phase 4 (Requirement 2)**: Depends on Phase 3 (T018) OR can run parallel if independent
+  - 4.1 Tests: T019 → T020
+  - 4.2 Implementation: T021 || T022
+  - 4.3 Validation: T023 → T024
 
-- **Tests (Phase 3)**:
-  - T010: Must complete first (RAG query for test patterns)
-  - T011, T012, T013: Can all run in parallel after T010 (different test files)
-  - T014: Validation step after all tests written
+- **Phase 5+ (Requirements 3, 4, ...)**: Follow same pattern
+  - Each requirement CAN run parallel if independent
+  - Each requirement MUST complete tests before implementation
 
-- **DML Implementation (Phase 4)**:
-  - T015 (registers.dml) and T017 (interfaces.dml): Can run in parallel (different files)
-  - T016: Depends on T015 (modifying same file - registers.dml)
-  - T018-T019: Sequential (same file - DEVICE_NAME.dml, state management before error handling)
+- **Phase N-1 (Integration)**: Depends on ALL requirement phases complete
+  - T[N-5] → T[N-4] → T[N-3] → T[N-2] (mostly sequential integration)
+  - T[N-1] → T[N] (validation + commit)
 
-- **Integration (Phase 5)**:
-  - T020-T023: Mostly sequential (build on each other, same file)
-  - T024: Validation step after all integration complete
+- **Phase N (Polish)**: Depends on Integration (T[N])
+  - T[N+1] || T[N+2] || T[N+3] || T[N+4] (all parallel)
+  - T[N+5] → T[N+6] (final validation + commit)
 
-- **Polish (Phase 6)**:
-  - T025, T026, T027, T028: All can run in parallel (different concerns/files)
-  - T029: Final validation after all polish tasks complete
+### Parallelization Opportunities
 
-### Parallel Opportunities
-
-- **Setup**: Limited parallelization - mostly sequential setup steps
-- **Knowledge**: No parallelization - sequential reading for comprehension
-- **Tests**: T011 || T012 || T013 (after T010 completes)
-- **DML Implementation**: T015 || T017 (different files: registers.dml and interfaces.dml)
-- **Integration**: Limited parallelization - mostly sequential due to dependencies
-- **Polish**: T025 || T026 || T027 || T028 (all different concerns)
+- **Phase 2**: T009 || T010 (base tests - different files)
+- **Requirement Phases**:
+  - Within requirement: Implementation tasks can run parallel if different files
+  - Across requirements: Independent requirements can run parallel
+- **Integration**: Limited parallelization - mostly sequential
+- **Polish**: T[N+1] || T[N+2] || T[N+3] || T[N+4] (all different concerns)
 
 ### Critical Path
 
-The critical path through all phases:
 ```
-T001 → T002 → T003 → T004 (Setup)
+Phase 1 (Setup) → Phase 2 (Foundation) → [BLOCKS]
   ↓
-T005 → T006 → T007 → T008 → T009 (Knowledge - BLOCKS everything)
+Phase 3 (Req 1): Tests → Implementation → Validation
   ↓
-T010 → T011/T012/T013 → T014 (Tests - BLOCKS implementation)
+Phase 4 (Req 2): Tests → Implementation → Validation
   ↓
-T015 → T016 → T018 → T019 (DML Implementation)
+Phase 5+ (Req 3, 4, ...): Tests → Implementation → Validation
   ↓
-T020 → T021 → T022 → T023 → T024 (Integration)
+Phase N-1 (Integration): Connect all requirements
   ↓
-T025/T026/T027/T028 → T029 (Polish)
+Phase N (Polish): Final validation
 ```
 
-**Total Minimum Time**: 29 tasks (with some parallelization possible in Phases 3, 4, and 6)
-
----
-
-## Parallel Example: Test Creation
-
-```bash
-# After T010 RAG query completes, launch all test creation together:
-Task T011: "Register access test in simics-project/modules/DEVICE_NAME/test/test_register_access.py"
-Task T012: "Interface behavior test in simics-project/modules/DEVICE_NAME/test/test_interface_behavior.py"
-Task T013: "Device workflow test in simics-project/modules/DEVICE_NAME/test/test_device_workflow.py"
-```
+**Note**: Requirements CAN run in parallel if independent (different registers, different state, no shared resources)
 
 ---
 
 ## Implementation Strategy
 
-### TDD Workflow with On-Demand Knowledge
+### Hybrid TDD Workflow
 
-1. Complete Phase 1: Setup → Simics project ready
-2. Complete Phase 2: Tests First → All tests written and FAILING (RAG on-demand for test patterns)
-3. **VALIDATE**: Tests must fail before proceeding to implementation
-4. Complete Phase 3: DML Implementation → Tests start passing (RAG on-demand per implementation need)
-5. Complete Phase 4: Integration → All tests passing (RAG on-demand per integration need)
-6. Complete Phase 5: Polish → Final validation
+1. **Phase 1**: Setup → Simics project structure ready
+2. **Phase 2**: Foundation → Knowledge + base infrastructure tests (MUST FAIL)
+3. **Phase 3+**: Per-Requirement → Tests → Implementation → Validation (incremental delivery)
+4. **Phase N-1**: Integration → Connect all requirements together
+5. **Phase N**: Polish → Production-ready
+
+### Benefits of Requirement-Based Organization
+
+✅ **Incremental Delivery**: Each requirement independently testable and committable
+✅ **Clear TDD**: Test → Implement → Validate cycle visible per requirement
+✅ **Better Progress**: "Requirement 2 of 5 complete" vs "Phase 3 40% done"
+✅ **Parallelization**: Independent requirements can be implemented simultaneously
+✅ **Natural Mapping**: Follows spec.md Functional Requirements structure
+✅ **Independent Validation**: Each requirement has its own test suite
+✅ **Easier Debugging**: Failures isolated to specific requirement
 
 ### On-Demand Knowledge Acquisition
 
-For each implementation task (Phase 3 & 4):
-1. Review available knowledge sources:
-   - research.md (architecture decisions, patterns from planning phase)
-   - data-model.md (registers, interfaces, implementation notes)
-   - `.specify/memory/DML_Device_Development_Best_Practices.md` (patterns & pitfalls)
-   - `.specify/memory/DML_grammar.md` (DML 1.4 reference)
-   - Device skeleton (generated structure)
-2. If knowledge is sufficient → proceed with implementation
-3. If knowledge is insufficient → execute targeted RAG query → document results in research.md
-4. Implement the task using available knowledge
-5. Validate: check_with_dmlc → build_simics_project
-6. Only mark done when build succeeds
-7. Git commit the change
+For each implementation task:
+1. Review available knowledge: research.md, data-model.md, DML best practices, DML grammar
+2. If sufficient → implement
+3. If insufficient → execute targeted `perform_rag_query()` → document in research.md → implement
+4. Validate: check_with_dmlc → build_simics_project
+5. Only mark done when build succeeds
+6. Git commit when requirement complete
 
 ---
 
 ## Notes
 
-- [P] tasks = different files, no dependencies
-- Verify tests fail before implementing (TDD)
-- RAG queries are on-demand - only execute when knowledge is insufficient
-- Run check_with_dmlc + build after EVERY implementation task
-- Document RAG results in research.md for reuse
-- Commit after each task or logical group
-- Always use absolute paths for MCP tools (SSE transport requirement)
-- Do NOT create separate tasks for check_with_dmlc/build_simics_project (they are validation steps)
-- Stop at any checkpoint to validate phase independently
+- **[P] tasks** = Can run in parallel (different files, no dependencies)
+- **Verify tests fail** before implementing (TDD principle)
+- **RAG queries** are on-demand - execute only when knowledge insufficient
+- **check_with_dmlc + build** after EVERY implementation task (not separate tasks)
+- **Document RAG results** in research.md for reuse across tasks
+- **Git commit** after each requirement completion (incremental delivery)
+- **Absolute paths** for MCP tools (SSE transport requirement)
+- **Stop at checkpoints** to validate phases independently
+- **Requirement independence**: Analyze dependencies - some can run parallel
+- **Task IDs**: Use T[N] notation - actual numbers depend on number of requirements
