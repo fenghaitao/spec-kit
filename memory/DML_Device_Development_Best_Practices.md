@@ -11,9 +11,8 @@ This guide provides a comprehensive introduction to writing Device Modeling Lang
 3. [Device Structure](#device-structure)
 4. [Common Patterns](#common-patterns)
 5. [Compilation Issues and Solutions](#compilation-issues-and-solutions)
-6. [Best Practices](#best-practices)
-7. [Example Devices](#example-devices)
-8. [Testing Best Practices](#testing-best-practices)
+6. [General Best Practices](#general-best-practices)
+7. [Testing Best Practices](#testing-best-practices)
 
 ## DML Compilation Setup
 
@@ -225,281 +224,6 @@ method update_interrupt() {
 ```
 
 ### 3. Timer Device
-
-```dml
-dml 1.4;
-
-device timer_device;
-
-import "simics/device-api.dml";
-
-param classname = "timer_device";
-param desc = "Simple timer device";
-
-event timer_tick;
-
-bank timer_regs {
-    param function = 0x4000;
-    param register_size = 4;
-
-    register TIMER_VALUE @ 0x00 {
-        param size = 4;
-        param desc = "Current timer value";
-    }
-
-    register TIMER_CONTROL @ 0x04 {
-        param size = 4;
-        param desc = "Timer control register";
-
-        method write(uint64 value) {
-            this.val = value;
-            if (value & 0x1) {  // Enable bit
-                start_timer();
-            }
-        }
-    }
-}
-
-method start_timer() {
-    after 1.0 s: timer_expired();
-}
-
-method timer_expired() {
-    log info: "Timer expired";
-    timer_regs.TIMER_VALUE.val = 0;
-    // Could trigger interrupt here
-}
-```
-
-## Compilation Issues and Solutions
-
-### Issue 1: "syntax error at 'device'"
-
-**Cause**: Using old DML syntax with braces after device declaration.
-
-**Solution**: Remove braces from device declaration:
-```dml
-// Wrong
-device my_device { ... }
-
-// Correct
-device my_device;
-```
-
-### Issue 2: "cannot find file to import: dml-builtins.dml"
-
-**Cause**: Missing include path for DML builtins.
-
-**Solution**: Add both include paths:
-```bash
-dmlc --simics-api=7 -I ../linux64/bin/dml/api/7/1.4 -I ../linux64/bin/dml/1.4 file.dml output
-```
-
-### Issue 3: "assert sys.flags.utf8_mode"
-
-**Cause**: Python not running in UTF-8 mode.
-
-**Solution**: Set environment variable or modify dmlc script:
-```bash
-export PYTHONUTF8=1
-```
-
-### Issue 4: "unknown template: 'device'"
-
-**Cause**: DML builtins not found in include path.
-
-**Solution**: Ensure `-I ../linux64/bin/dml/1.4` is included.
-
-## Best Practices
-
-### 1. File Organization
-
-```
-simics-project/
-├── modules/
-│   ├── device1/
-│   │   ├── device.dml
-│   │   └── Makefile
-│   └── device2/
-│       ├── device.dml
-│       └── Makefile
-├── common/
-│   └── device-common.dml
-└── Makefile
-```
-
-### 2. Naming Conventions
-
-- **Device names**: lowercase_with_underscores
-- **Bank names**: lowercase_with_underscores
-- **Register names**: descriptive_uppercase
-- **Field names**: descriptive_camelCase
-- **Parameters**: lowercase or camelCase
-- **Methods**: lowercase_with_underscores
-
-### 3. Documentation
-
-Always include meaningful descriptions:
-
-```dml
-param desc = "Detailed description of what this device does";
-
-register CONTROL @ 0x00 {
-    param desc = "Main control register - bit 0 enables device";
-}
-```
-
-### 4. Error Handling
-
-```dml
-method write(uint64 value) {
-    if (value > 0xFF) {
-        log error: "Invalid value written to 8-bit register: 0x%x", value;
-        return;
-    }
-    this.val = value;
-}
-```
-
-### 5. Logging
-
-Use appropriate log levels:
-
-```dml
-log info: "Device initialized";
-log warning: "Unusual register access pattern";
-log error: "Invalid operation attempted";
-```
-
-## Example Devices
-
-### Complete UART Example
-
-```dml
-dml 1.4;
-
-device uart_16550;
-
-import "simics/device-api.dml";
-
-param classname = "uart_16550";
-param desc = "16550-compatible UART device";
-
-bank uart_regs {
-    param function = 0x3f8;
-    param register_size = 1;
-
-    // Data register / Divisor latch low
-    register RBR_THR_DLL @ 0x00 {
-        param size = 1;
-        param desc = "Receiver buffer/Transmitter holding/Divisor latch low";
-
-        method write(uint64 value) {
-            if (LCR.val & 0x80) {
-                // Divisor latch access
-                log info: "Divisor latch low set to 0x%02x", value;
-            } else {
-                // Transmit data
-                log info: "UART transmit: 0x%02x ('%c')", value,
-                         (value >= 32 && value < 127) ? value : '?';
-            }
-            this.val = value;
-        }
-
-        method read() -> (uint64) {
-            if (LCR.val & 0x80) {
-                return this.val;  // Divisor latch
-            } else {
-                log info: "UART receive read";
-                return 0x00;  // No data available
-            }
-        }
-    }
-
-    // Interrupt enable register / Divisor latch high
-    register IER_DLH @ 0x01 {
-        param size = 1;
-        param desc = "Interrupt enable/Divisor latch high";
-    }
-
-    // Line control register
-    register LCR @ 0x03 {
-        param size = 1;
-        param desc = "Line control register";
-        param init_val = 0x03;  // 8N1
-    }
-
-    // Line status register
-    register LSR @ 0x05 {
-        param size = 1;
-        param desc = "Line status register";
-        param init_val = 0x60;  // TX empty and ready
-    }
-}
-```
-
-### Simple PCI Device Template
-
-```dml
-dml 1.4;
-
-device simple_pci;
-
-import "simics/device-api.dml";
-
-param classname = "simple_pci";
-param desc = "Simple PCI device template";
-
-// PCI configuration space
-bank pci_config {
-    param function = 0;  // Will be mapped by PCI bus
-    param register_size = 4;
-
-    register VENDOR_ID @ 0x00 {
-        param size = 2;
-        param desc = "PCI Vendor ID";
-        param init_val = 0x8086;  // Intel
-        param read_only = true;
-    }
-
-    register DEVICE_ID @ 0x02 {
-        param size = 2;
-        param desc = "PCI Device ID";
-        param init_val = 0x1234;  // Custom device
-        param read_only = true;
-    }
-
-    register COMMAND @ 0x04 {
-        param size = 2;
-        param desc = "PCI Command register";
-    }
-
-    register STATUS @ 0x06 {
-        param size = 2;
-        param desc = "PCI Status register";
-        param init_val = 0x0200;  // 66MHz capable
-    }
-}
-
-// Device-specific registers
-bank device_regs {
-    param function = 0x1000;  // BAR0 mapping
-    param register_size = 4;
-
-    register CONTROL @ 0x00 {
-        param size = 4;
-        param desc = "Device control register";
-    }
-
-    register STATUS @ 0x04 {
-        param size = 4;
-        param desc = "Device status register";
-        param init_val = 0x1;  // Ready
-    }
-}
-```
-
-### Advanced Timer Device Implementation
 
 This comprehensive example demonstrates how to implement hardware timer functionality in Simics, including time event management, frequency conversion, and both relative and absolute timer modes.
 
@@ -889,6 +613,7 @@ bank abs_timer_bank is (timer_helper) {
 }
 ```
 
+
 #### Key Timer Implementation Points
 
 **1. Event Management:**
@@ -975,6 +700,232 @@ print $dev.bank.timer_bank.TIMER_CONTROL    # Enable should be clear
 - ✅ Calculate elapsed/remaining time dynamically on read
 - ❌ Don't forget to cancel events when disabling the timer
 - ❌ Don't post events without checking if one is already pending
+
+### 4. Complete UART Example
+
+```dml
+dml 1.4;
+
+device uart_16550;
+
+import "simics/device-api.dml";
+
+param classname = "uart_16550";
+param desc = "16550-compatible UART device";
+
+bank uart_regs {
+    param function = 0x3f8;
+    param register_size = 1;
+
+    // Data register / Divisor latch low
+    register RBR_THR_DLL @ 0x00 {
+        param size = 1;
+        param desc = "Receiver buffer/Transmitter holding/Divisor latch low";
+
+        method write(uint64 value) {
+            if (LCR.val & 0x80) {
+                // Divisor latch access
+                log info: "Divisor latch low set to 0x%02x", value;
+            } else {
+                // Transmit data
+                log info: "UART transmit: 0x%02x ('%c')", value,
+                         (value >= 32 && value < 127) ? value : '?';
+            }
+            this.val = value;
+        }
+
+        method read() -> (uint64) {
+            if (LCR.val & 0x80) {
+                return this.val;  // Divisor latch
+            } else {
+                log info: "UART receive read";
+                return 0x00;  // No data available
+            }
+        }
+    }
+
+    // Interrupt enable register / Divisor latch high
+    register IER_DLH @ 0x01 {
+        param size = 1;
+        param desc = "Interrupt enable/Divisor latch high";
+    }
+
+    // Line control register
+    register LCR @ 0x03 {
+        param size = 1;
+        param desc = "Line control register";
+        param init_val = 0x03;  // 8N1
+    }
+
+    // Line status register
+    register LSR @ 0x05 {
+        param size = 1;
+        param desc = "Line status register";
+        param init_val = 0x60;  // TX empty and ready
+    }
+}
+```
+
+### 5. Simple PCI Device Template
+
+```dml
+dml 1.4;
+
+device simple_pci;
+
+import "simics/device-api.dml";
+
+param classname = "simple_pci";
+param desc = "Simple PCI device template";
+
+// PCI configuration space
+bank pci_config {
+    param function = 0;  // Will be mapped by PCI bus
+    param register_size = 4;
+
+    register VENDOR_ID @ 0x00 {
+        param size = 2;
+        param desc = "PCI Vendor ID";
+        param init_val = 0x8086;  // Intel
+        param read_only = true;
+    }
+
+    register DEVICE_ID @ 0x02 {
+        param size = 2;
+        param desc = "PCI Device ID";
+        param init_val = 0x1234;  // Custom device
+        param read_only = true;
+    }
+
+    register COMMAND @ 0x04 {
+        param size = 2;
+        param desc = "PCI Command register";
+    }
+
+    register STATUS @ 0x06 {
+        param size = 2;
+        param desc = "PCI Status register";
+        param init_val = 0x0200;  // 66MHz capable
+    }
+}
+
+// Device-specific registers
+bank device_regs {
+    param function = 0x1000;  // BAR0 mapping
+    param register_size = 4;
+
+    register CONTROL @ 0x00 {
+        param size = 4;
+        param desc = "Device control register";
+    }
+
+    register STATUS @ 0x04 {
+        param size = 4;
+        param desc = "Device status register";
+        param init_val = 0x1;  // Ready
+    }
+}
+```
+
+## Compilation Issues and Solutions
+
+### Issue 1: "syntax error at 'device'"
+
+**Cause**: Using old DML syntax with braces after device declaration.
+
+**Solution**: Remove braces from device declaration:
+```dml
+// Wrong
+device my_device { ... }
+
+// Correct
+device my_device;
+```
+
+### Issue 2: "cannot find file to import: dml-builtins.dml"
+
+**Cause**: Missing include path for DML builtins.
+
+**Solution**: Add both include paths:
+```bash
+dmlc --simics-api=7 -I ../linux64/bin/dml/api/7/1.4 -I ../linux64/bin/dml/1.4 file.dml output
+```
+
+### Issue 3: "assert sys.flags.utf8_mode"
+
+**Cause**: Python not running in UTF-8 mode.
+
+**Solution**: Set environment variable or modify dmlc script:
+```bash
+export PYTHONUTF8=1
+```
+
+### Issue 4: "unknown template: 'device'"
+
+**Cause**: DML builtins not found in include path.
+
+**Solution**: Ensure `-I ../linux64/bin/dml/1.4` is included.
+
+## General Best Practices
+
+### 1. File Organization
+
+```
+simics-project/
+├── modules/
+│   ├── device1/
+│   │   ├── device.dml
+│   │   └── Makefile
+│   └── device2/
+│       ├── device.dml
+│       └── Makefile
+├── common/
+│   └── device-common.dml
+└── Makefile
+```
+
+### 2. Naming Conventions
+
+- **Device names**: lowercase_with_underscores
+- **Bank names**: lowercase_with_underscores
+- **Register names**: descriptive_uppercase
+- **Field names**: descriptive_camelCase
+- **Parameters**: lowercase or camelCase
+- **Methods**: lowercase_with_underscores
+
+### 3. Documentation
+
+Always include meaningful descriptions:
+
+```dml
+param desc = "Detailed description of what this device does";
+
+register CONTROL @ 0x00 {
+    param desc = "Main control register - bit 0 enables device";
+}
+```
+
+### 4. Error Handling
+
+```dml
+method write(uint64 value) {
+    if (value > 0xFF) {
+        log error: "Invalid value written to 8-bit register: 0x%x", value;
+        return;
+    }
+    this.val = value;
+}
+```
+
+### 5. Logging
+
+Use appropriate log levels:
+
+```dml
+log info: "Device initialized";
+log warning: "Unusual register access pattern";
+log error: "Invalid operation attempted";
+```
 
 ## Testing Your DML Device
 
