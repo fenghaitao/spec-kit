@@ -174,8 +174,9 @@ The `/plan` command executes a 2-phase planning workflow for Simics device model
    - `list_installed_packages()` → Required Packages
    - `list_simics_platforms()` → Available Platforms
 
-3. **Read DML Grammar** (MANDATORY):
+3. **Read DML Grammar and Best Practices** (MANDATORY):
    - Read `.specify/memory/DML_grammar.md` to understand DML 1.4 syntax
+   - Read `.specify/memory/DML_Device_Development_Best_Practices.md` for Simics DML device modeling best practices
    - Focus on: device structure, register banks, attributes, methods, events, interfaces
    - **Purpose**: Understand DML syntax before querying architectural patterns
    - **Note**: This is reference material, not for copying into research.md

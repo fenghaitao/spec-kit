@@ -22,7 +22,8 @@ des**Prerequisites**:
 **Input**: Design documents from `/specs/[###-feature-name]/`
 **Prerequisites**:
 - **Required**: plan.md, spec.md, [device-name]-registers.xml
-- **Optional**: research.md, data-model.md, contracts/, test-scenarios.md
+- **Optional**: research.md, data-model.md, contracts/, test-scenarios.md,
+- **References**: .specify/memory/DML_Device_Development_Best_Practices.md for Simics DML device modeling best practices, .specify/memory/DML_grammar.md for DML grammar reference
 
 **Tests**: Tests are REQUIRED for Simics device modeling (TDD approach).
 
@@ -102,6 +103,7 @@ des**Prerequisites**:
   - Read spec.md Functional Requirements (all requirements overview)
   - Read data-model.md (if exists): Registers, interfaces, state variables, DML patterns
   - Read test-scenarios.md (if exists): Test coverage planning
+  - Read .specify/memory/DML_Device_Development_Best_Practices.md for Simics DML device modeling best practices
   - Document key findings and patterns in research.md
 
 - [ ] T007 **RAG Query** (if DML patterns needed): Execute `perform_rag_query("DML device modeling common patterns register bank interface signal event", source_type="dml", match_count=10)` → document patterns in research.md
