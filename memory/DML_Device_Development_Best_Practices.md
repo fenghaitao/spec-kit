@@ -1146,6 +1146,192 @@ wdt.queue = global_clk
    dev2.queue = clk_50mhz  # Different frequency - be careful!
    ```
 
+### Python Test File Structure and Patterns
+
+#### Test File Naming Convention
+
+Simics test files should follow the naming pattern: **`s-<feature>.py`**
+
+Where `<feature>` describes the specific functionality, register, or behavior being tested:
+
+- `s-timer.py` - Tests timer functionality
+- `s-interrupt.py` - Tests interrupt generation and handling
+- `s-control-register.py` - Tests a specific control register
+- `s-reset-behavior.py` - Tests device reset behavior
+- `s-error-conditions.py` - Tests error handling
+
+This naming convention helps organize tests by feature and makes it easy to identify test coverage.
+
+#### Required Module Imports
+
+All Simics Python tests should import these essential modules:
+
+```python
+import dev_util  # Device utility functions for register access
+import stest     # Simics test assertions and utilities
+import cli       # Command-line interface utilities (if needed)
+```
+
+#### Register Access Pattern Using dev_util
+
+The `dev_util` module provides a clean interface for accessing device registers through the `bank_regs()` method:
+
+```python
+import dev_util
+import stest
+
+# Create the device instance
+device = SIM_create_object('device_class', 'device_instance')
+
+# Create and assign a clock for time-based devices
+clk = simics.SIM_create_object('clock', 'clk', freq_mhz=1)
+device.queue = clk
+
+# Access the register bank
+bank = dev_util.bank_regs(device.bank.memory_map_name)
+
+# Get handles to specific registers
+REG_CONTROL = bank.REG_CONTROL
+REG_STATUS = bank.REG_STATUS
+REG_DATA = bank.REG_DATA
+
+# Read register values
+control_value = REG_CONTROL.read()
+status_value = REG_STATUS.read()
+
+# Write register values
+REG_CONTROL.write(0x0001)
+REG_DATA.write(0x12345678)
+
+# Use assertions to verify behavior
+stest.expect_equal(REG_STATUS.read(), 0x00, "Status should be cleared after reset")
+```
+
+#### Complete Test Template
+
+Here's a complete template for a typical device test:
+
+```python
+#!/usr/bin/env python3
+"""
+Test for <device_feature> functionality.
+
+This test verifies:
+- <Test objective 1>
+- <Test objective 2>
+- <Test objective 3>
+"""
+
+import dev_util
+import stest
+import simics
+
+def test_basic_functionality():
+    """Test basic device register operations."""
+    
+    # Create device instance
+    device = SIM_create_object('device_class', 'device_inst')
+    
+    # Create and assign clock (required for time-based devices)
+    clk = simics.SIM_create_object('clock', 'clk', freq_mhz=1)
+    device.queue = clk
+    
+    # Access register bank
+    bank = dev_util.bank_regs(device.bank.memory_map_name)
+    
+    # Get register handles
+    REG_CONTROL = bank.REG_CONTROL
+    REG_STATUS = bank.REG_STATUS
+    
+    # Test 1: Verify reset values
+    stest.expect_equal(REG_CONTROL.read(), 0x00, 
+                      "Control register should be 0 after reset")
+    stest.expect_equal(REG_STATUS.read(), 0x00, 
+                      "Status register should be 0 after reset")
+    
+    # Test 2: Write and read back
+    REG_CONTROL.write(0x01)
+    stest.expect_equal(REG_CONTROL.read(), 0x01, 
+                      "Control register should preserve written value")
+    
+    # Test 3: Test functional behavior
+    REG_CONTROL.write(0x03)  # Enable device
+    SIM_continue(100)  # Advance simulation time
+    
+    status = REG_STATUS.read()
+    stest.expect_true(status != 0, 
+                     "Status should change after device operation")
+
+def test_timing_behavior():
+    """Test time-dependent behavior."""
+    
+    device = SIM_create_object('device_class', 'device_inst')
+    clk = simics.SIM_create_object('clock', 'clk', freq_mhz=1)
+    device.queue = clk
+    
+    bank = dev_util.bank_regs(device.bank.memory_map_name)
+    REG_COUNTER = bank.REG_COUNTER
+    
+    # Record initial counter value
+    initial_value = REG_COUNTER.read()
+    
+    # Advance simulation time
+    SIM_continue(1000)  # 1000 cycles at 1 MHz = 1ms
+    
+    # Verify counter incremented
+    final_value = REG_COUNTER.read()
+    stest.expect_true(final_value > initial_value, 
+                     "Counter should increment over time")
+    
+    # Calculate expected increment (adjust based on device behavior)
+    expected_increment = 1000  # 1 count per cycle
+    actual_increment = final_value - initial_value
+    stest.expect_equal(actual_increment, expected_increment,
+                      "Counter should increment at expected rate")
+
+# Run all tests
+if __name__ == "__main__":
+    test_basic_functionality()
+    test_timing_behavior()
+    print("All tests passed!")
+```
+
+#### Key Testing Patterns
+
+1. **Device Setup Pattern**
+   ```python
+   device = SIM_create_object('device_class', 'instance_name')
+   clk = simics.SIM_create_object('clock', 'clk', freq_mhz=1)
+   device.queue = clk
+   ```
+
+2. **Register Bank Access Pattern**
+   ```python
+   bank = dev_util.bank_regs(device.bank.memory_map_name)
+   REG_NAME = bank.REG_NAME
+   ```
+
+3. **Register Read/Write Pattern**
+   ```python
+   value = REG_NAME.read()
+   REG_NAME.write(new_value)
+   ```
+
+4. **Assertion Pattern**
+   ```python
+   stest.expect_equal(actual, expected, "Description")
+   stest.expect_true(condition, "Description")
+   stest.expect_false(condition, "Description")
+   ```
+
+5. **Time Advancement Pattern**
+   ```python
+   initial_state = REG_STATUS.read()
+   SIM_continue(cycles)
+   final_state = REG_STATUS.read()
+   stest.expect_true(final_state != initial_state, "State should change")
+   ```
+
 ### Troubleshooting Test Issues
 
 #### Error: "The 'queue' attribute is not set, cannot post event"
