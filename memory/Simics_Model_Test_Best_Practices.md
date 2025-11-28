@@ -269,18 +269,18 @@ class FakePic(pyobj.ConfObject):
 
 # Configuration helper
 def create_config():
-    wdog = simics.pre_conf_object('watchdog', 'my_wdog')
+    dut = simics.pre_conf_object('test_device', 'test_class')
     clk = simics.pre_conf_object('clk', 'clock', [["freq_mhz", 100]])
     fake_pic = simics.pre_conf_object('fake_pic', 'FakePic')
 
-    wdog.queue = conf.clk
-    wdog.pic = conf.fake_pic
+    dut.queue = conf.clk
+    dut.pic = conf.fake_pic
     
-    simics.SIM_add_configuration([wdog, clk, fake_pic], None)
-    return (conf.wdog, conf.fake_pic)
+    simics.SIM_add_configuration([dut, clk, fake_pic], None)
+    return (conf.test_device, conf.fake_pic)
 ```
 
-**s-basic.py** (Test file):
+**s-<feature>.py** (Test file):
 ```python
 import simics
 import dev_util
@@ -288,8 +288,8 @@ import stest
 from common import create_config
 
 # 1. Setup
-(wdog, pic) = create_config()
-regs = dev_util.bank_regs(wdog.bank.regs)
+(dut, pic) = create_config()
+regs = dev_util.bank_regs(dut.bank.regs)
 
 # 2. Test Register Access
 regs.load.write(0x5)
@@ -305,14 +305,40 @@ stest.expect_equal(pic.raised, 1, "Interrupt not raised")
 int_number = pic.raised
 regs.load.write(1000) # re-configure timer
 regs.control.write(0x1)  # Start timer
-start = simics.SIM_cycle_count(wdog.queue)
+start = simics.SIM_cycle_count(dut.queue)
 simics.SIM_continue(500) # run simulation 500 cycles
 stest.expect_equal(regs.timer_value.read(), 500, "Timer value mismatch after 500 cycles")
 simics.SIM_continue(501) # run simulation 501 cycles
-elapsed = simics.SIM_cycle_count(wdog.queue) - start
+elapsed = simics.SIM_cycle_count(dut.queue) - start
 stest.expect_equal(elapsed, 1001, "Time did not advance")
 stest.expect_equal(pic.raised, int_number + 1, "Interrupt not raised")
 stest.expect_equal(regs.timer_value.read(), 0, "Timer value should be 0 after expiry")
+```
+or
+
+```python
+import simics
+import dev_util
+import stest
+from common import create_config
+
+def test_feature():
+    # 1. Setup
+    (dut, pic) = create_config()
+    regs = dev_util.bank_regs(dut.bank.regs)
+
+    # 2. Test Register Access
+    regs.load.write(0x5)
+    stest.expect_equal(regs.timer_value.read(), 0x5, "TimeValue register mismatch while loading new timer configuration")
+    regs.control.write(0x1)
+    stest.expect_equal(regs.control.read(), 0x1, "Control register mismatch")
+
+    '''
+    More test content ...
+    '''
+
+if __name__ == "__main__":
+    test_feature()
 ```
 
 ## Best Practices Checklist
