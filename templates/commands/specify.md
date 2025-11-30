@@ -29,16 +29,24 @@ Run `{SCRIPT}` from repo root → parse JSON for BRANCH_NAME, SPEC_FILE. Use abs
 #### 2.1 Device Overview
 Extract: Device name, base address, category (Timer/Counter, UART, DMA, Interrupt Controller, GPIO, Memory Controller, Custom)
 
-#### 2.2 Register Map & Bit Fields
-For each register, extract:
-| Field | Description |
-|-------|-------------|
-| Name | Register name (preserve hierarchy) |
-| Offset | Hex offset from base |
-| Size | Bytes (1/2/4/8) |
-| Access | RO/WO/RW (+ W1C, RW1S, RW1C) |
-| Reset | Default value (hex) |
-| Bits | Field name, [start:end], access, purpose, reserved bits |
+#### 2.2 Register Map (Two-Part Structure)
+
+**Part A: Register Map Overview Table**
+Create a COMPACT summary table for ALL registers:
+| Offset | Register Name | Type | Width | Reset Value | Description |
+|--------|---------------|------|-------|-------------|-------------|
+
+**Part B: Detailed Descriptions (ONLY for Side-Effect Registers)**
+Only include detailed bit field tables for registers with:
+- Read side-effects (value changes on read)
+- Write side-effects (triggers actions beyond storing value)
+- Cross-register dependencies
+- Special access behaviors (lock protection, clear-on-read)
+
+**Skip detailed descriptions for**:
+- Read-only ID/version registers
+- Simple R/W registers without side-effects
+- Reserved registers
 
 **Access Type Mapping**:
 | HW Spec | IP-XACT | Notes |
@@ -104,41 +112,113 @@ Verify completeness before proceeding to Step 3.
 
 **spec.md MUST include these sections**:
 1. Device Overview (from 2.1)
-2. Register Map & Bit Fields (from 2.2)
+2. Register Map (compact table) & Side-Effect Register Descriptions (from 2.2)
 3. External Interfaces & Signals (from 2.3)
 4. Register Side-Effects & Behaviors (from 2.4)
 5. **Device Operational Model** (from 2.5) - states, transitions, SW/HW flows
-6. Functional Requirements (from 3.2)
-7. User Scenarios & Testing (from 3.3)
+6. **Functional Requirements** (categorized, from 3.2)
+7. **User Scenarios & Testing** (from 3.3)
 
 #### 3.1 [NEEDS CLARIFICATION] Guidelines
 - Mark unknowns as `[NEEDS CLARIFICATION: specific question]`
 - NEVER guess unstated requirements
 - Provide options when possible
 
-#### 3.2 Functional Requirements
-Generate requirements using ID format:
-| Type | ID Format | Example |
-|------|-----------|---------|
-| Functional | FUNC-XXX | Device operations |
-| Register | REG-XXX | Access behavior |
-| Interface | INTF-XXX | Signal behavior |
-| Behavior | BEHAV-XXX | State machines |
-| Test | TEST-XXX | Verification |
+#### 3.2 Functional Requirements (Categorized)
 
-**Example pattern**:
+**Organize requirements into categories with ID format**:
+
+| Category | ID Format | Purpose |
+|----------|-----------|---------|
+| FUNC-XXX | Core device functionality | Timer behavior, state transitions |
+| REG-XXX | Register access requirements | R/W behaviors, reset values |
+| INTF-XXX | Interface/signal requirements | Interrupts, clocks, resets |
+| BEHAV-XXX | Behavioral requirements | State machines, sequencing |
+| TEST-XXX | Test verification requirements | Validation criteria |
+
+**Example - Watchdog Timer Categories**:
+
+```markdown
+## 4. Functional Requirements
+
+### 4.1 Timer Functionality Requirements
+**FUNC-001**: The watchdog timer shall be a 32-bit decrementing counter...
+**FUNC-002**: The timer shall decrement at a rate determined by clock divider...
+
+### 4.2 Interrupt and Reset Requirements
+**FUNC-005**: When counter reaches zero and INTEN=1, device shall assert wdogint...
+**FUNC-007**: If counter reaches zero again while interrupt asserted and RESEN=1...
+
+### 4.3 Register Access Requirements
+**FUNC-010**: Register access shall be performed via APB bus interface...
+**FUNC-011**: All registers except WDOGLOCK shall be write-protected when locked...
+
+### 4.4 Clock Divider Requirements
+**FUNC-014**: Clock divider setting shall determine timer decrement rate...
+
+### 4.5 Integration Test Mode Requirements
+**FUNC-016**: When WDOGITCR[0]=1, device shall enter integration test mode...
+
+### 4.6 Identification Requirements
+**FUNC-019**: Device shall implement all PrimeCell identification registers...
+
+## 5. Register Access Requirements
+**REG-001**: WDOGLOAD register supports read and write operations...
+**REG-002**: WDOGVALUE register supports read operations only...
+
+## 6. Behavioral Requirements
+**BEHAV-001**: When INTEN=0, timer shall decrement without generating interrupts...
+**BEHAV-002**: When INTEN=1 and timer reaches zero, WDOGRIS[0] shall be set to 1...
+```
+
+**Requirement Generation Pattern**:
 ```
 HW Spec: "Bit 0 (ENABLE): Writing 1 enables timer"
 → REG-010: CONTROL.ENABLE bit [0] enables timer when set
 → BEHAV-001: Timer starts counting when CONTROL.ENABLE transitions 0→1
 ```
 
-#### 3.3 Test Scenario Generation
-Extract from hardware spec:
-- Usage examples → Acceptance Scenarios
-- Expected behavior → Pass/Fail Criteria
+#### 3.3 Test Scenario Generation (Structured Format)
 
-**Minimum**: 5+ requirements, 3+ test scenarios
+**Extract from hardware spec**: Usage examples → Acceptance Scenarios, Expected behavior → Pass/Fail Criteria
+
+**Organize scenarios by functional area**:
+
+```markdown
+## 7. Test Scenarios
+
+### 7.1 Basic Timer Operation Test
+**TEST-001**: Verify basic timer countdown functionality.
+- Setup: Write small value to WDOGLOAD, set INTEN=1 in WDOGCONTROL
+- Action: Verify counter decrements in WDOGVALUE register
+- Expected: Counter value decreases, interrupt is generated at zero
+
+### 7.2 Interrupt and Reset Generation Test
+**TEST-002**: Verify interrupt and reset generation sequence.
+- Setup: Write value to WDOGLOAD, set INTEN=1, RESEN=1
+- Action: Allow timer to count to zero twice without clearing interrupt
+- Expected: First zero generates interrupt, second generates reset
+
+### 7.3 Lock Protection Test
+**TEST-003**: Verify lock protection mechanism.
+- Setup: Write 0x1ACCE551 to WDOGLOCK to unlock
+- Action: Write to WDOGLOAD (should succeed), then lock, then try again
+- Expected: First write succeeds, second write fails (locked)
+
+### 7.4 Clock Divider Test
+**TEST-004**: Verify different clock divider settings.
+- Setup: Configure timer with same value but different step_value
+- Action: Measure time to reach zero for each setting
+- Expected: Larger divider → proportionally longer countdown
+
+### 7.5 Integration Test Mode Test
+**TEST-005**: Verify integration test mode functionality.
+- Setup: Set WDOGITCR[0]=1 to enable test mode
+- Action: Write different values to WDOGITOP register
+- Expected: Direct control of wdogint and wdogres outputs
+```
+
+**Minimum Coverage**: 5+ requirements per category, 5+ test scenarios
 
 #### 3.4 Finalize Specification
 Save to SPEC_FILE path from setup script.

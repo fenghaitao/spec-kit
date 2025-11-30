@@ -22,16 +22,51 @@
 
 ## Hardware Specification *(mandatory)*
 
-### Register Map Overview
+### Register Map
 
-| Offset | Name | Size | Access | Reset | Purpose |
-|--------|------|------|--------|-------|---------|
-| 0x00 | CONTROL | 32-bit | R/W | 0x0000 | Device control and enable flags |
-| 0x04 | STATUS | 32-bit | R/O | 0x0001 | Device status indicators |
-| 0x08 | TIMEOUT | 32-bit | R/W | 0x0000 | Timeout period configuration |
-| 0x0C | COUNTER | 32-bit | R/O | 0x0000 | Current countdown value |
-| 0x10 | INTCLR | 32-bit | W/O | 0x0000 | Write any value to clear interrupt |
+**Summary Table** (ALL registers):
+| Offset | Register Name | Type | Width | Reset Value | Description |
+|--------|---------------|------|-------|-------------|-------------|
+| 0x00 | CONTROL | R/W | 32 | 0x00000000 | Control register |
+| 0x04 | STATUS | R | 32 | 0x00000000 | Status register |
+| 0x08 | LOAD | R/W | 32 | 0xFFFFFFFF | Load value |
+| 0x0C | VALUE | R | 32 | 0xFFFFFFFF | Current counter value |
+| 0x10 | INTCLR | W | 32 | 0x00000000 | Interrupt clear |
+| 0x14 | RIS | R | 32 | 0x00000000 | Raw interrupt status |
+| 0x18 | MIS | R | 32 | 0x00000000 | Masked interrupt status |
+| 0xC00 | LOCK | R/W | 32 | 0x00000000 | Lock register |
 | ... | ... | ... | ... | ... | ... |
+
+### Register Descriptions (Side-Effect Registers Only)
+
+**Note**: Only registers with read/write side-effects or special behaviors need detailed descriptions. Skip read-only ID registers and simple R/W registers without side-effects.
+
+#### CONTROL - Control Register [0x08]
+**Offset**: 0x08 | **Size**: 32 bits | **Access**: R/W | **Reset**: 0x00
+
+| Field | Bits | Access | Reset | Description |
+|-------|------|--------|-------|-------------|
+| Reserved | [31:5] | - | - | Reserved |
+| step_value | [4:2] | R/W | 0b000 | Clock divider: 000=÷1, 001=÷2, 010=÷4, 011=÷8, 100=÷16 |
+| RESEN | [1] | R/W | 0 | Enable reset output (1=enabled) |
+| INTEN | [0] | R/W | 0 | Enable interrupt (1=enabled, reloads counter on 0→1 transition) |
+
+#### INTCLR - Interrupt Clear Register [0x0C]
+**Offset**: 0x0C | **Size**: 32 bits | **Access**: Write Only | **Reset**: 0x00
+
+**Side-Effect**: Writing any value clears the interrupt and reloads counter from LOAD register.
+
+#### LOCK - Lock Register [0xC00]
+**Offset**: 0xC00 | **Size**: 32 bits | **Access**: R/W | **Reset**: 0x00000000
+
+| Field | Bits | Access | Reset | Description |
+|-------|------|--------|-------|-------------|
+| lock | [31:0] | R/W | 0x00 | Write 0x1ACCE551 to unlock, any other value to lock |
+
+**Side-Effects**:
+- **Write 0x1ACCE551**: Enables write access to all other registers (unlocked)
+- **Write any other value**: Disables write access to all other registers (locked)
+- **Read**: Returns 0x0 if unlocked, 0x1 if locked
 
 ### External Interfaces and Signals
 
@@ -139,71 +174,123 @@ Test Validation:
 
 **Purpose**: Define testable, verifiable requirements derived from the Hardware Specification. Each requirement must be traceable to hardware behaviors and validated by test scenarios.
 
-**CRITICAL**: Generate requirements that comprehensively cover ALL aspects of the Hardware Specification section above:
-- **Register Map**: All registers, reset values, access types, and **side-effects**
-- **External Interfaces and Signals**: All interrupt outputs, reset inputs, other signals (assertion/clear conditions)
-- **Device States and Transitions**: All device states and all state transitions
-- **Software/Hardware Interaction Flows**: All documented operational flows
-- **Register Access Ordering**: Any critical ordering constraints
-- **Memory Interface**: Address space, access patterns, timing requirements
+**Organization**: Group requirements by functional area with standard ID prefixes:
+- **FUNC-XXX**: Core device functionality (timer behavior, state transitions)
+- **REG-XXX**: Register access requirements (R/W behaviors, reset values, protection)
+- **INTF-XXX**: Interface/signal requirements (interrupts, clocks, resets)
+- **BEHAV-XXX**: Behavioral requirements (state machines, sequencing)
+- **TEST-XXX**: Test verification requirements (validation criteria)
 
 ---
 
-**EXAMPLE - Watchdog Timer Device**:
+### 4.1 Timer Functionality Requirements
 
-### Requirement 1: Countdown Timer Logic
+**FUNC-001**: The device shall be a 32-bit decrementing counter that starts counting from the value in LOAD register.
 
-**User Story**: As a system developer, I want a countdown timer that decrements at a predictable rate, so that I can monitor software execution deadlines
+**FUNC-002**: The timer shall decrement at a rate determined by the clock divider specified in CONTROL[4:2].
 
-**Acceptance Criteria**:
-1. THE device SHALL count down from WDOGLOAD value to zero at system clock rate when INTEN=1
-2. THE device SHALL provide WDOGVALUE register to read current counter value in real-time
-3. WHEN INTEN transitions from 0→1, THE device SHALL reload counter with WDOGLOAD value and transition to COUNTING state
-4. WHEN WDOGLOAD is written during counting, THE device SHALL update reload value but NOT affect current counter
-5. THE device SHALL NOT decrement counter when INTEN=0 (disabled state)
-6. WHILE counter is active, THE device SHALL decrement WDOGVALUE by 1 every clock cycle
+**FUNC-003**: The timer shall reload with the value in LOAD when it reaches zero.
 
-### Requirement 2: Interrupt Generation and Clearing
+**FUNC-004**: The timer shall continue decrementing after reaching zero if INTEN is not set.
 
-**User Story**: As a driver developer, I want interrupt generation on timeout, so that I can respond to watchdog events in software
+### 4.2 Interrupt and Reset Requirements
 
-**Acceptance Criteria**:
-1. WHEN counter reaches zero AND INTEN=1, THE device SHALL assert wdogint interrupt signal within 1 clock cycle
-2. THE device SHALL transition from COUNTING to INTERRUPT_PENDING state when counter reaches zero
-3. THE device SHALL reload counter with WDOGLOAD value when WDOGINTCLR register is written (register side-effect)
-4. THE device SHALL clear wdogint interrupt signal when WDOGINTCLR is written (register side-effect)
-5. WHILE in INTERRUPT_PENDING state, THE device SHALL keep wdogint asserted until WDOGINTCLR is written
-6. WHEN WDOGINTCLR is written, THE device SHALL transition from INTERRUPT_PENDING to COUNTING state
+**FUNC-005**: When the counter reaches zero and INTEN=1, the device shall assert the interrupt signal.
 
----
+**FUNC-006**: The interrupt signal shall remain asserted until cleared by writing to INTCLR.
 
-*[Generate similar requirements for your device, covering all key capabilities from Hardware Specification]*
+**FUNC-007**: If the counter reaches zero again while interrupt is asserted and RESEN=1, the device shall assert the reset signal.
 
----
+**FUNC-008**: The reset signal shall remain asserted until a system reset occurs.
 
-## Device Behavioral Model *(mandatory)*
+**FUNC-009**: Writing any value to INTCLR shall clear the interrupt and reload the counter from LOAD.
 
-### System Context
-- **Simulation Purpose**: [e.g., Boot validation, Software development, Performance analysis]
-- **Abstraction Level**: Functional (default for Simics device models)
+### 4.3 Register Access Requirements
 
-### State Management
-- **Device State Variables**: [internal state that must be maintained]
-- **State Transitions**: [how device state changes based on register writes/external events]
-- **Reset Behavior**: [how device state is initialized/reset]
-- **Save/Restore**: Not required (Simics handles checkpoint/restore automatically for register state)
+**FUNC-010**: Register access shall be performed via the bus interface.
 
-### Data Processing
-- **Input Data Flow**: [how device processes input data]
-- **Output Generation**: [how device generates outputs]
-- **Buffer Management**: [internal buffer requirements and management]
-- **Timing Behavior**: Functional timing (precise cycle-accurate timing not required)
+**FUNC-011**: All registers except LOCK shall be write-protected when locked.
 
-### Error Scenarios and Recovery
-- **Error Detection**: [how device detects error conditions]
-- **Error Reporting**: [how errors are communicated to software]
-- **Recovery Mechanisms**: [how device recovers from errors]
-- **Fault Injection**: [support for testing error scenarios, or NEEDS CLARIFICATION]
+**FUNC-012**: VALUE register shall always be readable regardless of lock status.
+
+**FUNC-013**: LOCK register itself shall always be readable and writable.
+
+### 4.4 Clock Divider Requirements
+
+**FUNC-014**: The clock divider setting shall determine the timer decrement rate:
+- 000: No division (÷1)
+- 001: Divide by 2
+- 010: Divide by 4
+- 011: Divide by 8
+- 100: Divide by 16
+
+**FUNC-015**: Values 101-111 for the clock divider shall be treated as invalid.
+
+### 4.5 Integration Test Mode Requirements
+
+**FUNC-016**: When ITCR[0] is set to 1, the device shall enter integration test mode.
+
+**FUNC-017**: In integration test mode, writing to ITOP shall directly control output signals.
+
+**FUNC-018**: In integration test mode, normal timer behavior shall be overridden.
+
+### 4.6 Identification Requirements
+
+**FUNC-019**: The device shall implement all identification registers with the specified values.
+
+**FUNC-020**: The identification registers shall be readable at all times and not affected by lock mechanism.
+
+## 5. Register Access Requirements
+
+### 5.1 Register Access Behavior
+
+**REG-001**: LOAD register supports read and write operations, with reset value 0xFFFFFFFF.
+
+**REG-002**: VALUE register supports read operations only, returning current counter value.
+
+**REG-003**: CONTROL register supports read and write operations, with reset value 0x00000000.
+
+**REG-004**: INTCLR register supports write operations only, any write clears interrupt and reloads counter.
+
+**REG-005**: RIS register supports read operations, showing raw interrupt status.
+
+**REG-006**: MIS register supports read operations, showing masked interrupt status.
+
+**REG-007**: LOCK register supports read and write operations with special locking behavior.
+
+### 5.2 Lock Protection Requirements
+
+**REG-010**: Writing unlock code to LOCK register shall unlock write access to protected registers.
+
+**REG-011**: Writing any value other than unlock code to LOCK register shall lock write access.
+
+**REG-012**: Reading LOCK register shall return 0x00000000 when unlocked, 0x00000001 when locked.
+
+## 6. Behavioral Requirements
+
+### 6.1 Timer State Machine
+
+**BEHAV-001**: When INTEN=0, the timer shall decrement and reload at zero without generating interrupts.
+
+**BEHAV-002**: When INTEN=1 and the timer reaches zero, the raw interrupt status shall be set to 1.
+
+**BEHAV-003**: When RESEN=1, INTEN=1, and the timer reaches zero for the second consecutive time without interrupt clear, the reset signal shall be asserted.
+
+**BEHAV-004**: The timer shall be paused when clock enable signal is deasserted.
+
+### 6.2 Interrupt Handling
+
+**BEHAV-005**: The interrupt output signal shall be asserted when MIS[0] is 1.
+
+**BEHAV-006**: The interrupt signal shall be deasserted when INTCLR is written, regardless of counter state.
+
+**BEHAV-007**: The reset signal shall remain asserted until system reset occurs.
+
+### 6.3 Reset Behavior
+
+**BEHAV-008**: Reset signals shall reset the device to its initial state.
+
+**BEHAV-009**: When reset occurs, all registers shall return to their specified reset values.
 
 ---
 
@@ -211,60 +298,71 @@ Test Validation:
 
 **Purpose**: Define comprehensive, testable scenarios that drive specification clarity, state machine design, and test case development. Each scenario maps to device states, transitions, and operational flows.
 
-### Functional Test Scenarios (Given-When-Then Format)
+### 7. Test Scenarios
 
-**CRITICAL**: Each scenario must explicitly reference device states, operational flows, and requirements for full traceability.
+### 7.1 Basic Timer Operation Test
 
-**Example Scenarios**:
+**TEST-001**: Verify basic timer countdown functionality.
+- **Setup**: Write a small value (e.g., 0x10) to LOAD, set INTEN=1 in CONTROL
+- **Action**: Verify counter decrements in VALUE register
+- **Expected**: Counter value decreases from 0x10 to 0x0, interrupt is generated
 
-1. **Scenario 1: Device Initialization**
-   - **States**: RESET → IDLE → ACTIVE
-   - **Flow**: Flow 1 (Device Initialization)
-   - **Requirements**: Requirement 1, 2
-   - **Given** device in RESET state
-   - **When** software writes configuration and sets ENABLE=1
-   - **Then** device transitions to ACTIVE, registers readable, STATUS shows ready
-   - **Test Validation**: Verify register writes, state transition, STATUS flag
+### 7.2 Interrupt and Reset Generation Test
 
-2. **Scenario 2: Interrupt Handling**
-   - **States**: ACTIVE → INTERRUPT_PENDING → ACTIVE
-   - **Flow**: Flow 2 (Interrupt Handling)
-   - **Requirements**: Requirement 3
-   - **Given** device in ACTIVE with interrupts enabled
-   - **When** event occurs, then software acknowledges
-   - **Then** interrupt asserted then cleared, STATUS updated correctly
-   - **Test Validation**: Verify interrupt timing, STATUS flags, clear mechanism
+**TEST-002**: Verify interrupt and reset generation sequence.
+- **Setup**: Write value to LOAD, set INTEN=1, RESEN=1 in CONTROL
+- **Action**: Allow timer to count to zero, then count to zero again without clearing interrupt
+- **Expected**: First zero generates interrupt, second zero generates reset
+
+### 7.3 Lock Protection Test
+
+**TEST-003**: Verify lock protection mechanism.
+- **Setup**: Write unlock code to LOCK to unlock
+- **Action**: Write new value to LOAD, verify write succeeds
+- **Subsequently**: Write non-magic value to LOCK to lock
+- **Action**: Attempt to write to LOAD again
+- **Expected**: First write succeeds, second write fails (register unchanged)
+
+### 7.4 Clock Divider Test
+
+**TEST-004**: Verify different clock divider settings.
+- **Setup**: Configure timer with same initial value but different step_value settings
+- **Action**: Measure time to reach zero for each divider setting
+- **Expected**: Timer with larger divider values takes proportionally longer to reach zero
+
+### 7.5 Integration Test Mode Test
+
+**TEST-005**: Verify integration test mode functionality.
+- **Setup**: Set ITCR[0]=1 to enable test mode
+- **Action**: Write different values to ITOP register
+- **Expected**: Direct control of interrupt and reset output signals
 
 ---
 
 *Mark any unclear cases with [NEEDS CLARIFICATION: specific behavior under [condition]]?*
 
-### Test Coverage Requirements
+### 8. Input/Output Signals
 
-**Traceability Matrix**:
-- Each test scenario → Device states → Operational flows → Requirements
-- Each device state → At least one test scenario
-- Each state transition → At least one test scenario
-- Each operational flow → At least one test scenario
-- Each requirement → At least one test scenario
+### 8.1 Clock and Reset Signals
+- **clk**: Work clock input (input)
+- **clk_en**: Work clock enable (input)
+- **rst_n**: Reset (active low, input)
 
-**Coverage Checklist**:
-- [ ] **Register Coverage**: All registers tested (read, write, reset value verification)
-- [ ] **Bit Field Coverage**: All functional bit fields tested (set, clear, combinations)
-- [ ] **State Coverage**: All device states reachable and testable
-- [ ] **Transition Coverage**: All state transitions exercised
-- [ ] **Flow Coverage**: All operational flows validated
-- [ ] **Error Coverage**: All error conditions testable (detection, reporting, recovery)
-- [ ] **Protocol Coverage**: All bus protocol sequences validated (if applicable)
+### 8.2 Output Signals
+- **irq**: Interrupt output (output)
+- **res**: Reset output (output, if applicable)
 
-### Test Automation Considerations
+## 9. Implementation Notes
 
-*For later /plan and /implement phases:*
-- Each scenario maps to 1+ automated test cases in Simics
-- Test cases verify both register state AND device behavior/outputs
-- Use Simics Python scripting for test automation
-- Define explicit pass/fail criteria for each scenario
-- Leverage state machine model for test case generation
+### 9.1 Modeling Scope
+- This specification covers register behavior, state transitions, interrupt/reset conditions, and lock protection
+- Functional model implementation - precise cycle-accurate timing is not required
+- Base clock frequency is not specified - this is a functional model
+- Checkpoint/restore is handled automatically by Simics
+
+### 9.2 Performance Considerations
+- The implementation should achieve minimal simulation overhead
+- Follow Simics device development best practices for performance
 
 ---
 
@@ -291,20 +389,21 @@ Test Validation:
 
 ### AUTOMATED CHECKS (AI Agent MUST verify)
 
-**Content Quality** (objective - can be checked automatically):
+**Content Quality**:
 - [ ] No implementation details (DML syntax, code structure, algorithms)
 - [ ] Focused on hardware behavior and device operation
 - [ ] All mandatory sections completed
 
-**Hardware Specification Completeness** (objective):
-- [ ] Register map table included (all registers with offset, name, size, access, reset, purpose)
-- [ ] External interfaces documented (interrupt outputs, reset inputs, other signals with direction/type/behavior)
-- [ ] Device operational model documented (states, transitions, interaction flows, ordering constraints)
-- [ ] Memory interface requirements specified (address space, access patterns, timing)
-- [ ] At least 5 functional requirements included (user stories with SHALL statements, testable acceptance criteria)
-- [ ] At least 3 functional test scenarios included (with states, flows, requirements references, and validation steps)
-- [ ] Device behavioral model documented (system context, state management, data processing, error handling)
-- [ ] Requirements traceability established (each requirement mapped to test scenarios)
+**Hardware Specification Completeness**:
+- [ ] Register map table included (all registers with offset, name, size, access, reset, description)
+- [ ] Side-effect register descriptions included (detailed bit fields for registers with side-effects)
+- [ ] External interfaces documented (I/O signals with direction/type/behavior)
+- [ ] Device operational model documented (states, transitions, SW/HW interaction flows)
+
+**Functional Requirements Completeness**:
+- [ ] Requirements organized by category (FUNC, REG, BEHAV, INTF, TEST)
+- [ ] At least 15+ requirements across all categories
+- [ ] At least 5 test scenarios included (Setup/Action/Expected format)
 
 ---
 
@@ -312,23 +411,14 @@ Test Validation:
 *AI Agent: Mark [x] as each section is completed*
 
 ### Section Completion
-- [ ] **Hardware Specification**: Register map, external interfaces, operational model, memory interface documented
-- [ ] **Functional Requirements**: Minimum 5 requirements with user stories and SHALL statements generated
-- [ ] **Device Behavioral Model**: System context, state management, data processing, error handling documented
-- [ ] **Test Scenarios**: Minimum 3 scenarios with states, flows, requirements references, and validation steps generated
+- [ ] **Register Map**: Summary table + detailed descriptions for side-effect registers
+- [ ] **External Interfaces**: I/O signals documented
+- [ ] **Device Operational Model**: States, transitions, SW/HW flows documented
+- [ ] **Functional Requirements**: Categorized requirements generated (FUNC, REG, BEHAV)
+- [ ] **Test Scenarios**: 5+ scenarios with Setup/Action/Expected format
 
 ### Quality Validation
-- [ ] **Clarifications Listed**: All [NEEDS CLARIFICATION] markers documented in "Clarifications Required" section
+- [ ] **Clarifications Listed**: All [NEEDS CLARIFICATION] markers documented
 - [ ] **Status Updated**: Clarification count complete, Status field at top updated
-- [ ] **Traceability Verified**: All requirements mapped to test scenarios, all states/transitions covered
-- [ ] **Completeness Check**: All mandatory sections complete, all checklists items verified
 
-**COMPLETION CRITERIA**: All 8 checkboxes marked [x] = Specification ready for planning phase
-
-**TRACEABILITY REQUIREMENTS**:
-- [ ] Each test scenario references device states (from Device States and Transitions)
-- [ ] Each test scenario references operational flows (from Software/Hardware Interaction Flows)
-- [ ] Each test scenario references functional requirements (Requirement N)
-- [ ] Each device state has at least one test scenario
-- [ ] Each state transition has at least one test scenario
-- [ ] Each functional requirement has at least one test scenario
+**COMPLETION CRITERIA**: All checkboxes marked [x] = Specification ready for planning phase
