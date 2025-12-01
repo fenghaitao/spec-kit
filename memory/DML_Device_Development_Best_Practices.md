@@ -980,438 +980,274 @@ export PYTHONUTF8=1
 
 ## Testing Best Practices
 
-### Clock Queue Configuration for Time-Based Devices
+### 1. Clock Queue Configuration
 
-In Intel Simics, **devices that use time events** (e.g., timers, watchdogs, periodic interrupts) require a **clock source** to drive their simulation timing. This clock is set via the device's `queue` attribute.
+**Overview**: Time-based devices (timers, watchdogs, periodic interrupts) require a clock source via the `queue` attribute to drive simulation timing. Without it, posting time events fails with: `The 'queue' attribute is not set, cannot post event`.
 
-#### The Clock Queue Problem
+**Clock Source Types**:
+- **Dedicated Clock Devices** (`clock` class) - Required for unit tests
+- **System Clocks** (XTAL, TSC, platform generators) - Available in integration tests
+- **CPU Models** - Can act as clock sources
 
-Without a properly configured queue, attempting to post time events will fail with:
+**Default Behavior**: Simics auto-assigns the first available clock to devices. In unit tests (no default clock), you **must create one explicitly**.
 
-```
-The 'queue' attribute is not set, cannot post event
-```
-
-This is one of the most common issues when testing DML devices that implement time-based functionality.
-
-#### What is a Clock Queue?
-
-A **clock queue** is a time management mechanism in Simics that:
-- Drives the progression of simulation time for devices
-- Allows devices to schedule and execute time-based events
-- Provides timing synchronization across the simulated system
-
-#### Types of Clock Sources
-
-Any Simics object that implements the clock interface can serve as a queue:
-
-1. **Dedicated Clock Devices** (`clock` class)
-   - Explicitly created clock objects
-   - Configured with specific frequency (e.g., `freq_mhz=1`)
-   - **Required for unit tests**
-
-2. **System Clocks**
-   - Crystal oscillator (XTAL) clocks
-   - TSC (Time Stamp Counter) clocks
-   - Platform-level clock generators
-
-3. **CPU Models**
-   - Can act as clock sources
-   - Provide time progression based on instruction execution
-
-#### Default Clock Allocation Behavior
-
-**Important**: By default, Simics will automatically allocate the **first available clock device** in the system to all simple devices that don't have their `queue` attribute explicitly set.
-
-- **In unit tests**: Usually **no default clock exists**, so you **must create one**
-- **In integration tests**: System-level clocks may exist and be auto-assigned
-- **Best practice**: **Explicitly set the queue** to avoid ambiguity
-
-### Common Test Scenarios
-
-#### Scenario 1: Simple Unit Test (Explicit Clock Required)
+**Common Scenarios**:
 
 ```python
-# No system clocks exist - must create one
-device = SIM_create_object('my_timer_device', 'dev')
+# Unit Test - Create explicit clock (REQUIRED)
+device = SIM_create_object('timer_dev', 'dev')
 clk = SIM_create_object('clock', 'clk', freq_mhz=1)
-device.queue = clk  # REQUIRED
-```
+device.queue = clk
 
-#### Scenario 2: Integration Test (System Clock Available)
+# Integration Test - Use system clock or CPU
+device.queue = cpu  # or xtal_clock
 
-```python
-# Assuming a platform with existing clocks
-cpu = SIM_create_object('x86-core', 'cpu0')
-device = SIM_create_object('my_timer_device', 'dev')
-
-# Option A: Use CPU as clock source
-device.queue = cpu
-
-# Option B: Use platform XTAL clock
-xtal = SIM_get_object('xtal_clock')
-device.queue = xtal
-
-# Option C: Let Simics auto-assign (may be unpredictable)
-# device.queue remains unset - Simics uses first available clock
-```
-
-#### Scenario 3: Multiple Devices Sharing a Clock
-
-```python
-# Create one global clock
-global_clk = SIM_create_object('clock', 'system_clock', freq_mhz=100)
-
-# Share across multiple devices
-timer1 = SIM_create_object('timer_device', 'timer1')
+# Multiple devices sharing one clock
+global_clk = SIM_create_object('clock', 'sys_clk', freq_mhz=100)
 timer1.queue = global_clk
-
-timer2 = SIM_create_object('timer_device', 'timer2')
 timer2.queue = global_clk
-
-wdt = SIM_create_object('watchdog', 'wdt')
 wdt.queue = global_clk
 ```
 
-### Testing Best Practices Checklist
+**Key Rules**:
+- Create clock **before** posting events
+- Match clock frequency to device requirements (e.g., 32.768 kHz for RTC, 3 GHz for CPU)
+- Document clock requirements in test files
 
-#### ✅ DO
+---
 
-1. **Always create and assign a clock in unit tests**
-   ```python
-   clk = SIM_create_object('clock', 'clk', freq_mhz=1)
-   device.queue = clk
-   ```
+### 2. Common Test Scenarios and Patterns
 
-2. **Document clock requirements in test files**
-   ```python
-   # This device requires a clock queue for timer events
-   ```
-
-3. **Create clock BEFORE posting events**
-   ```python
-   # CORRECT ORDER:
-   device = SIM_create_object('my_device', 'dev')
-   clk = SIM_create_object('clock', 'clk', freq_mhz=1)
-   device.queue = clk  # Set before enabling timers
-   device.enable_timer()
-   ```
-
-4. **Use appropriate clock frequency for your device**
-   ```python
-   # Match device requirements
-   rtc_clk = SIM_create_object('clock', 'rtc', freq_mhz=0.032768)  # 32.768 kHz
-   cpu_clk = SIM_create_object('clock', 'cpu_clk', freq_mhz=3000)   # 3 GHz
-   ```
-
-5. **Test time-dependent behavior explicitly**
-   ```python
-   # Read initial state
-   value_before = device.counter.read()
-   
-   # Advance simulation time
-   SIM_continue(1000)
-   
-   # Verify state changed
-   value_after = device.counter.read()
-   stest.expect_true(value_after != value_before, "Timer should advance")
-   ```
-
-#### ❌ DON'T
-
-1. **Don't assume a default clock exists in unit tests**
-   ```python
-   # BAD - will fail in unit tests
-   device = SIM_create_object('my_device', 'dev')
-   # Missing: device.queue = ...
-   device.enable_timer()  # ← CRASH!
-   ```
-
-2. **Don't forget to handle missing queue in DML code**
-   ```dml
-   // Good practice: check queue before posting
-   method start_timer() {
-       if (dev.queue != NULL) {
-           timer_event.post(delay);
-       } else {
-           log error: "Cannot post event - no queue configured";
-       }
-   }
-   ```
-
-3. **Don't mix incompatible clock domains without consideration**
-   ```python
-   # RISKY - devices may expect synchronized timing
-   dev1.queue = clk_100mhz
-   dev2.queue = clk_50mhz  # Different frequency - be careful!
-   ```
-
-### Python Test File Structure and Patterns
-
-#### Test File Naming Convention
-
-Simics test files should follow the naming pattern: **`s-<feature>.py`**
-
-Where `<feature>` describes the specific functionality, register, or behavior being tested:
-
-- `s-timer.py` - Tests timer functionality
-- `s-interrupt.py` - Tests interrupt generation and handling
-- `s-control-register.py` - Tests a specific control register
-- `s-reset-behavior.py` - Tests device reset behavior
-- `s-error-conditions.py` - Tests error handling
-
-This naming convention helps organize tests by feature and makes it easy to identify test coverage.
-
-#### Required Module Imports
-
-All Simics Python tests should import these essential modules:
+**Essential Test Patterns**:
 
 ```python
-import dev_util  # Device utility functions for register access
-import stest     # Simics test assertions and utilities
-import cli       # Command-line interface utilities (if needed)
-```
-
-#### Register Access Pattern Using dev_util
-
-The `dev_util` module provides a clean interface for accessing device registers through the `bank_regs()` method:
-
-```python
-import dev_util
-import stest
-
-# Create the device instance
-device = SIM_create_object('device_class', 'device_instance')
-
-# Create and assign a clock for time-based devices
+# Pattern 1: Device Setup (always first)
+device = simics.SIM_create_object('device_class', 'dev')
 clk = simics.SIM_create_object('clock', 'clk', freq_mhz=1)
 device.queue = clk
 
-# Access the register bank
+# Pattern 2: Register Bank Access
 bank = dev_util.bank_regs(device.bank.memory_map_name)
-
-# Get handles to specific registers
 REG_CONTROL = bank.REG_CONTROL
 REG_STATUS = bank.REG_STATUS
-REG_DATA = bank.REG_DATA
 
-# Read register values
-control_value = REG_CONTROL.read()
-status_value = REG_STATUS.read()
+# Pattern 3: Register Operations
+REG_CONTROL.write(0x01)
+value = REG_CONTROL.read()
 
-# Write register values
-REG_CONTROL.write(0x0001)
-REG_DATA.write(0x12345678)
+# Pattern 4: Assertions
+stest.expect_equal(value, 0x01, "Register should preserve value")
 
-# Use assertions to verify behavior
-stest.expect_equal(REG_STATUS.read(), 0x00, "Status should be cleared after reset")
+# Pattern 5: Time Advancement
+initial = REG_STATUS.read()
+simics.SIM_continue(1000)  # Advance simulation
+final = REG_STATUS.read()
+stest.expect_true(final != initial, "State should change over time")
+
+# Pattern 6: Signal Interface Mocks (prevents crashes with DML connect blocks)
+moc_dev = dev_util.Dev([dev_util.Signal]).obj
+device.signal_out = moc_dev
 ```
 
-#### Complete Test Template
+**Test File Naming**: `s-<feature>.py` (e.g., `s-timer.py`, `s-interrupt.py`)
 
-Here's a complete template for a typical device test:
+**Required Imports**:
+```python
+import dev_util  # Register access utilities
+import stest     # Test assertions
+import simics    # Simics API
+import cli       # Command-line interface (optional)
+```
+
+---
+
+### 3. Testing Best Practices Checklist
+
+**✅ DO**:
+1. Always create and assign clock in unit tests: `device.queue = clk`
+2. Create clock BEFORE posting events (correct order matters)
+3. Use appropriate clock frequency for your device
+4. Test time-dependent behavior explicitly with `SIM_continue()`
+5. Document clock requirements in test comments
+6. Mock signal interfaces if DML has `connect` blocks
+
+**❌ DON'T**:
+1. Assume default clock exists in unit tests (it doesn't)
+2. Forget to handle missing queue in DML code (`if (dev.queue != NULL)`)
+3. Mix incompatible clock domains without consideration
+4. Skip signal interface mocks when DML uses `connect` objects
+
+**Complete Test Template**:
 
 ```python
 #!/usr/bin/env python3
-"""
-Test for <device_feature> functionality.
+"""Test for <feature> functionality."""
 
-This test verifies:
-- <Test objective 1>
-- <Test objective 2>
-- <Test objective 3>
-"""
+import dev_util, stest, simics
+
+def test_device():
+    # Setup device with clock
+    device = simics.SIM_create_object('device_class', 'dev')
+    clk = simics.SIM_create_object('clock', 'clk', freq_mhz=1)
+    device.queue = clk
+    
+    # Mock signal interfaces (if needed)
+    moc_dev = dev_util.Dev([dev_util.Signal]).obj
+    device.signal_out = moc_dev
+    
+    # Access registers
+    bank = dev_util.bank_regs(device.bank.registers)
+    REG_CONTROL = bank.REG_CONTROL
+    REG_STATUS = bank.REG_STATUS
+    
+    # Test register operations
+    REG_CONTROL.write(0x01)
+    stest.expect_equal(REG_CONTROL.read(), 0x01, "Value preserved")
+    
+    # Test time-dependent behavior
+    initial = REG_STATUS.read()
+    simics.SIM_continue(100)
+    final = REG_STATUS.read()
+    stest.expect_true(final != initial, "State changes over time")
+
+if __name__ == "__main__":
+    test_device()
+```
+
+---
+
+### 4. Python Test File Structure
+
+**Standard Structure**:
+
+```python
+#!/usr/bin/env python3
+"""Brief description of what this test validates."""
 
 import dev_util
 import stest
 import simics
+import cli  # Optional
 
-def test_basic_functionality():
-    """Test basic device register operations."""
-    
-    # Create device instance
-    device = SIM_create_object('device_class', 'device_inst')
-    
-    # Create and assign clock (required for time-based devices)
+def setup_device():
+    """Create and configure device instance."""
+    device = simics.SIM_create_object('device_class', 'dev')
     clk = simics.SIM_create_object('clock', 'clk', freq_mhz=1)
     device.queue = clk
-    
-    # Access register bank
-    bank = dev_util.bank_regs(device.bank.memory_map_name)
-    
-    # Get register handles
-    REG_CONTROL = bank.REG_CONTROL
-    REG_STATUS = bank.REG_STATUS
-    
-    # Test 1: Verify reset values
-    stest.expect_equal(REG_CONTROL.read(), 0x00, 
-                      "Control register should be 0 after reset")
-    stest.expect_equal(REG_STATUS.read(), 0x00, 
-                      "Status register should be 0 after reset")
-    
-    # Test 2: Write and read back
-    REG_CONTROL.write(0x01)
-    stest.expect_equal(REG_CONTROL.read(), 0x01, 
-                      "Control register should preserve written value")
-    
-    # Test 3: Test functional behavior
-    REG_CONTROL.write(0x03)  # Enable device
-    SIM_continue(100)  # Advance simulation time
-    
-    status = REG_STATUS.read()
-    stest.expect_true(status != 0, 
-                     "Status should change after device operation")
+    return device
 
-def test_timing_behavior():
-    """Test time-dependent behavior."""
-    
-    device = SIM_create_object('device_class', 'device_inst')
-    clk = simics.SIM_create_object('clock', 'clk', freq_mhz=1)
-    device.queue = clk
-    
-    bank = dev_util.bank_regs(device.bank.memory_map_name)
-    REG_COUNTER = bank.REG_COUNTER
-    
-    # Record initial counter value
-    initial_value = REG_COUNTER.read()
-    
-    # Advance simulation time
-    SIM_continue(1000)  # 1000 cycles at 1 MHz = 1ms
-    
-    # Verify counter incremented
-    final_value = REG_COUNTER.read()
-    stest.expect_true(final_value > initial_value, 
-                     "Counter should increment over time")
-    
-    # Calculate expected increment (adjust based on device behavior)
-    expected_increment = 1000  # 1 count per cycle
-    actual_increment = final_value - initial_value
-    stest.expect_equal(actual_increment, expected_increment,
-                      "Counter should increment at expected rate")
+def test_feature_1():
+    """Test specific feature or register."""
+    device = setup_device()
+    bank = dev_util.bank_regs(device.bank.registers)
+    # Test logic here
+    stest.expect_equal(bank.REG.read(), expected, "Description")
 
-# Run all tests
 if __name__ == "__main__":
-    test_basic_functionality()
-    test_timing_behavior()
-    print("All tests passed!")
+    test_feature_1()
 ```
 
-#### Key Testing Patterns
-
-1. **Device Setup Pattern**
-   ```python
-   device = SIM_create_object('device_class', 'instance_name')
-   clk = simics.SIM_create_object('clock', 'clk', freq_mhz=1)
-   device.queue = clk
-   ```
-
-2. **Register Bank Access Pattern**
-   ```python
-   bank = dev_util.bank_regs(device.bank.memory_map_name)
-   REG_NAME = bank.REG_NAME
-   ```
-
-3. **Register Read/Write Pattern**
-   ```python
-   value = REG_NAME.read()
-   REG_NAME.write(new_value)
-   ```
-
-4. **Assertion Pattern**
-   ```python
-   stest.expect_equal(actual, expected, "Description")
-   stest.expect_true(condition, "Description")
-   stest.expect_false(condition, "Description")
-   ```
-
-5. **Time Advancement Pattern**
-   ```python
-   initial_state = REG_STATUS.read()
-   SIM_continue(cycles)
-   final_state = REG_STATUS.read()
-   stest.expect_true(final_state != initial_state, "State should change")
-   ```
-
-### Troubleshooting Test Issues
-
-#### Error: "The 'queue' attribute is not set, cannot post event"
-
-**Cause**: Device is trying to schedule a time event without a configured clock queue.
-
-**Solution**:
+**Register Access**:
 ```python
-# Before running the test
-clk = SIM_create_object('clock', 'clk', freq_mhz=1)
-device.queue = clk
+# Get register bank handle
+bank = dev_util.bank_regs(device.bank.memory_map_name)
+
+# Access specific registers
+REG_CONTROL = bank.REG_CONTROL
+REG_STATUS = bank.REG_STATUS
+
+# Read/write operations
+control_val = REG_CONTROL.read()
+REG_CONTROL.write(0x0001)
+
+# Assertions
+stest.expect_equal(REG_STATUS.read(), 0x00, "Status cleared after reset")
 ```
 
-#### Error: "Attribute 'queue' not found"
+---
 
-**Cause**: Device doesn't support time events (not a simple device).
+### 5. Troubleshooting
 
-**Solution**: Check if device actually needs a queue. Not all devices require timing.
+**Error: "The 'queue' attribute is not set, cannot post event"**
+- **Cause**: Device trying to schedule time event without clock
+- **Solution**: Create and assign clock before enabling timers
+  ```python
+  clk = SIM_create_object('clock', 'clk', freq_mhz=1)
+  device.queue = clk
+  ```
 
-#### Warning: Timer events not executing
+**Error: "Attribute 'queue' not found"**
+- **Cause**: Device doesn't support time events
+- **Solution**: Verify device actually needs timing; not all devices do
 
-**Cause**: Clock frequency may be misconfigured, or time not advancing.
+**Simulation crashes with segfault**
+- **Cause**: DML uses `connect` blocks but interfaces not mocked
+- **Solution**: Add signal interface mocks
+  ```python
+  moc_dev = dev_util.Dev([dev_util.Signal]).obj
+  device.signal_out = moc_dev
+  ```
 
-**Solution**:
-```python
-# Verify clock configuration
-print(f"Clock frequency: {clk.freq_mhz} MHz")
-print(f"Device queue: {device.queue}")
+**Events/interrupts don't fire (with microsecond timing)**
+- **Cause**: Multiple clock domains + time quantum mismatch
+- **When**: Only applies when test has multiple clocks at different frequencies
+- **Solution**: Adjust quantum to match fastest clock
+  ```python
+  import cli
+  cli.run_command('cpu-switch-time seconds = 1e-6')  # For 1 MHz clock
+  ```
 
-# Ensure time is advancing
-SIM_continue(1000)  # Run simulation for 1000 cycles
-```
+**Timer events not executing**
+- **Verification**:
+  ```python
+  print(f"Clock freq: {clk.freq_mhz} MHz")
+  print(f"Device queue: {device.queue}")
+  SIM_continue(1000)  # Ensure time advances
+  ```
 
-#### Events execute but at wrong frequency
+**Events at wrong frequency**
+- **Solution**: Match clock frequency to device expectations
+  ```python
+  clk = SIM_create_object('clock', 'clk', freq_mhz=1)  # Match device spec
+  ```
 
-**Cause**: Clock frequency doesn't match device expectations.
+**Quick Reference Summary**:
 
-**Solution**:
-```python
-# Check device requirements
-# If device expects 1 MHz timer ticks:
-clk = SIM_create_object('clock', 'clk', freq_mhz=1)  # Match expectation
+| Aspect | Unit Tests | Integration Tests |
+|--------|-----------|------------------|
+| Clock Creation | Must create explicitly | May use system clocks |
+| Queue Assignment | Always required | May auto-assign |
+| Clock Frequency | Match device spec | Use platform clocks |
+| Signal Mocks | Required for `connect` | May use real devices |
 
-# If device has configurable frequency, set it:
-device.timer_frequency = 1000000  # 1 MHz
-```
-
-### Clock Queue Summary
-
-| Aspect | Description |
-|--------|-------------|
-| **Purpose** | Provides simulation time progression for devices |
-| **Requirement** | Mandatory for devices posting time events |
-| **Configuration** | Set via `device.queue = clock_object` |
-| **Unit Tests** | Must explicitly create and assign clock |
-| **Integration Tests** | May use system clocks or CPU as queue |
-| **Default Behavior** | Simics auto-assigns first available clock (if any) |
-
-**Key Takeaway**: Always create and assign a clock queue in unit tests for devices that use time events. This is essential for avoiding the `'queue' attribute is not set` error, as demonstrated in the watchdog timer test case.
+---
 
 ## Conclusion
 
-DML device development requires understanding the specific syntax requirements and testing practices:
+Successful DML device development and testing requires mastering both language syntax and simulation best practices:
 
-### Development Requirements:
+**Core Development Principles**:
+- Device declarations are single lines without braces (`device name;`)
+- Include paths must cover both API and builtins directories
+- UTF-8 mode must be enabled for the compiler
+- Parameters and banks live at the top level, not inside device blocks
+- Proper logging and error handling are essential
 
-1. **Device declarations are single lines without braces**
-2. **Include paths must include both API and builtins directories**
-3. **UTF-8 mode must be enabled for the compiler**
-4. **Parameters and banks go at the top level**
-5. **Use proper logging and error handling**
+**Essential Testing Practices**:
+- **Clock configuration is mandatory** for time-based devices in unit tests
+- Create and assign clocks **before** posting any time events
+- Test time-dependent behavior explicitly with `SIM_continue()`
+- Mock signal interfaces when DML uses `connect` blocks
+- Use `dev_util.bank_regs()` for clean register access
+- Follow the `s-<feature>.py` naming convention
 
-### Testing Requirements:
+**Quick Troubleshooting Checklist**:
+1. Queue not set error → Create clock: `device.queue = clk`
+2. Segfault on test → Add signal mocks for `connect` interfaces
+3. Events don't fire → Check clock frequency and time advancement
+4. Multiple clocks → Adjust time quantum if needed
 
-6. **Always configure clock queue for time-based devices in unit tests**
-7. **Create explicit clock objects before posting time events**
-8. **Test time-dependent behavior with `SIM_continue()`**
-9. **Document clock requirements in test files**
-
-Following these practices will help you write robust, maintainable DML devices and reliable tests for Simics simulation.
+Following these practices ensures robust, maintainable DML devices with reliable test coverage for Simics simulation.
 
 ## Quick Reference
 
