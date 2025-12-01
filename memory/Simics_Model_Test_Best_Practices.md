@@ -34,7 +34,6 @@ module-name/
 
 - **common.py**: Shared code including configuration setup, fake object definitions, and helper functions.
 
-
 ## Core Testing Concepts
 
 ### 1. Test Configuration Setup

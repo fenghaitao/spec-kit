@@ -9,6 +9,7 @@ This document provides XML templates and examples for generating IEEE 1685-2022 
 **Complete Workflow**: See `templates/commands/specify.md` for the full specification generation process.
 
 **Quick Reference**:
+
 - Access type mapping table: See Section 4.1 (also in specify.md Step 2.2)
 - State machine documentation: See specify.md Step 2.4.6
 - XML structure templates: Sections 1-5 below
@@ -31,12 +32,14 @@ IP-XACT XML documents must follow this exact order:
 **Purpose**: Document root element with metadata and namespace declarations.
 
 **Required Fields**:
+
 - `[VENDOR_NAME]`: Organization/company name (e.g., "ARM", "Intel", "MyCompany")
 - `[LIBRARY_NAME]`: Library category (e.g., "AMBA_Devices", "Timers", "Controllers")
 - `[IP_NAME]`: Device name from specification (e.g., "Watchdog_Timer", "UART", "GPIO")
 - `[VERSION]`: Version string (e.g., "1.0", "2.0.1")
 
 **XML Template**:
+
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <ipxact:component
@@ -63,11 +66,13 @@ IP-XACT XML documents must follow this exact order:
 **Purpose**: Define bus connectivity for memory-mapped register access.
 
 **Required Fields**:
+
 - `[BUS_TYPE]`: Protocol name (APB4, AXI4, AXI4-Lite, AHB, etc.)
 - `[MEMORY_MAP_NAME]`: Reference to memory map name (defined in section 3)
 - Role: "slave" for peripheral devices, "master" for DMA/bus masters
 
 **Common Bus Types**:
+
 - **APB**: `vendor="AMBA" library="AMBA4" name="APB4" version="r0p0"`
 - **AXI4-Lite**: `vendor="AMBA" library="AMBA4" name="AXI4-Lite" version="r0p0"`
 - **AXI4**: `vendor="AMBA" library="AMBA4" name="AXI4" version="r0p0"`

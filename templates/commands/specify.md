@@ -221,6 +221,7 @@ HW Spec: "Bit 0 (ENABLE): Writing 1 enables timer"
 **Minimum Coverage**: 5+ requirements per category, 5+ test scenarios
 
 #### 3.4 Finalize Specification
+
 Save to SPEC_FILE path from setup script.
 
 ---
@@ -229,7 +230,37 @@ Save to SPEC_FILE path from setup script.
 
 Generate `[device-name]-register.xml` in same directory as spec.md:
 
+**XML Well-Formedness Check (Python)**
+After writing the XML file, **verify it is well-formed** using Python:
+
+```python
+import xml.etree.ElementTree as ET
+from pathlib import Path
+
+xml_path = Path("[device-name]-register.xml")
+
+try:
+    ET.parse(xml_path)
+except ET.ParseError as exc:
+    # IMPORTANT: Do NOT just exit. Use this error to drive an automatic fix.
+    print(f"Invalid IP-XACT XML: {xml_path} -> {exc}")
+    # Feed the XML content and this error message back into the LLM and
+    # ask it to:
+    # 1) Identify the structural/syntax problem
+    # 2) Produce a corrected, well-formed IP-XACT XML file
+    # 3) Preserve all registers, fields, and ports from the spec
+    raise
+```
+
+- If `ET.parse` raises `ParseError`, the XML is not well-formed.
+- In that case, you **MUST**:
+  - Load the current XML content and the full `ParseError` message.
+  - Ask the LLM to **analyze and fix** the XML while preserving all registers, fields, resets, access types, and ports.
+  - Overwrite `[device-name]-register.xml` with the corrected, well-formed XML.
+  - Run the `ET.parse` check again until it passes before committing.
+
 **XML MUST include**:
+
 1. Component metadata (vendor, library, name, version)
 2. Memory maps with all registers
 3. **Register descriptions with side-effects** (read/write behaviors)
@@ -262,6 +293,7 @@ Generate `[device-name]-register.xml` in same directory as spec.md:
 ```
 
 **Register Element** (include side-effects in description):
+
 ```xml
 <ipxact:register>
   <ipxact:name>[NAME]</ipxact:name>
@@ -285,6 +317,7 @@ Generate `[device-name]-register.xml` in same directory as spec.md:
 ```
 
 **Port Element** (for each external signal):
+
 ```xml
 <ipxact:port>
   <ipxact:name>[signal_name]</ipxact:name>
@@ -301,6 +334,7 @@ Generate `[device-name]-register.xml` in same directory as spec.md:
 ```
 
 **Common Ports to Include**:
+
 - Clock inputs (clk, clk_en)
 - Reset inputs (rst_n - active low)
 - Interrupt outputs (irq - assertion/clear conditions)
