@@ -833,6 +833,82 @@ export PYTHONUTF8=1
 
 **Solution**: Ensure `-I ../linux64/bin/dml/1.4` is included.
 
+### Issue 5: "syntax error at 'except'" - Python Syntax in DML
+
+**Cause**: DML is C-like, NOT Python.
+
+**Wrong**: `try { } except { }` ❌
+**Correct**: `try { } catch { }` ✅
+
+**Key Differences (C/C++ vs Python)**:
+- Exception: `catch` not `except`
+- Blocks: `{ }` not indentation
+- Statements: end with `;`
+- Comments: `//` or `/* */` not `#`
+
+### Issue 6: Tests Unchanged After DML Edits
+
+**Cause**: Forgot to rebuild. Tests run against old `.so` binary, not new `.dml` source.
+
+**Mandatory Cycle**: Edit → Build → Test
+```bash
+# 1. Edit
+vim simics-project/modules/<device>/<device>.dml
+
+# 2. BUILD (CRITICAL - don't skip!)
+cd simics-project && make <device>
+
+# 3. Test
+bin/test-runner --suite modules/<device>/test/
+
+# 4. Verify build happened
+ls -lh linux64/lib/<device>.so  # Check timestamp is recent
+```
+
+**Why**: DML compiles to `.so` shared libraries. Simics loads `.so`, not `.dml`. No rebuild = old code runs.
+
+### Issue 7: AttributeError in module_load.py - "object has no attribute 'X'"
+
+**Cause**: `module_load.py` references non-existent device attributes. Auto-generated attributes follow `<bank_name>_<register_name>` pattern.
+
+**Wrong Code** (in `module_load.py`):
+```python
+def get_status(obj):
+    return [("Registers",
+             [("Counter", obj.wrong_attr_name)])]  # ❌ Attribute doesn't exist!
+```
+
+**How to Fix**:
+1. **Check DML for actual bank/register names**:
+   ```bash
+   grep "^bank " simics-project/modules/<device>/<device>.dml
+   grep "register " simics-project/modules/<device>/<device>.dml
+   ```
+
+2. **Use correct attribute pattern**: `obj.<BankName>_<RegisterName>`
+   ```python
+   # If DML has: bank MyBankName { register MY_REG { ... } }
+   # Then use:
+   def get_status(obj):
+       return [("Registers",
+                [("Register Value", obj.MyBankName_MY_REG)])]  # ✅ Correct!
+   ```
+
+**Attribute Naming Rules**:
+- Pattern: `device_obj.<BankName>_<RegisterName>`
+- Bank `<bank1>` + register `<REG1>` → `obj.<bank1>_<REG1>`
+- Bank `<bank2>` + register `<REG2>` → `obj.<bank2>_<REG2>`
+- Use exact names from DML (case-sensitive)
+
+**If No Suitable Attribute Exists**:
+Just remove or comment out the status display code:
+```python
+def get_status(obj):
+    return []  # No status to report
+```
+
+**Key Point**: `module_load.py` is auto-generated from DML structure. If you modify it manually, ensure attributes match DML bank/register declarations.
+
 ## General Best Practices
 
 ### 1. File Organization
@@ -905,45 +981,6 @@ dmlc --simics-api=7 -I ../linux64/bin/dml/api/7/1.4 -I ../linux64/bin/dml/1.4 my
 # Check for warnings
 dmlc -T --simics-api=7 -I ../linux64/bin/dml/api/7/1.4 -I ../linux64/bin/dml/1.4 my_device.dml my_device
 ```
-
-## Compilation Issues and Solutions
-
-### Issue 1: "syntax error at 'device'"
-
-**Cause**: Using old DML syntax with braces after device declaration.
-
-**Solution**: Remove braces from device declaration:
-```dml
-// Wrong
-device my_device { ... }
-
-// Correct
-device my_device;
-```
-
-### Issue 2: "cannot find file to import: dml-builtins.dml"
-
-**Cause**: Missing include path for DML builtins.
-
-**Solution**: Add both include paths:
-```bash
-dmlc --simics-api=7 -I ../linux64/bin/dml/api/7/1.4 -I ../linux64/bin/dml/1.4 file.dml output
-```
-
-### Issue 3: "assert sys.flags.utf8_mode"
-
-**Cause**: Python not running in UTF-8 mode.
-
-**Solution**: Set environment variable or modify dmlc script:
-```bash
-export PYTHONUTF8=1
-```
-
-### Issue 4: "unknown template: 'device'"
-
-**Cause**: DML builtins not found in include path.
-
-**Solution**: Ensure `-I ../linux64/bin/dml/1.4` is included.
 
 ## Testing Best Practices
 
