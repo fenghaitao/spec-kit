@@ -216,9 +216,7 @@ bank regs {
 
 method update_interrupt() {
     if (regs.INTERRUPT_ENABLE.val & regs.INTERRUPT_STATUS.val) {
-        if (irq.obj) {
-            irq.signal.signal_raise();
-        }
+        irq.signal.signal_raise();
     }
 }
 ```
@@ -659,38 +657,7 @@ method simtime_to_cycles(double simtime) -> (uint64) {
   - Timer expires when counter reaches target
   - Example: `ABS_TIMER_TARGET` in the code above
 
-**5. Testing Your Timer:**
-
-```python
-# Create device and configure
-$dev = (create-timer_device)
-
-# Configure timer for 10ms (1M cycles at 100MHz)
-$dev.bank.timer_bank.TIMER_VALUE = 1000000
-
-# Start timer
-$dev.bank.timer_bank.TIMER_CONTROL = 1
-
-# Check immediate status
-print $dev.bank.timer_bank.TIMER_VALUE
-print $dev.bank.timer_bank.TIMER_CURRENT
-
-# Advance time
-run-cycles 500000
-
-# Check mid-flight
-print $dev.bank.timer_bank.TIMER_VALUE      # Should be ~500000
-print $dev.bank.timer_bank.TIMER_CURRENT    # Should be ~500000
-
-# Wait for expiration
-run-cycles 500000
-
-# Check completion
-print $dev.bank.timer_bank.TIMER_STATUS     # Timeout bit should be set
-print $dev.bank.timer_bank.TIMER_CONTROL    # Enable should be clear
-```
-
-**6. Common Timer Best Practices:**
+**5. Common Timer Best Practices:**
 
 - ✅ Use `saved` variables for timer state that needs to persist across checkpoints
 - ✅ Validate input values (e.g., reject zero timeout)
@@ -1180,7 +1147,7 @@ stest.expect_equal(REG_STATUS.read(), 0x00, "Status cleared after reset")
 - **Cause**: Device doesn't support time events
 - **Solution**: Verify device actually needs timing; not all devices do
 
-**Simulation crashes with segfault**
+**Simulation crashes with Segmentfault**
 - **Cause**: DML uses `connect` blocks but interfaces not mocked
 - **Solution**: Add signal interface mocks
   ```python
@@ -1243,7 +1210,7 @@ Successful DML device development and testing requires mastering both language s
 
 **Quick Troubleshooting Checklist**:
 1. Queue not set error → Create clock: `device.queue = clk`
-2. Segfault on test → Add signal mocks for `connect` interfaces
+2. Segmentfault on test → Add signal mocks for `connect` interfaces
 3. Events don't fire → Check clock frequency and time advancement
 4. Multiple clocks → Adjust time quantum if needed
 
