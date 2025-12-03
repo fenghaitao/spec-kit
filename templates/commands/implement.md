@@ -38,6 +38,17 @@ Run `{SCRIPT}` from repo root → parse FEATURE_DIR and AVAILABLE_DOCS. All path
 - TDD: test tasks before implementation tasks
 - Tasks affecting same files run sequentially
 
+**Code Update Strategy**:
+- **CRITICAL**: For DML files (.dml) and test files (.py), use `apply_git_diff` tool to apply targeted patches
+  - Generate git diff format patches for specific changes
+  - Preserves existing code structure and comments
+  - Reduces risk of overwriting unrelated code
+- **ONLY** use `write_file` with `overwrite=True` for:
+  - New files (no existing content)
+  - Complete file replacement explicitly required
+  - Small files where full rewrite is clearer
+- **NEVER** use `write_file` with `overwrite=True` on existing DML or test files unless absolutely necessary
+
 **After EACH Task**:
 1. **Mark complete**: `- [ ] T###` → `- [X] T###` in tasks.md (use replace_string_in_file)
 2. **Git commit**:
@@ -70,7 +81,7 @@ Run `{SCRIPT}` from repo root → parse FEATURE_DIR and AVAILABLE_DOCS. All path
 1. Capture error (type, file, line)
 2. Review: DML_Device_Development_Best_Practices.md, DML_grammar.md, research.md
 3. RAG query if needed: `perform_rag_query("<error message>", source_type="dml")`
-4. Apply minimal fix
+4. Apply minimal fix using `apply_git_diff` (generate targeted patch for error location)
 5. Re-validate: `check_with_dmlc()` → `build_simics_project()`
 6. Git commit (even if failed): `"implement: <task-id> - error recovery attempt <N> - <result>"`
 7. Document in research.md under "## Build Error Solutions"
@@ -81,7 +92,7 @@ Run `{SCRIPT}` from repo root → parse FEATURE_DIR and AVAILABLE_DOCS. All path
 1. Analyze: which test, expected vs actual, register values, state transitions
 2. Review: DML best practices, data-model.md, research.md
 3. RAG query if needed (DML or Python source_type)
-4. Fix device logic or test
+4. Fix device logic or test using `apply_git_diff` (targeted patches)
 5. Re-validate: build → test
 6. Git commit
 7. Document in research.md under "## Runtime Error Solutions"

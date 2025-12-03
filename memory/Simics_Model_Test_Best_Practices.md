@@ -34,11 +34,13 @@ module-name/
 
 - **common.py**: Shared code including configuration setup, fake object definitions, and helper functions.
 
-## Core Testing Concepts
+## Core Testing Concepts & Patterns
 
-### 1. Test Configuration Setup
+### 1. Configuration and Simulation Control
 
-Tests should create minimal configurations containing only what's necessary:
+Proper configuration is essential for Simics tests. The goal is to create a **minimal configuration** containing only the device under test and necessary support objects (clock, memory).
+
+#### Minimal Configuration Pattern
 
 ```python
 import simics
@@ -46,373 +48,178 @@ import conf
 import dev_util
 import stest
 
-def create_config():
-    # Create the device under test
-    my_dev = simics.pre_conf_object('dev', 'my_device_class')
-
-    # Configure required attributes
-    my_dev.attr1 = 'value'
-    my_dev.attr2 = 42
-
-    # Add configuration to Simics
-    simics.SIM_add_configuration([my_dev], None)
-
-    # Return reference to configured object
-    return conf.dev
+def create_test_config():
+    # 1. Create pre-conf objects
+    dev = simics.pre_conf_object('dev', 'my_device')
+    clk = simics.pre_conf_object('clk', 'clock')
+    mem = simics.pre_conf_object('mem', 'memory-space')
+    mem.map = []
+    # map dev.bank.regs to memory space [0x1000, 0x2000]
+    mem.map += [0x1000, #base address
+                dev.bank.regs, # object
+                0, # function
+                0, # offset
+                0x1000]
+    
+    # 2. Configure attributes
+    clk.freq_mhz = 1000
+    dev.queue = clk  # REQUIRED: Set queue for time-dependent objects
+    
+    # 3. Add configuration
+    simics.SIM_add_configuration([dev, clk, mem], None)
+    
+    return (conf.dev, conf.clk, conf.mem)
 ```
 
-### 2. Using Fake Objects
+#### Running the Simulation
 
-Instead of creating full system configurations, use fake objects to simulate the environment:
+Use `simics.SIM_continue()` to advance time. This must be called from **Global Context**.
+
+```python
+# Run for specific cycles
+start = simics.SIM_cycle_count(conf.clk)
+simics.SIM_continue(1000)
+elapsed = simics.SIM_cycle_count(conf.clk) - start
+stest.expect_equal(elapsed, 1000, "Time did not advance correctly")
+```
+
+### 2. Register Access
+
+Testing register access is the most common task. Use `dev_util` helpers for convenience.
+
+#### Using `bank_regs` (Recommended)
+
+The `bank_regs` utility creates a proxy for easy read/write access to registers and fields.
+
+```python
+# Create proxy
+regs = dev_util.bank_regs(conf.dev.bank.regs)
+
+# Full register access
+regs.control.write(0xdeadbeef)
+stest.expect_equal(regs.control.read(), 0xdeadbeef)
+
+# Field access (Read-Modify-Write)
+regs.status.write(dev_util.READ, enable=1, mode=3)
+stest.expect_equal(regs.status.field.enable.read(), 1)
+```
+
+#### Using `Register_LE/BE` (Specific Layouts)
+
+Use `Register_LE` (Little Endian) or `Register_BE` (Big Endian) when you need to test specific offsets or endianness behavior explicitly.
+
+```python
+# Define register at specific offset
+control = dev_util.Register_LE(
+    conf.dev.bank.regs, 0x00, size=4,
+    bitfield=dev_util.Bitfield_LE({'enable': 31, 'mode': (30, 28)})
+)
+
+control.write(0x80000000)
+stest.expect_equal(control.enable, 1)
+```
+
+### 3. Environment Simulation (Fakes & Interfaces)
+
+Isolate your device by using **Fake Objects** instead of real dependencies. This improves test speed and stability.
+
+#### Fake Object Pattern
 
 ```python
 import pyobj
 
-# Create a fake interrupt controller
 class FakePic(pyobj.ConfObject):
-    class raised(pyobj.SimpleAttribute(0, 'i')):
-        '''Attribute to store signal state'''
-
-    # Implement the signal interface
+    class raised(pyobj.SimpleAttribute(0, 'i')): pass
+    
     class signal(pyobj.Interface):
-        def signal_raise(self):
-            self._up.raised.val += 1
+        def signal_raise(self): self._up.raised.val += 1
+        def signal_lower(self): self._up.raised.val -= 1
 
-        def signal_lower(self):
-            self._up.raised.val -= 1
-
-# Use the fake object in configuration
+# In config setup:
 fake_pic = simics.pre_conf_object('fake_pic', 'FakePic')
-my_dev = simics.pre_conf_object('dev', 'my_device_class')
-my_dev.pic = fake_pic
-
-simics.SIM_add_configuration([my_dev, fake_pic], None)
-
-# Later in test: verify interrupt was raised
-stest.expect_equal(conf.fake_pic.raised, 1, 'signal not raised')
+dev.pic = fake_pic
 ```
 
-### 3. Register Access Patterns
+#### Interface Testing
 
-#### Using bank_regs (Recommended for Register Testing)
+Verify your device interacts correctly with the environment (e.g., raising interrupts).
 
 ```python
-import dev_util
-from stest import expect_equal
+# Trigger device action
+regs.control.write(1)  # Suppose this triggers interrupt
 
-# Create bank proxy for convenient register access
-regs = dev_util.bank_regs(conf.dev.bank.regs)
-
-# Write and read entire registers
-regs.control.write(0xdeadbeef)
-expect_equal(regs.control.read(), 0xdeadbeef)
-
-# Read-modify-write with fields
-regs.status.write(dev_util.READ, enable=1, mode=3)
-
-# Read individual fields
-expect_equal(regs.status.field.enable.read(), 1)
-expect_equal(regs.status.field.mode.read(), 3)
+# Verify side effect on fake object
+stest.expect_equal(conf.fake_pic.raised, 1, "Interrupt not raised")
 ```
 
-#### Using Register_LE/BE (For Testing Endianness and Offsets)
+### 4. Memory and DMA
+
+For DMA devices, use `dev_util.Memory` to simulate system memory.
+
+#### DMA Test Pattern
 
 ```python
-import dev_util
-
-# Define register with explicit offset and endianness
-control_reg = dev_util.Register_LE(
-    conf.dev.bank.regs,  # bank
-    0x00,                # offset
-    size=4,
-    bitfield=dev_util.Bitfield_LE({
-        'enable': 31,
-        'mode': (30, 28),
-        'count': (15, 0)
-    })
-)
-
-# Access register
-control_reg.write(0x80000042)
-expect_equal(control_reg.enable, 1)
-expect_equal(control_reg.mode, 0)
-expect_equal(control_reg.count, 0x42)
-
-# Field write (implicit read-modify-write)
-control_reg.enable = 0
-control_reg.mode = 5
-```
-
-### 4. Memory and DMA Testing
-
-#### Using dev_util.Memory
-
-```python
-import dev_util
-
-# Create test memory
+# 1. Setup Memory
 mem = dev_util.Memory()
+dev.phys_mem = mem.obj
 
-# Configure device to use test memory
-dma_dev = simics.pre_conf_object('dev', 'my_dma_device')
-dma_dev.phys_mem = mem.obj
-simics.SIM_add_configuration([dma_dev], None)
+# 2. Prepare Data
+src = 0x1000; dst = 0x2000; size = 256
+data = tuple(range(size))
+mem.write(src, data)
 
-# Write test data to memory
-test_data = tuple(range(256))
-mem.write(0x1000, test_data)
+# 3. Trigger DMA
+regs.dma_src.write(src)
+regs.dma_dst.write(dst)
+regs.dma_len.write(size)
+regs.dma_cmd.write(1) # Start
 
-# Trigger DMA operation
-# ... device performs DMA ...
-
-# Verify data was copied
-expect_equal(mem.read(0x2000, 256), list(test_data))
+# 4. Verify Result
+stest.expect_equal(mem.read(dst, size), list(data), "DMA mismatch")
 ```
 
+#### Descriptors
 
-#### Using dev_util.Layout for Descriptors
+Use `dev_util.Layout` to map Python objects to memory structures (descriptors).
 
 ```python
-import dev_util
-
-# Define descriptor layout
-desc = dev_util.Layout_LE(
-    mem,           # Memory object
-    0x1234,        # Address
-    {
-        'control': (0, 4),
-        'address': (4, 4),
-        'length': (8, 2),
-        'status': (10, 2, dev_util.Bitfield_LE({
-            'done': 15,
-            'error': 14,
-            'count': (7, 0)
-        }))
-    }
-)
-
-# Initialize descriptor
-desc.control = 0x00000001
-desc.address = 0xabcd0000
-desc.length = 512
-desc.status.write(0, done=0, error=0, count=0)
-
-# After device processes descriptor
-expect_equal(desc.status.done, 1)
-expect_equal(desc.status.count, 512)
+desc = dev_util.Layout_LE(mem, 0x1000, {
+    'control': (0, 4),
+    'status': (4, 4)
+})
+desc.control = 0x1
+# ... device runs ...
+stest.expect_equal(desc.status, 0x1) # Verify device updated status
 ```
 
-### 5. Interface Testing
+### 5. Events and Timing
 
-#### Calling Interfaces on Devices
+Simics uses **Event Queues** (Time, Cycle, Step) associated with clocks to manage time.
 
-```python
-# Call interface at device level
-conf.dev.iface.signal.signal_raise()
+#### Event-Based Testing
 
-# Call interface on a port
-conf.dev.port.reset.iface.signal.signal_raise()
-conf.dev.port.reset.iface.signal.signal_lower()
-```
+To test time-dependent behavior (timers, delays):
 
-#### Testing Custom Transaction Atoms
+1.  **Configure**: Set up the operation.
+2.  **Wait**: Advance time using `SIM_continue()`.
+3.  **Verify**: Check if the event occurred.
 
 ```python
-import simics
-
-# Load module defining custom atom
-simics.SIM_load_module('extended-id-atom')
-
-# Create transaction with custom atom
-txn = simics.transaction_t(
-    size=4,
-    write=True,
-    value_le=0xdeadbeef,
-    extended_id=3000
-)
-
-# Send transaction to device
-exc = simics.SIM_issue_transaction(conf.dev.bank.regs, txn, 0x420)
-```
-
-### 6. Tracking Device Behavior
-
-Use fake objects to record and verify device actions:
-
-```python
-class Test_state:
-    def __init__(self):
-        self.seq = []  # Record sequence of events
-        self.memory = dev_util.Memory()
-
-    def read_mem(self, addr, n):
-        return self.memory.read(addr, n)
-
-    def write_mem(self, addr, bytes):
-        self.memory.write(addr, bytes)
-
-# Fake object that records interface calls
-class FakePhy(dev_util.Ieee_802_3_phy_v2):
-    def send_frame(self, sim_obj, buf, replace_crc):
-        test_state.seq.append(('send_frame', tuple(buf), replace_crc))
-        return 0
-
-    def check_tx_bandwidth(self, sim_obj):
-        return 1
-
-# Later: verify expected sequence
-expect_equal(test_state.seq, [
-    ('send_frame', expected_data, 1),
-    ('raise', conf.dev, 0),
-    ('clear', conf.dev, 0)
-])
-```
-
-
-## Best Practices
-
-### Test Coverage
-
-1. **Comprehensive but Focused**: Cover all implemented functionality, but don't test unimplemented features.
-
-2. **Document Omissions**: Clearly note any functionality not covered by tests in the README.
-
-3. **Test Early**: Write tests before or during implementation to catch errors quickly.
-
-### Test Speed
-
-1. **Fast Execution**: Individual tests should complete in seconds, dominated by Simics startup time.
-
-2. **Complete Suite**: All tests for a device should run in under 30 seconds.
-
-3. **Clever Testing**: Cover maximum functionality in minimum time through smart test design.
-
-### Test Organization
-
-1. **Independent Subtests**: Put tests of independent features in separate files so they can fail/succeed independently.
-
-2. **Shared Code**: Factor out common configuration and helper functions into `common.py`.
-
-3. **Logical Grouping**: Group related small tests in the same file to reduce Simics startup overhead.
-
-### Code Quality
-
-1. **Clear Documentation**: Document what each test covers, both in README and as comments.
-
-2. **Descriptive Names**: Use clear, descriptive names for test files and functions.
-
-3. **Good Error Messages**: Provide informative messages when tests fail:
-
-```python
-stest.expect_equal(
-    actual_value,
-    expected_value,
-    "Control register enable bit not set after initialization"
-)
-```
-
-4. **Use Assertions**: Let `stest` functions raise exceptions automatically for clear tracebacks.
-
-### Configuration Principles
-
-1. **Minimal Setup**: Include only objects necessary for the test.
-
-2. **Fake When Possible**: Use fake objects instead of real models to:
-   - Verify interface usage
-   - Reduce dependencies
-   - Simplify configuration
-
-3. **Real When Necessary**: Use real objects for:
-   - Clock objects (for timing)
-   - Image objects (for large data structures)
-   - Objects that can't be faked in Python
-
-
-## Common Testing Patterns
-
-### Pattern 1: Simple Register Test
-
-```python
-from common import create_config, device_regs
-from stest import expect_equal
-
-dev = create_config()
-regs = device_regs(dev)
-
-# Test register read/write
-regs.control.write(0x12345678)
-expect_equal(regs.control.read(), 0x12345678)
-
-# Test field access
-regs.status.write(dev_util.READ, enable=1, mode=3)
-expect_equal(regs.status.field.enable.read(), 1)
-```
-
-### Pattern 2: Interrupt Testing
-
-```python
-from common import create_config, FakePic
-from stest import expect_equal
-
-(dev, pic_state) = create_config()
-
-# Trigger interrupt
-# ... perform action that should raise interrupt ...
-
-# Verify interrupt was raised
-expect_equal(pic_state.raised, 1, "Interrupt not raised")
-```
-
-### Pattern 3: DMA Transfer Test
-
-```python
-from common import create_config
-from stest import expect_equal
-import dev_util
-
-(dev, test_state) = create_config()
-
-# Setup source data
-src_addr = 0x1000
-dst_addr = 0x2000
-size = 256
-test_data = tuple(range(size))
-test_state.write_mem(src_addr, test_data)
-
-# Configure and trigger DMA
-# ... configure device registers ...
-
-# Verify transfer
-expect_equal(
-    test_state.read_mem(dst_addr, size),
-    list(test_data),
-    "DMA transfer data mismatch"
-)
-```
-
-### Pattern 4: Timing-Based Test
-
-```python
-from common import create_config
-from stest import expect_equal
-import simics
-
-(dev, clk) = create_config()
-
-# Record start time
-start_cycle = simics.SIM_cycle_count(clk)
-
-# Trigger timed operation
-# ... configure device ...
+# Start timer (1000 cycles)
+regs.timer.write(1000)
+regs.start.write(1)
 
 # Advance time
-simics.SIM_continue(1000)  # Run for 1000 cycles
+simics.SIM_continue(1000)
 
-# Verify timing
-elapsed = simics.SIM_cycle_count(clk) - start_cycle
-expect_equal(elapsed, 1000, "Unexpected cycle count")
+# Verify interrupt fired
+stest.expect_equal(conf.fake_pic.raised, 1, "Timer interrupt missing")
 ```
 
+#### Event Best Practices
+- **Transform to Time Functions**: Calculate values based on `SIM_cycle_count` instead of periodic events where possible.
+- **Avoid Continuous Events**: They kill performance.
+- **Cancel Events**: Clean up in `destroy()` or when disabled.
 
 ## Helper Utilities
 
@@ -440,75 +247,91 @@ class Struct:
     def __init__(self, **kws):
         for (k, v) in list(kws.items()):
             setattr(self, k, v)
-
-# Usage
-regs = Struct(
-    control=dev_util.Register_LE(dev.bank.regs, 0x00, 4),
-    status=dev_util.Register_LE(dev.bank.regs, 0x04, 4),
-    data=dev_util.Register_LE(dev.bank.regs, 0x08, 4)
-)
 ```
 
 ## Example Test Suite Structure
 
+Here is a complete example showing how to organize a test suite with shared code and individual tests.
+
+**common.py** (Shared setup):
 ```python
-# common.py - Shared definitions
 import simics
 import conf
 import dev_util
 import pyobj
 
+# Fake object definition
 class FakePic(pyobj.ConfObject):
-    # ... fake interrupt controller ...
-    pass
+    class raised(pyobj.SimpleAttribute(0, 'i')): pass
+    class signal(pyobj.Interface):
+        def signal_raise(self): self._up.raised.val += 1
+        def signal_lower(self): self._up.raised.val -= 1
 
+# Configuration helper
 def create_config():
-    # ... create minimal test configuration ...
-    return (conf.dev, fake_pic_state)
+    wdog = simics.pre_conf_object('watchdog', 'my_wdog')
+    clk = simics.pre_conf_object('clk', 'clock', [["freq_mhz", 100]])
+    fake_pic = simics.pre_conf_object('fake_pic', 'FakePic')
 
-def device_regs(dev):
-    # ... return struct with register proxies ...
-    return Struct(...)
-
-# s-basic.py - Basic functionality test
-from common import *
-from stest import expect_equal
-
-(dev, pic) = create_config()
-regs = device_regs(dev)
-
-# Test basic register access
-regs.control.write(0x1)
-expect_equal(regs.control.read(), 0x1)
-
-# s-interrupts.py - Interrupt functionality test
-from common import *
-from stest import expect_equal
-
-(dev, pic) = create_config()
-
-# ... trigger interrupt ...
-expect_equal(pic.raised, 1, "Interrupt not raised")
-
-# s-dma.py - DMA functionality test
-from common import *
-from stest import expect_equal
-import dev_util
-
-(dev, test_state) = create_config()
-
-# ... test DMA transfers ...
+    wdog.queue = clk
+    wdog.pic = fake_pic
+    
+    simics.SIM_add_configuration([wdog, clk, fake_pic], None)
+    return (conf.wdog, conf.fake_pic)
 ```
+
+**s-basic.py** (Test file):
+```python
+import simics
+import dev_util
+import stest
+from common import create_config
+
+# 1. Setup
+(wdog, pic) = create_config()
+regs = dev_util.bank_regs(wdog.bank.regs)
+
+# 2. Test Register Access
+regs.load.write(0x5)
+stest.expect_equal(regs.timer_value.read(), 0x5, "TimeValue register mismatch while loading new timer configuration")
+regs.control.write(0x1)
+stest.expect_equal(regs.control.read(), 0x1, "Control register mismatch")
+
+# 3. Test Side Effects
+regs.trigger_irq.write(1)
+stest.expect_equal(pic.raised, 1, "Interrupt not raised")
+
+# 4. Test Timing
+int_number = pic.raised
+regs.load.write(1000) # re-configure timer
+regs.control.write(0x1)  # Start timer
+start = simics.SIM_cycle_count(wdog.queue)
+simics.SIM_continue(500) # run simulation 500 cycles
+stest.expect_equal(regs.timer_value.read(), 500, "Timer value mismatch after 500 cycles")
+simics.SIM_continue(501) # run simulation 501 cycles
+elapsed = simics.SIM_cycle_count(wdog.queue) - start
+stest.expect_equal(elapsed, 1001, "Time did not advance")
+stest.expect_equal(pic.raised, int_number + 1, "Interrupt not raised")
+stest.expect_equal(regs.timer_value.read(), 0, "Timer value should be 0 after expiry")
+```
+
+## Best Practices Checklist
+
+### 1. Test Coverage & Organization
+- **Comprehensive but Focused**: Cover implemented features; document omissions.
+- **Independent Subtests**: Use separate files (`s-*.py`) for independent features.
+- **Shared Code**: Put common setup in `common.py`.
+
+### 2. Performance
+- **Fast Execution**: Tests should run in seconds.
+- **Minimal Config**: Only create necessary objects.
+- **Use Fakes**: Avoid full system simulation dependencies.
+
+### 3. Code Quality
+- **Descriptive Names**: Clear test filenames and function names.
+- **Good Error Messages**: Use `stest` assertions with helpful messages.
+- **Documentation**: Explain what each test covers.
 
 ## Conclusion
 
-Effective testing is essential for reliable device models. By following these best practices:
-
-- Write tests early and run them often
-- Keep tests focused on the device under test
-- Use fake objects to minimize dependencies
-- Organize tests logically for maintainability
-- Ensure tests run quickly to enable frequent execution
-- Document test coverage and any omissions
-
-These practices will help you develop robust, well-tested device models that are easier to maintain and extend over time.
+Effective testing is essential for reliable device models. By following these best practices—using minimal configurations, leveraging fake objects, and structuring tests logically—you can ensure robust and maintainable device models.
