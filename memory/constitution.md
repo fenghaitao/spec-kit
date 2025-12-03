@@ -90,6 +90,157 @@ Leverage Simics domain expertise and best practices:
 - Optimize for simulation performance while maintaining accuracy
 - Leverage Simics debugging and inspection capabilities
 
+## Technical Implementation Rules
+
+### File System Organization
+
+#### Editable Files (Permitted Modifications)
+
+✅ **DML Device Implementation**
+- Location: `simics-project/modules/<device_name>/<device_name>.dml`
+- Purpose: Device behavior, register side-effects, timer logic
+- Rule: This is the PRIMARY implementation file for device logic
+
+✅ **Python Unit Tests**
+- Location: `simics-project/modules/<device_name>/test/*.py`
+- Pattern: `s-<feature>.py` (one test function per file)
+- Purpose: Functional validation of device behavior
+
+#### Protected Files (DO NOT MODIFY)
+
+❌ **Auto-Generated DML Files**
+- `<device_name>-glue.dml` - Generated from IP-XACT during build
+- `<device_name>-dia.dml` - Defines register interface from IP-XACT
+- `<device_name>-registers.dml` - Defines register skeleton from IP-XACT
+- **Reason**: These files are regenerated on every build. Manual changes will be lost.
+
+❌ **Build Configuration Files**
+- `Makefile`, `CMakeLists.txt`, `MODULEINFO`, `MODULEDEPS`
+- **Reason**: Build system is pre-configured for Simics project structure
+
+❌ **IP-XACT XML Files**
+- `<device_name>.xml` and other register specification files
+- **Reason**: These are specification artifacts from the specify phase
+
+### DML Import Statements (CRITICAL)
+
+**ABSOLUTE REQUIREMENT**: Keep ALL import statements intact - NEVER remove or comment out:
+
+```dml
+import "<device_name>-glue.dml"; // Auto-generated - register association
+import "<device_name>-dia.dml";  // Defines register interface from IP-XACT
+import "simics/devs/signal.dml"; // Defines signal interfaces (interrupts)
+```
+or
+```
+import "<device_name>-registers.dml"; // Defines register skeleton from IP-XACT
+import "simics/devs/signal.dml";      // Defines signal interfaces (interrupts)
+```
+
+**Why This Matters**:
+- Register map: Without <device_name>-glue.dml, register interface/storage association are not resolved
+- Register Interface: Without <device_name>-dia.dml, register template won't be available
+- Register Skeleton: Without <device_name>-registers.dml, register skeleton won't be available
+- Signal Interfaces: Without signal.dml, interrupt handling won't compile
+
+### Timer Device Implementation Pattern
+
+**REQUIRED**: Use DML `event` objects with explicit timestamp management
+
+```dml
+// ✅ CORRECT: Event-based timer
+event timeout_event;
+
+method schedule_timeout() {
+    local double seconds = calculate_timeout_seconds();
+    after (seconds) call timeout_event;
+}
+```
+
+**REQUIRED**: Use `SIM_time()` for elapsed time calculations
+
+```dml
+// ✅ CORRECT: Timestamp-based calculation
+method read_remaining_value() -> (uint32) {
+    local double elapsed = SIM_time() - timer_start_time;
+    return convert_to_ticks(timeout_duration - elapsed);
+}
+```
+
+**FORBIDDEN**: Storing counter values in `saved uint32` variables
+```dml
+// ❌ WRONG: Breaks on checkpoint restore
+saved uint32 current_counter;  // Don't do this!
+```
+
+### Python Test File Structure
+
+**Pattern**: `s-<feature>.py` (one test function per file)
+
+**Required Structure**:
+```python
+# Device instantiation
+device = SIM_create_object("test_dev", "dev0", [])
+
+# Configure clock queue (REQUIRED for time-based tests)
+device.queue = conf.sim.queue
+
+# Test with assertions
+SIM_write_phys_memory(device, ADDR, value, 4)
+result = SIM_read_phys_memory(device, ADDR, 4)
+assert result == expected, f"Expected {expected}, got {result}"
+```
+
+### Forbidden Actions (Complete List)
+
+#### ❌ File System Violations
+- Removing or commenting out ANY import statements
+- Creating new `.dml` files without explicit approval
+- Modifying auto-generated files (`-registers.dml`, `-dia.dml`, `-glue.dml`)
+- Editing build configuration files
+- Modifying IP-XACT XML during implementation
+
+#### ❌ Implementation Anti-Patterns
+- Storing counter/timer values in `saved uint32` variables
+- Using polling loops or busy-wait patterns
+- Implementing cycle-accurate timing (use functional model)
+- Adding checkpoint/restore logic (Simics handles automatically)
+- Making assumptions beyond hardware specification
+
+#### ❌ Test Anti-Patterns
+- Multiple test functions in one file
+- Tests without clock queue configuration
+- Tests without clear assertions
+- Tests that don't validate time-based behavior
+
+### Build and Validation Commands
+
+**Building**:
+```bash
+cd simics-project
+make <device_name>
+```
+
+**Testing**:
+```bash
+cd simics-project/modules/<device_name>/test
+./bin/test-runner --suite <device_name>
+```
+
+### Compliance Checklist
+
+Before submitting any implementation, verify:
+
+- [ ] ✅ All import statements present and intact
+- [ ] ✅ Only permitted files modified (`.dml` implementation, `.py` tests)
+- [ ] ✅ No auto-generated files edited
+- [ ] ✅ Timer uses `event` objects with timestamps
+- [ ] ✅ No `saved uint32` for counter/timer state
+- [ ] ✅ Tests follow `s-<feature>.py` pattern
+- [ ] ✅ Tests configure clock queue
+- [ ] ✅ Device builds successfully
+- [ ] ✅ All tests pass
+
 ## Constitutional Compliance Framework
 
 ### Specification Phase
@@ -101,11 +252,13 @@ Leverage Simics domain expertise and best practices:
 - Constitutional compliance verification for Simics device development
 - Technical translation from hardware specifications to DML implementation plans
 - Behavioral testing strategy focused on software-visible device functionality
+- **Mandatory**: Reference technical rules and forbidden actions in proposals
 
 ### Implementation Phase
 - Simics-specific task generation following device modeling best practices
 - Adherence to DML standards while maintaining constitutional principles
 - Consistent documentation and validation approaches across all device models
+- **Mandatory**: Verify compliance checklist before archiving
 
 ## Amendment Process
 
@@ -119,6 +272,6 @@ Modifications to this constitution require:
 
 This constitution supersedes all other Simics device development practices. All specification, planning, task generation, and implementation must verify constitutional compliance. When specific device requirements conflict with constitutional principles, the constitution takes precedence unless explicitly documented and justified.
 
-**Version**: 4.0.0 | **Ratified**: 2024-12-19 | **Last Amended**: 2024-12-19
+**Version**: 5.0.0 | **Ratified**: 2025-12-03 | **Last Amended**: 2025-12-03
 
-*Major version increment reflects focus on Simics model development as the primary methodology.*
+*Major version increment adds comprehensive technical implementation rules extracted from prompt templates for agent autonomy.*
