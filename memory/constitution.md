@@ -223,8 +223,8 @@ make <device_name>
 
 **Testing**:
 ```bash
-cd simics-project/modules/<device_name>/test
-./bin/test-runner --suite <device_name>
+cd simics-project/
+./bin/test-runner --suite modules/<device_name>/test
 ```
 
 ### Compliance Checklist
