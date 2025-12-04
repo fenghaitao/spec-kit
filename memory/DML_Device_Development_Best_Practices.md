@@ -74,7 +74,7 @@ import "simics/device-api.dml";  // Always needed for devices
 
 ### Correct vs. Incorrect Syntax
 
-❌ **WRONG** (old DML style):
+❌ **WRONG**:
 ```dml
 device my_device {
     param classname = "my_device";
