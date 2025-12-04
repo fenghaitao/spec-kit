@@ -145,51 +145,94 @@ import "simics/devs/signal.dml";      // Defines signal interfaces (interrupts)
 
 ### Timer Device Implementation Pattern
 
-**REQUIRED**: Use DML `event` objects with explicit timestamp management
+**CRITICAL PERFORMANCE RULE**: Simics is EVENT-DRIVEN, not cycle-accurate!
 
+**REQUIRED**: Use timestamp-based single event pattern
 ```dml
-// ✅ CORRECT: Event-based timer
-event timeout_event;
+// ✅ EFFICIENT: Post ONE event for final timeout
+event timer_event is (simple_time_event) {
+    method event() {
+        // Timer expired - handle timeout
+    }
 
-method schedule_timeout() {
-    local double seconds = calculate_timeout_seconds();
-    after (seconds) call timeout_event;
+    method arm(double timeout_seconds) {
+        if (posted()) remove();  // Remove old event if exists
+        post(timeout_seconds);   // Post ONE event
+    }
+}
+
+saved double timer_start_simtime = 0.0;
+
+method start_timer(uint64 timeout_cycles) {
+    timer_start_simtime = SIM_time(dev.obj);  // Record start time
+    local double timeout_seconds = cycles_to_simtime(timeout_cycles);
+    timer_event.arm(timeout_seconds);  // Post single event
+}
+
+method read_current_value() -> (uint64) {
+    local double elapsed = SIM_time(dev.obj) - timer_start_simtime;
+    local uint64 elapsed_cycles = simtime_to_cycles(elapsed);
+    return calculate_remaining(elapsed_cycles);  // Dynamic calculation
 }
 ```
 
-**REQUIRED**: Use `SIM_time()` for elapsed time calculations
+**For complete timer implementation details**, including:
+- Full code examples with `simple_time_event` template
+- Event remove/posted/post methods
+- Frequency conversion helpers
+- Relative vs absolute timer patterns
 
-```dml
-// ✅ CORRECT: Timestamp-based calculation
-method read_remaining_value() -> (uint32) {
-    local double elapsed = SIM_time() - timer_start_time;
-    return convert_to_ticks(timeout_duration - elapsed);
-}
-```
+→ **See `.specify/memory/DML_Device_Development_Best_Practices.md` Section: "Timer Device"**
 
-**FORBIDDEN**: Storing counter values in `saved uint32` variables
-```dml
-// ❌ WRONG: Breaks on checkpoint restore
-saved uint32 current_counter;  // Don't do this!
-```
+**Timer Implementation Checklist**:
+- [ ] ✅ Use `saved double timer_start_simtime` to record when timer started
+- [ ] ✅ Use `event ... is (simple_time_event)` with arm/cancel methods
+- [ ] ✅ Post exactly ONE event for when counter reaches zero
+- [ ] ✅ Calculate current counter value from `SIM_time()` - timer_start_simtime
 
 ### Python Test File Structure
 
+**CRITICAL**: See `.specify/memory/DML_Device_Development_Best_Practices.md` for complete test examples and patterns.
+
 **Pattern**: `s-<feature>.py` (one test function per file)
 
-**Required Structure**:
+**Required Imports**:
 ```python
-# Device instantiation
-device = SIM_create_object("test_dev", "dev0", [])
-
-# Configure clock queue (REQUIRED for time-based tests)
-device.queue = conf.sim.queue
-
-# Test with assertions
-SIM_write_phys_memory(device, ADDR, value, 4)
-result = SIM_read_phys_memory(device, ADDR, 4)
-assert result == expected, f"Expected {expected}, got {result}"
+#!/usr/bin/env python3
+import simics      # REQUIRED - Simics API
+import stest       # REQUIRED - Test assertions
+import dev_util    # REQUIRED - Register access utilities
 ```
+
+**Essential Test Structure** (simplified - see best practices doc for details):
+```python
+def test_feature_name():
+    # 1. Create device and clock (MANDATORY for time-based tests)
+    device = simics.SIM_create_object('<device_name>', 'dev0')
+    clk = simics.SIM_create_object('clock', 'clk', freq_mhz=1)
+    device.queue = clk
+    
+    # 2. Access registers via bank
+    bank = dev_util.bank_regs(device.bank.<Bank_Name>)
+    
+    # 3. Test and validate
+    bank.<REGISTER_NAME>.write(<value>)
+    result = bank.<REGISTER_NAME>.read()
+    stest.expect_equal(result, <expected>, "message")
+
+# Run test when executed
+if __name__ == '__main__':
+    test_feature_name()
+```
+
+**For complete examples including**:
+- Clock queue configuration details
+- Register access patterns (bank vs attribute)
+- Time advancement with `simics.SIM_continue()`
+- Signal interface mocking
+- Troubleshooting common test errors
+
+→ **Refer to `.specify/memory/DML_Device_Development_Best_Practices.md` Section: "Testing Best Practices"**
 
 ### Forbidden Actions (Complete List)
 
@@ -201,9 +244,9 @@ assert result == expected, f"Expected {expected}, got {result}"
 - Modifying IP-XACT XML during implementation
 
 #### ❌ Implementation Anti-Patterns
-- Storing counter/timer values in `saved uint32` variables
+- Decrementing counters in event handlers instead of calculating from `SIM_time()`
 - Using polling loops or busy-wait patterns
-- Implementing cycle-accurate timing (use functional model)
+- Implementing cycle-accurate timing (use functional, event-driven model)
 - Adding checkpoint/restore logic (Simics handles automatically)
 - Making assumptions beyond hardware specification
 
@@ -212,6 +255,34 @@ assert result == expected, f"Expected {expected}, got {result}"
 - Tests without clock queue configuration
 - Tests without clear assertions
 - Tests that don't validate time-based behavior
+- **Using pytest-style fixtures** (e.g., `def test(conf, SIM_create_object)`)
+- **Missing required imports** (`simics`, `stest`, `dev_util`)
+- **Using undefined functions** (e.g., `SIM_write_phys_memory` doesn't exist)
+- **Wrong function signatures** - test functions take no parameters
+
+**Correct vs Incorrect Test Patterns**:
+
+❌ **WRONG - Pytest-style**:
+```python
+def test_device(conf, SIM_create_object, SIM_write_phys_memory):
+    dev = SIM_create_object("<device_name>", "dev0", [])
+    dev.queue = conf.sim.queue  # conf doesn't exist
+    SIM_write_phys_memory(dev, 0x0, 0x10, 4)  # function doesn't exist
+```
+
+✅ **CORRECT - Simics style**:
+```python
+import simics
+import stest
+import dev_util
+
+def test_device():
+    dev = simics.SIM_create_object('<device_name>', 'dev0')
+    clk = simics.SIM_create_object('clock', 'clk', freq_mhz=1)
+    dev.queue = clk
+    bank = dev_util.bank_regs(dev.bank.<BankName>)
+    bank.<REGISTER_NAME>.write(0x10)
+```
 
 ### Build and Validation Commands
 
@@ -227,10 +298,55 @@ cd simics-project/
 ./bin/test-runner --suite modules/<device_name>/test
 ```
 
+### Task Marking Requirements (MANDATORY)
+
+**CRITICAL**: Mark tasks in `tasks.md` IMMEDIATELY after completing each step.
+
+#### Preparation Tasks (Section 1) - Mark AFTER Reading
+```bash
+# After reading constitution.md
+read_file(".specify/memory/constitution.md")
+→ IMMEDIATELY mark: "- [x] Read project constitution"
+
+# After reading spec.md
+read_file("specs/<change-id>/spec.md")
+→ IMMEDIATELY mark: "- [x] Review device spec"
+
+# After reading best practices
+read_file(".specify/memory/DML_Device_Development_Best_Practices.md")
+→ IMMEDIATELY mark: "- [x] Review best practices"
+```
+
+**Why this matters**: Preparation tasks have NO artifacts (no files created), but they ARE required work. You must explicitly mark them to show transparency and progress tracking.
+
+#### Actionable Tasks (Sections 2-5) - Mark AFTER Creating/Validating
+```bash
+# Tests: Mark after test file created
+write_file("test/s-<feature>.py")
+→ IMMEDIATELY mark: "- [x] Add Python test"
+
+# Implementation: Mark after DML file created
+write_file("<device>.dml")
+→ IMMEDIATELY mark: "- [x] Implement <behavior>"
+
+# Validation: Mark after build succeeds
+bash "make <device>" (success)
+→ IMMEDIATELY mark: "- [x] Build passes"
+
+# Archive: Mark after archiving completes
+bash "openspec archive" (success)
+→ IMMEDIATELY mark: "- [x] Move to archive"
+```
+
+**Pattern**:
+- Preparation = Read → Mark
+- Other tasks = Create/Validate → Mark
+
 ### Compliance Checklist
 
 Before submitting any implementation, verify:
 
+- [ ] ✅ **ALL preparation tasks marked** (constitution, spec, best practices)
 - [ ] ✅ All import statements present and intact
 - [ ] ✅ Only permitted files modified (`.dml` implementation, `.py` tests)
 - [ ] ✅ No auto-generated files edited
@@ -238,8 +354,42 @@ Before submitting any implementation, verify:
 - [ ] ✅ No `saved uint32` for counter/timer state
 - [ ] ✅ Tests follow `s-<feature>.py` pattern
 - [ ] ✅ Tests configure clock queue
-- [ ] ✅ Device builds successfully
-- [ ] ✅ All tests pass
+- [ ] ✅ **Build validation executed** (make succeeded at least once)
+- [ ] ✅ **Test validation executed** (test-runner ran at least once)
+- [ ] ✅ Device builds successfully (final state - may require iteration)
+- [ ] ✅ All tests pass (final state - may require iteration)
+- [ ] ✅ **ALL tasks in tasks.md marked complete**
+
+### Archive Readiness Criteria
+
+**Minimum criteria for archiving** (ALL required):
+1. ✅ All preparation tasks marked [x]
+2. ✅ All test files created
+3. ✅ All implementation code written (no TODO comments)
+4. ✅ Build succeeds at least once
+5. ✅ Test suite executed at least once
+6. ✅ All import statements intact
+7. ✅ No auto-generated files modified
+8. ✅ All tasks in tasks.md marked [x]
+
+**Optional criteria** (can defer to follow-up changes):
+- ❓ All tests pass 100% (can document failures and fix later)
+- ❓ Perfect code quality (can refactor later)
+- ❓ Full feature parity with spec (can implement remaining features later)
+- ❓ Optimal performance (can optimize later)
+
+**Archive with known issues** (acceptable pattern):
+- If tests fail: Add "## Known Issues" section to proposal.md
+- If partial implementation: Add "## Future Work" section to proposal.md
+- If performance issues: Add "## Performance Notes" section to proposal.md
+- Archive anyway, create follow-up change for fixes
+
+**Rationale**:
+- OpenSpec is iterative - changes build on changes
+- Perfect implementation blocks progress
+- Known issues documented are better than incomplete workflows
+- Git history shows evolution of implementation
+- Follow-up changes can address issues incrementally
 
 ## Constitutional Compliance Framework
 
@@ -259,6 +409,21 @@ Before submitting any implementation, verify:
 - Adherence to DML standards while maintaining constitutional principles
 - Consistent documentation and validation approaches across all device models
 - **Mandatory**: Verify compliance checklist before archiving
+- **CRITICAL**: "Implementation" means complete functional code:
+  - Replace ALL TODO comments with actual working DML code
+  - Implement ALL register side-effects (write_register, read_register)
+  - Implement ALL device behavior (timers, events, state management)
+  - Implement ALL signal handling (connect blocks)
+  - Tests are created FIRST (TDD), but implementation MUST follow
+  - Do NOT stop after creating tests - that's only the preparation step
+
+### Completion Phase
+- **Mandatory**: After archiving, provide clear status report
+- **Success case**: Report all tests passing, implementation complete
+- **Partial success case**: Report which tests failed, provide next prompt
+- **Failure case**: Report build errors, provide fix prompt
+- **Iterative workflow**: Each change builds on previous archived changes
+- **Next steps guidance**: Provide specific, actionable prompts for follow-up changes
 
 ## Amendment Process
 

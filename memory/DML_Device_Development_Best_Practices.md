@@ -74,7 +74,7 @@ import "simics/device-api.dml";  // Always needed for devices
 
 ### Correct vs. Incorrect Syntax
 
-❌ **WRONG** (old DML style):
+❌ **WRONG**:
 ```dml
 device my_device {
     param classname = "my_device";
@@ -1077,9 +1077,8 @@ import cli       # Command-line interface (optional)
 
 **❌ DON'T**:
 1. Assume default clock exists in unit tests (it doesn't)
-2. Forget to handle missing queue in DML code (`if (dev.queue != NULL)`)
-3. Mix incompatible clock domains without consideration
-4. Skip signal interface mocks when DML uses `connect` objects
+2. Mix incompatible clock domains without consideration
+3. Skip signal interface mocks when DML uses `connect` objects
 
 **Complete Test Template**:
 
