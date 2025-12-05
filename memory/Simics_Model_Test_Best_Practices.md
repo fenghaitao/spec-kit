@@ -63,7 +63,7 @@ def create_test_config():
     
     # 2. Configure attributes
     clk.freq_mhz = 1000
-    dev.queue = clk  # REQUIRED: Set queue for time-dependent objects
+    dev.queue = conf.clk  # REQUIRED: Set queue for time-dependent objects
     
     # 3. Add configuration
     simics.SIM_add_configuration([dev, clk, mem], None)
@@ -273,8 +273,8 @@ def create_config():
     clk = simics.pre_conf_object('clk', 'clock', [["freq_mhz", 100]])
     fake_pic = simics.pre_conf_object('fake_pic', 'FakePic')
 
-    wdog.queue = clk
-    wdog.pic = fake_pic
+    wdog.queue = conf.clk
+    wdog.pic = conf.fake_pic
     
     simics.SIM_add_configuration([wdog, clk, fake_pic], None)
     return (conf.wdog, conf.fake_pic)
