@@ -1276,45 +1276,6 @@ dmlc --simics-api=7 -I ../linux64/bin/dml/api/7/1.4 -I ../linux64/bin/dml/1.4 my
 dmlc -T --simics-api=7 -I ../linux64/bin/dml/api/7/1.4 -I ../linux64/bin/dml/1.4 my_device.dml my_device
 ```
 
-## Compilation Issues and Solutions
-
-### Issue 1: "syntax error at 'device'"
-
-**Cause**: Using old DML syntax with braces after device declaration.
-
-**Solution**: Remove braces from device declaration:
-```dml
-// Wrong
-device my_device { ... }
-
-// Correct
-device my_device;
-```
-
-### Issue 2: "cannot find file to import: dml-builtins.dml"
-
-**Cause**: Missing include path for DML builtins.
-
-**Solution**: Add both include paths:
-```bash
-dmlc --simics-api=7 -I ../linux64/bin/dml/api/7/1.4 -I ../linux64/bin/dml/1.4 file.dml output
-```
-
-### Issue 3: "assert sys.flags.utf8_mode"
-
-**Cause**: Python not running in UTF-8 mode.
-
-**Solution**: Set environment variable or modify dmlc script:
-```bash
-export PYTHONUTF8=1
-```
-
-### Issue 4: "unknown template: 'device'"
-
-**Cause**: DML builtins not found in include path.
-
-**Solution**: Ensure `-I ../linux64/bin/dml/1.4` is included.
-
 ## Conclusion
 
 DML device development requires understanding the specific syntax requirements:
