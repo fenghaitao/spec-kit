@@ -121,7 +121,7 @@ stest.expect_equal(control.enable, 1)
 
 ### 3. Environment Simulation (Fakes & Interfaces)
 
-Isolate your device by using **Fake Objects** instead of real dependencies. This improves test speed and stability.
+Isolate your device by using **Fake Objects** (also called "mock objects", "signal mocks", or "mock signal interfaces") instead of real dependencies. This improves test speed and stability.
 
 #### Fake Object Pattern
 
@@ -129,11 +129,11 @@ Isolate your device by using **Fake Objects** instead of real dependencies. This
 import pyobj
 
 class FakePic(pyobj.ConfObject):
-    class raised(pyobj.SimpleAttribute(0, 'i')): pass
+    class raised(pyobj.SimpleAttribute(True, 'b')): pass
     
     class signal(pyobj.Interface):
-        def signal_raise(self): self._up.raised.val += 1
-        def signal_lower(self): self._up.raised.val -= 1
+        def signal_raise(self): self._up.raised.val = True
+        def signal_lower(self): self._up.raised.val = False
 
 # In config setup:
 fake_pic = simics.pre_conf_object('fake_pic', 'FakePic')
@@ -357,6 +357,19 @@ if __name__ == "__main__":
 - **Descriptive Names**: Clear test filenames and function names.
 - **Good Error Messages**: Use `stest` assertions with helpful messages.
 - **Documentation**: Explain what each test covers.
+
+### 4. **Essential Testing Practices**:
+- **Clock configuration is mandatory** for time-based devices in unit tests
+- Create and assign clocks **before** posting any time events
+- Test time-dependent behavior explicitly with `SIM_continue()`
+- **Use Fake Objects (Section 3)** to mock signal interfaces when DML uses `connect` blocks
+- Use `dev_util.bank_regs()` for clean register access
+- Follow the `s-<feature>.py` naming convention
+
+### 5. **Quick Troubleshooting Checklist**:
+- Queue not set error → Create clock: `device.queue = clk`
+- Segmentfault on test → Add Fake Objects (Section 3) for `connect` interfaces
+- Events don't fire → Check clock frequency and time advancement
 
 ## Conclusion
 
