@@ -13,7 +13,6 @@ This guide provides a comprehensive introduction to writing Device Modeling Lang
 5. [Common Patterns](#common-patterns)
 6. [Compilation Issues and Solutions](#compilation-issues-and-solutions)
 7. [Best Practices](#best-practices)
-8. [Example Devices](#example-devices)
 
 ## Modeling in Simics
 
@@ -840,7 +839,7 @@ import "simics/device-api.dml";  // Always needed for devices
 
 ### Correct vs. Incorrect Syntax
 
-❌ **WRONG** (old DML style):
+❌ **WRONG**:
 ```dml
 device my_device {
     param classname = "my_device";
@@ -991,6 +990,34 @@ method update_interrupt() {
 
 ### 3. Timer Device
 
+This comprehensive example demonstrates how to implement hardware timer functionality in Simics, including time event management, frequency conversion, and both relative and absolute timer modes.
+
+#### Timer Implementation Concepts
+
+A hardware timer in Simics typically involves:
+- A **timer register** with control fields (enable, start, value)
+- A **time event** that fires when the timer expires
+- **Frequency conversion** between simulation time and timer cycles
+- **Start time tracking** for calculating elapsed time
+
+**Simulation Time vs Timer Cycles:**
+- **Simulation Time**: Absolute time in seconds returned by `SIM_time()`
+- **Timer Cycles**: Hardware-specific count based on timer frequency
+- **Conversion Formula**:
+  ```
+  cycles = simulation_time * frequency_hz
+  simulation_time = cycles / frequency_hz
+  ```
+
+**Timer Event Flow:**
+```
+Software Write → Start Timer → Post Event → Event Fires → Handle Timeout
+     ↓              ↓              ↓             ↓              ↓
+  Enable=1    Log start time  Calc timeout   Clear enable   Set status
+```
+
+#### Complete Timer Device Example
+
 ```dml
 dml 1.4;
 
@@ -999,146 +1026,447 @@ device timer_device;
 import "simics/device-api.dml";
 
 param classname = "timer_device";
-param desc = "Simple timer device";
+param desc = "Hardware timer device with relative and absolute timer modes";
 
-event timer_tick;
+// Define log group for timer messages
+loggroup timer_log;
 
-bank timer_regs {
-    param function = 0x4000;
-    param register_size = 4;
+// Timer frequency: 100 MHz
+constant TIMER_FREQ_HZ = 100 * 1000 * 1000;
 
-    register TIMER_VALUE @ 0x00 {
-        param size = 4;
-        param desc = "Current timer value";
+// ============================================================================
+// Timer Event Definition
+// ============================================================================
+
+event timer_event is (simple_time_event) {
+    // This method is called when the timer expires
+    method event() {
+        // Clear the running/busy bit
+        timer_bank.TIMER_CONTROL.Enable.set(0);
+        
+        // Set the interrupt/timeout flag
+        timer_bank.TIMER_STATUS.Timeout.set(1);
+        
+        // Log the expiration
+        log info, 1, timer_log: "Timer expired at sim time %f", 
+            SIM_time(dev.obj);
+        
+        // Optionally trigger an interrupt here
+        // interrupt_pin.signal.signal_raise();
     }
-
-    register TIMER_CONTROL @ 0x04 {
-        param size = 4;
-        param desc = "Timer control register";
-
-        method write(uint64 value) {
-            this.val = value;
-            if (value & 0x1) {  // Enable bit
-                start_timer();
-            }
+    
+    // Arm the timer with a timeout in simulation seconds
+    method arm(double timeout_seconds) {
+        local bool is_posted = posted();
+        
+        // If already posted, remove the old event
+        if (is_posted) {
+            remove();
+            log info, 2, timer_log: "Removed previously posted timer";
+        }
+        
+        // Post the new event
+        post(timeout_seconds);
+        log info, 2, timer_log: "Timer armed for %f seconds", timeout_seconds;
+    }
+    
+    // Cancel the timer
+    method cancel() {
+        if (posted()) {
+            remove();
+            log info, 2, timer_log: "Timer cancelled";
         }
     }
 }
 
-method start_timer() {
-    after 1.0 s: timer_expired();
-}
+// ============================================================================
+// Helper Template for Time Conversion
+// ============================================================================
 
-method timer_expired() {
-    log info: "Timer expired";
-    timer_regs.TIMER_VALUE.val = 0;
-    // Could trigger interrupt here
-}
-```
-
-## Compilation Issues and Solutions
-
-### Issue 1: "syntax error at 'device'"
-
-**Cause**: Using old DML syntax with braces after device declaration.
-
-**Solution**: Remove braces from device declaration:
-```dml
-// Wrong
-device my_device { ... }
-
-// Correct
-device my_device;
-```
-
-### Issue 2: "cannot find file to import: dml-builtins.dml"
-
-**Cause**: Missing include path for DML builtins.
-
-**Solution**: Add both include paths:
-```bash
-dmlc --simics-api=7 -I ../linux64/bin/dml/api/7/1.4 -I ../linux64/bin/dml/1.4 file.dml output
-```
-
-### Issue 3: "assert sys.flags.utf8_mode"
-
-**Cause**: Python not running in UTF-8 mode.
-
-**Solution**: Set environment variable or modify dmlc script:
-```bash
-export PYTHONUTF8=1
-```
-
-### Issue 4: "unknown template: 'device'"
-
-**Cause**: DML builtins not found in include path.
-
-**Solution**: Ensure `-I ../linux64/bin/dml/1.4` is included.
-
-## Best Practices
-
-### 1. File Organization
-
-```
-simics-project/
-├── modules/
-│   ├── device1/
-│   │   ├── device.dml
-│   │   └── Makefile
-│   └── device2/
-│       ├── device.dml
-│       └── Makefile
-├── common/
-│   └── device-common.dml
-└── Makefile
-```
-
-### 2. Naming Conventions
-
-- **Device names**: lowercase_with_underscores
-- **Bank names**: lowercase_with_underscores
-- **Register names**: descriptive_uppercase
-- **Field names**: descriptive_camelCase
-- **Parameters**: lowercase or camelCase
-- **Methods**: lowercase_with_underscores
-
-### 3. Documentation
-
-Always include meaningful descriptions:
-
-```dml
-param desc = "Detailed description of what this device does";
-
-register CONTROL @ 0x00 {
-    param desc = "Main control register - bit 0 enables device";
-}
-```
-
-### 4. Error Handling
-
-```dml
-method write(uint64 value) {
-    if (value > 0xFF) {
-        log error: "Invalid value written to 8-bit register: 0x%x", value;
-        return;
+template timer_helper {
+    param frequency_hz default TIMER_FREQ_HZ;
+    
+    // Convert cycles to simulation time (seconds)
+    method cycles_to_simtime(uint64 cycles) -> (double) {
+        return cast(cycles, double) / frequency_hz;
     }
-    this.val = value;
+    
+    // Convert simulation time to cycles
+    method simtime_to_cycles(double simtime) -> (uint64) {
+        return cast(simtime * frequency_hz, uint64);
+    }
+    
+    // Get current time in cycles
+    method get_current_cycles() -> (uint64) {
+        local double sim_time = SIM_time(dev.obj);
+        return simtime_to_cycles(sim_time);
+    }
+}
+
+// ============================================================================
+// Saved Variables for Timer State
+// ============================================================================
+
+// Store the simulation time when timer was started
+saved double timer_start_simtime = 0.0;
+
+// Store the target cycle count when timer should expire
+saved uint64 timer_target_cycles = 0;
+
+// ============================================================================
+// Timer Register Bank (Relative/Countdown Timer)
+// ============================================================================
+
+bank timer_bank is (timer_helper) {
+    
+    // -------------------------------------------------------------------------
+    // TIMER_CONTROL Register
+    // -------------------------------------------------------------------------
+    register TIMER_CONTROL size 4 @ 0x00 {
+        field Enable @ [0] "Timer enable/start bit";
+        field AutoReload @ [1] "Auto-reload mode";
+        field Reserved @ [31:2];
+        
+        method write_register(uint64 value, uint64 enabled_bytes, void *aux) {
+            // Write the value to register fields first
+            default(value, enabled_bytes, aux);
+            
+            // Check if timer is being enabled/started
+            if (Enable.val == 1) {
+                // Get the configured timeout value
+                local uint64 timeout_cycles = TIMER_VALUE.Value.val;
+                
+                if (timeout_cycles == 0) {
+                    log error: "Cannot start timer with zero timeout";
+                    Enable.set(0);
+                    return;
+                }
+                
+                // Record the start time (critical for elapsed time calculation)
+                timer_start_simtime = SIM_time(dev.obj);
+                
+                // Calculate target expiration time in cycles
+                local uint64 current_cycles = get_current_cycles();
+                timer_target_cycles = current_cycles + timeout_cycles;
+                
+                // Convert timeout cycles to simulation seconds
+                local double timeout_seconds = cycles_to_simtime(timeout_cycles);
+                
+                // Arm/post the timer event
+                timer_event.arm(timeout_seconds);
+                
+                log info, 1, timer_log: 
+                    "Timer started: %lld cycles (%f sec) at simtime %f",
+                    timeout_cycles, timeout_seconds, timer_start_simtime;
+            } 
+            else {
+                // Timer is being disabled - cancel the event
+                timer_event.cancel();
+                log info, 1, timer_log: "Timer stopped by software";
+            }
+        }
+    }
+    
+    // -------------------------------------------------------------------------
+    // TIMER_VALUE Register
+    // -------------------------------------------------------------------------
+    register TIMER_VALUE size 4 @ 0x04 {
+        field Value @ [31:0] "Timer timeout value in cycles";
+        
+        method write_register(uint64 value, uint64 enabled_bytes, void *aux) {
+            // Just store the value - it will be used when timer is started
+            default(value, enabled_bytes, aux);
+            log info, 2, timer_log: "Timer value configured: %lld cycles", 
+                Value.val;
+        }
+        
+        method read_register(uint64 enabled_bytes, void *aux) -> (uint64) {
+            // If timer is not running, return the configured value
+            if (TIMER_CONTROL.Enable.val == 0) {
+                return default(enabled_bytes, aux);
+            }
+            
+            // Timer is running - calculate and return remaining cycles
+            local double current_simtime = SIM_time(dev.obj);
+            local double elapsed_simtime = current_simtime - timer_start_simtime;
+            local uint64 elapsed_cycles = simtime_to_cycles(elapsed_simtime);
+            
+            local uint64 initial_cycles = Value.val;
+            local uint64 remaining_cycles;
+            
+            if (elapsed_cycles >= initial_cycles) {
+                // Timer should have expired (or is about to)
+                remaining_cycles = 0;
+            } else {
+                remaining_cycles = initial_cycles - elapsed_cycles;
+            }
+            
+            log info, 3, timer_log: 
+                "Timer read: elapsed=%lld, remaining=%lld cycles",
+                elapsed_cycles, remaining_cycles;
+            
+            return remaining_cycles;
+        }
+    }
+    
+    // -------------------------------------------------------------------------
+    // TIMER_STATUS Register
+    // -------------------------------------------------------------------------
+    register TIMER_STATUS size 4 @ 0x08 {
+        field Timeout @ [0] "Timer timeout occurred (write 1 to clear)";
+        field Running @ [1] "Timer is currently running (read-only)";
+        field Reserved @ [31:2];
+        
+        method read_register(uint64 enabled_bytes, void *aux) -> (uint64) {
+            // Update running status dynamically
+            Running.set(TIMER_CONTROL.Enable.val);
+            return default(enabled_bytes, aux);
+        }
+        
+        method write_register(uint64 value, uint64 enabled_bytes, void *aux) {
+            // Allow clearing timeout flag by writing 1
+            if ((value & 0x1) == 1) {
+                Timeout.set(0);
+                log info, 2, timer_log: "Timeout flag cleared";
+            }
+            // Running bit is read-only, ignore writes to it
+        }
+    }
+    
+    // -------------------------------------------------------------------------
+    // TIMER_CURRENT Register (Read-only elapsed cycles)
+    // -------------------------------------------------------------------------
+    register TIMER_CURRENT size 4 @ 0x0C {
+        field Value @ [31:0] "Current elapsed cycles (read-only)";
+        
+        method read_register(uint64 enabled_bytes, void *aux) -> (uint64) {
+            if (TIMER_CONTROL.Enable.val == 0) {
+                // Timer not running, return 0
+                return 0;
+            }
+            
+            // Calculate elapsed cycles since timer start
+            local double current_simtime = SIM_time(dev.obj);
+            local double elapsed_simtime = current_simtime - timer_start_simtime;
+            local uint64 elapsed_cycles = simtime_to_cycles(elapsed_simtime);
+            
+            log info, 3, timer_log: 
+                "Elapsed time: %f sec = %lld cycles",
+                elapsed_simtime, elapsed_cycles;
+            
+            return elapsed_cycles;
+        }
+    }
+}
+
+// ============================================================================
+// Absolute Target Timer Example
+// ============================================================================
+
+// This example shows a timer that uses an absolute target time
+// (useful for timestamp-based timers like TSC-based timers)
+
+event absolute_timer_event is (simple_time_event) {
+    method event() {
+        abs_timer_bank.ABS_TIMER_CONTROL.Run_Busy.set(0);
+        abs_timer_bank.ABS_TIMER_STATUS.Expired.set(1);
+        log info, 1, timer_log: "Absolute timer expired";
+    }
+    
+    method arm(double timeout) {
+        if (posted())
+            remove();
+        post(timeout);
+    }
+
+    method cancel() {
+        if (posted())
+            remove();
+    }
+}
+
+bank abs_timer_bank is (timer_helper) {
+    
+    // Free-running counter register (like a TSC counter)
+    register FREE_RUNNING_COUNTER size 8 @ 0x20 is (timer_helper) {
+        method read_register(uint64 enabled_bytes, void *aux) -> (uint64) {
+            // Return current simulation time converted to cycles
+            return get_current_cycles();
+        }
+    }
+    
+    // Absolute target timer control
+    register ABS_TIMER_CONTROL size 4 @ 0x28 {
+        field Run_Busy @ [0] "Timer is running";
+        field Reserved @ [31:1];
+        
+        method write_register(uint64 value, uint64 enabled_bytes, void *aux) {
+            default(value, enabled_bytes, aux);
+            
+            // If enabling, arm the timer with current target
+            if (Run_Busy.val == 1) {
+                local uint64 target_cycles = ABS_TIMER_TARGET.Target_Cycles.val;
+                local uint64 current_cycles = FREE_RUNNING_COUNTER.get_current_cycles();
+                
+                // Calculate delta cycles
+                local uint64 delta_cycles;
+                if (target_cycles > current_cycles) {
+                    delta_cycles = target_cycles - current_cycles;
+                } else {
+                    // Target is in the past, fire immediately
+                    delta_cycles = 0;
+                }
+                
+                // Convert to simulation time
+                local double timeout_seconds = cycles_to_simtime(delta_cycles);
+                
+                log info, 1, timer_log: 
+                    "Absolute timer started: target=%lld, current=%lld, delta=%lld cycles (%f sec)",
+                    target_cycles, current_cycles, delta_cycles, timeout_seconds;
+                
+                // Arm the event
+                absolute_timer_event.arm(timeout_seconds);
+            } else {
+                // Disabling - cancel the event
+                absolute_timer_event.cancel();
+            }
+        }
+    }
+    
+    register ABS_TIMER_TARGET size 8 @ 0x2C {
+        field Target_Cycles @ [63:0] "Absolute cycle count to trigger at";
+        
+        method write_register(uint64 value, uint64 enabled_bytes, void *aux) {
+            default(value, enabled_bytes, aux);
+            
+            // If timer is already running, re-arm with new target
+            if (ABS_TIMER_CONTROL.Run_Busy.val == 1) {
+                local uint64 target_cycles = Target_Cycles.val;
+                local uint64 current_cycles = FREE_RUNNING_COUNTER.get_current_cycles();
+                
+                // Calculate delta cycles
+                local uint64 delta_cycles;
+                if (target_cycles > current_cycles) {
+                    delta_cycles = target_cycles - current_cycles;
+                } else {
+                    delta_cycles = 0;
+                }
+                
+                // Convert to simulation time
+                local double timeout_seconds = cycles_to_simtime(delta_cycles);
+                
+                log info, 1, timer_log: 
+                    "Absolute timer target updated: target=%lld, current=%lld, delta=%lld cycles (%f sec)",
+                    target_cycles, current_cycles, delta_cycles, timeout_seconds;
+                
+                // Re-arm the event
+                absolute_timer_event.arm(timeout_seconds);
+            }
+        }
+    }
+    
+    register ABS_TIMER_STATUS size 4 @ 0x34 {
+        field Expired @ [0] "Timer has expired (write 1 to clear)";
+        
+        method write_register(uint64 value, uint64 enabled_bytes, void *aux) {
+            if ((value & 0x1) == 1) {
+                Expired.set(0);
+                log info, 2, timer_log: "Absolute timer expired flag cleared";
+            }
+        }
+    }
 }
 ```
 
-### 5. Logging
 
-Use appropriate log levels:
+#### Key Timer Implementation Points
 
+**1. Event Management:**
+- Always check `posted()` before posting a new event to avoid multiple pending events
+- Use `remove()` to cancel a posted event before posting a new one
+- `post(seconds)` schedules the event relative to current simulation time
+
+**2. Tracking Start Time:**
 ```dml
-log info: "Device initialized";
-log warning: "Unusual register access pattern";
-log error: "Invalid operation attempted";
+// Critical for elapsed time calculation
+saved double timer_start_simtime = 0.0;
+
+// When timer starts:
+timer_start_simtime = SIM_time(dev.obj);
+
+// When reading elapsed time:
+local double elapsed = SIM_time(dev.obj) - timer_start_simtime;
+local uint64 elapsed_cycles = simtime_to_cycles(elapsed);
 ```
 
-## Example Devices
+**3. Frequency Conversion Helper Methods:**
+```dml
+method cycles_to_simtime(uint64 cycles) -> (double) {
+    return cast(cycles, double) / frequency_hz;
+}
 
-### Complete UART Example
+method simtime_to_cycles(double simtime) -> (uint64) {
+    return cast(simtime * frequency_hz, uint64);
+}
+```
+
+**4. Relative vs Absolute Timers:**
+
+- **Relative Timer (countdown)**:
+  - Software writes timeout duration
+  - Timer counts down from initial value
+  - Expires after duration elapses
+  - Example: `TIMER_VALUE` in the code above
+
+- **Absolute Timer (target-based)**:
+  - Uses a free-running counter
+  - Software writes absolute target cycle count
+  - Timer expires when counter reaches target
+  - Example: `ABS_TIMER_TARGET` in the code above
+
+**5. Testing Your Timer:**
+
+```python
+# Create device and configure
+$dev = (create-timer_device)
+
+# Configure timer for 10ms (1M cycles at 100MHz)
+$dev.bank.timer_bank.TIMER_VALUE = 1000000
+
+# Start timer
+$dev.bank.timer_bank.TIMER_CONTROL = 1
+
+# Check immediate status
+print $dev.bank.timer_bank.TIMER_VALUE
+print $dev.bank.timer_bank.TIMER_CURRENT
+
+# Advance time
+run-cycles 500000
+
+# Check mid-flight
+print $dev.bank.timer_bank.TIMER_VALUE      # Should be ~500000
+print $dev.bank.timer_bank.TIMER_CURRENT    # Should be ~500000
+
+# Wait for expiration
+run-cycles 500000
+
+# Check completion
+print $dev.bank.timer_bank.TIMER_STATUS     # Timeout bit should be set
+print $dev.bank.timer_bank.TIMER_CONTROL    # Enable should be clear
+```
+
+**6. Common Timer Best Practices:**
+
+- ✅ Use `saved` variables for timer state that needs to persist across checkpoints
+- ✅ Validate input values (e.g., reject zero timeout)
+- ✅ Log important timer operations at appropriate levels
+- ✅ Handle edge cases (zero timeout, timer already running, target in the past)
+- ✅ Check for and remove pending events before posting new ones
+- ✅ Calculate elapsed/remaining time dynamically on read
+- ❌ Don't forget to cancel events when disabling the timer
+- ❌ Don't post events without checking if one is already pending
+
+### 4. Complete UART Example
 
 ```dml
 dml 1.4;
@@ -1203,7 +1531,7 @@ bank uart_regs {
 }
 ```
 
-### Simple PCI Device Template
+### 5. Simple PCI Device Template
 
 ```dml
 dml 1.4;
@@ -1264,27 +1592,192 @@ bank device_regs {
 }
 ```
 
-## Testing Your DML Device
+## Compilation Issues and Solutions
 
-### 1. Compilation Test
+### Issue 1: "syntax error at 'device'"
 
+**Cause**: Using old DML syntax with braces after device declaration.
+
+**Solution**: Remove braces from device declaration:
+```dml
+// Wrong
+device my_device { ... }
+
+// Correct
+device my_device;
+```
+
+### Issue 2: "cannot find file to import: dml-builtins.dml"
+
+**Cause**: Missing include path for DML builtins.
+
+**Solution**: Add both include paths:
 ```bash
-# Test basic compilation
-dmlc --simics-api=7 -I ../linux64/bin/dml/api/7/1.4 -I ../linux64/bin/dml/1.4 my_device.dml my_device
+dmlc --simics-api=7 -I ../linux64/bin/dml/api/7/1.4 -I ../linux64/bin/dml/1.4 file.dml output
+```
 
-# Check for warnings
-dmlc -T --simics-api=7 -I ../linux64/bin/dml/api/7/1.4 -I ../linux64/bin/dml/1.4 my_device.dml my_device
+### Issue 3: "assert sys.flags.utf8_mode"
+
+**Cause**: Python not running in UTF-8 mode.
+
+**Solution**: Set environment variable or modify dmlc script:
+```bash
+export PYTHONUTF8=1
+```
+
+### Issue 4: "unknown template: 'device'"
+
+**Cause**: DML builtins not found in include path.
+
+**Solution**: Ensure `-I ../linux64/bin/dml/1.4` is included.
+
+### Issue 5: "syntax error at 'except'" - Python Syntax in DML
+
+**Cause**: DML is C-like, NOT Python.
+
+**Wrong**: `try { } except { }` ❌
+**Correct**: `try { } catch { }` ✅
+
+**Key Differences (C/C++ vs Python)**:
+- Exception: `catch` not `except`
+- Blocks: `{ }` not indentation
+- Statements: end with `;`
+- Comments: `//` or `/* */` not `#`
+
+### Issue 6: Tests Unchanged After DML Edits
+
+**Cause**: Forgot to rebuild. Tests run against old `.so` binary, not new `.dml` source.
+
+**Mandatory Cycle**: Edit → Build → Test
+```bash
+# 1. Edit
+vim simics-project/modules/<device>/<device>.dml
+
+# 2. BUILD (CRITICAL - don't skip!)
+cd simics-project && make <device>
+
+# 3. Test
+bin/test-runner --suite modules/<device>/test/
+
+# 4. Verify build happened
+ls -lh linux64/lib/<device>.so  # Check timestamp is recent
+```
+
+**Why**: DML compiles to `.so` shared libraries. Simics loads `.so`, not `.dml`. No rebuild = old code runs.
+
+### Issue 7: AttributeError in module_load.py - "object has no attribute 'X'"
+
+**Cause**: `module_load.py` references non-existent device attributes. Auto-generated attributes follow `<bank_name>_<register_name>` pattern.
+
+**Wrong Code** (in `module_load.py`):
+```python
+def get_status(obj):
+    return [("Registers",
+             [("Counter", obj.wrong_attr_name)])]  # ❌ Attribute doesn't exist!
+```
+
+**How to Fix**:
+1. **Check DML for actual bank/register names**:
+   ```bash
+   grep "^bank " simics-project/modules/<device>/<device>.dml
+   grep "register " simics-project/modules/<device>/<device>.dml
+   ```
+
+2. **Use correct attribute pattern**: `obj.<BankName>_<RegisterName>`
+   ```python
+   # If DML has: bank MyBankName { register MY_REG { ... } }
+   # Then use:
+   def get_status(obj):
+       return [("Registers",
+                [("Register Value", obj.MyBankName_MY_REG)])]  # ✅ Correct!
+   ```
+
+**Attribute Naming Rules**:
+- Pattern: `device_obj.<BankName>_<RegisterName>`
+- Bank `<bank1>` + register `<REG1>` → `obj.<bank1>_<REG1>`
+- Bank `<bank2>` + register `<REG2>` → `obj.<bank2>_<REG2>`
+- Use exact names from DML (case-sensitive)
+
+**If No Suitable Attribute Exists**:
+Just remove or comment out the status display code:
+```python
+def get_status(obj):
+    return []  # No status to report
+```
+
+**Key Point**: `module_load.py` is auto-generated from DML structure. If you modify it manually, ensure attributes match DML bank/register declarations.
+
+## Best Practices
+
+### 1. File Organization
+
+```
+simics-project/
+├── modules/
+│   ├── device1/
+│   │   ├── device.dml
+│   │   └── Makefile
+│   └── device2/
+│       ├── device.dml
+│       └── Makefile
+├── common/
+│   └── device-common.dml
+└── Makefile
+```
+
+### 2. Naming Conventions
+
+- **Device names**: lowercase_with_underscores
+- **Bank names**: lowercase_with_underscores
+- **Register names**: descriptive_uppercase
+- **Field names**: descriptive_camelCase
+- **Parameters**: lowercase or camelCase
+- **Methods**: lowercase_with_underscores
+
+### 3. Documentation
+
+Always include meaningful descriptions:
+
+```dml
+param desc = "Detailed description of what this device does";
+
+register CONTROL @ 0x00 {
+    param desc = "Main control register - bit 0 enables device";
+}
+```
+
+### 4. Error Handling
+
+```dml
+method write(uint64 value) {
+    if (value > 0xFF) {
+        log error: "Invalid value written to 8-bit register: 0x%x", value;
+        return;
+    }
+    this.val = value;
+}
+```
+
+### 5. Logging
+
+Use appropriate log levels:
+
+```dml
+log info: "Device initialized";
+log warning: "Unusual register access pattern";
+log error: "Invalid operation attempted";
 ```
 
 ## Conclusion
 
-DML device development requires understanding the specific syntax requirements:
+Successful DML device development requires mastering both language syntax and simulation best practices:
 
-1. **Device declarations are single lines without braces**
-2. **Include paths must include both API and builtins directories**
-3. **UTF-8 mode must be enabled for the compiler**
-4. **Parameters and banks go at the top level**
-5. **Use proper logging and error handling**
+**Core Development Principles**:
+- Device declarations are single lines without braces (`device name;`)
+- Include paths must cover both API and builtins directories
+- UTF-8 mode must be enabled for the compiler
+- Parameters and banks live at the top level, not inside device blocks
+- Proper logging and error handling are essential
 
 Following these practices will help you write robust, maintainable DML devices for Simics simulation.
 
